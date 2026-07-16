@@ -65,6 +65,7 @@ kotlin {
             implementation(dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.android.auth)
             implementation(libs.firebase.android.firestore)
+            implementation(libs.compose.uiTooling)
         }
     }
 }
