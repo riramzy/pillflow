@@ -27,10 +27,16 @@ interface PillFlowDao {
     fun getScheduledDosesForMedication(medicationId: Long): Flow<List<ScheduledDoseEntity>>
 
     @Query("""
-        SELECT * FROM scheduled_doses
+        SELECT 
+            scheduled_doses.id AS id, 
+            medications.name AS name, 
+            medications.dosage AS dosage, 
+            medications.colorHex AS colorHex, 
+            scheduled_doses.scheduledTime AS scheduledTime
+        FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
-        WHERE isTaken = 0
-        ORDER BY scheduledTime ASC
+        WHERE scheduled_doses.isTaken = 0
+        ORDER BY scheduled_doses.scheduledTime ASC
     """)
     fun getPendingDosesWithMedication(): Flow<List<PendingDoseWithMedication>>
 
