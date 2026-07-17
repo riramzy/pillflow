@@ -1,8 +1,9 @@
 package com.riramzy.pillfllow.data.local.entity
 
-import androidx.room.Embedded
-
 data class PendingDoseWithMedication(
-    @Embedded val dose : ScheduledDoseEntity,
-    @Embedded val medication : MedicationEntity
+    val id: Long,
+    val name: String,
+    val dosage: String,
+    val colorHex: String,
+    val scheduledTime: Long
 )
