@@ -9,8 +9,8 @@ fun checkChuteExit(
     jarRadius: Float,
     onPillLogged: (String) -> Unit
 ) {
-    val boundaryY = jarCenter.y + jarRadius
-    if (pill.position.y >= (boundaryY + pill.radius)) {
+    val boundaryX = jarCenter.x - jarRadius
+    if (pill.position.x <= (boundaryX - pill.radius)) {
         onPillLogged(pill.id)
     }
 }

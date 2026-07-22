@@ -16,9 +16,9 @@ fun resolveBoundaryCollision(
 
     if (distance > limit) {
         val normal = delta.normalize()
-        val isAtChuteOpening = pill.position.y > (jarCenter.y + jarRadius - 45f) &&
-                (pill.position.x > jarCenter.x - (chuteWidth / 2f)) &&
-                (pill.position.x < jarCenter.x + (chuteWidth / 2f))
+        val isAtChuteOpening = pill.position.x < (jarCenter.x - jarRadius + 45f) &&
+                (pill.position.y > jarCenter.y - (chuteWidth / 2f)) &&
+                (pill.position.y < jarCenter.y + (chuteWidth / 2f))
 
         if (!isAtChuteOpening) {
             pill.position -= normal * (distance - limit)
