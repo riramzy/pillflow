@@ -1,6 +1,6 @@
 package com.riramzy.pillfllow.domain.hardware
 
-expect class PlatformNotifier {
+expect class PlatformNotifier() {
     fun scheduleDoseReminder(
         context: Any? = null,
         doseId: String,
