@@ -4,7 +4,6 @@ import com.riramzy.pillfllow.data.local.entity.PillEntity
 import com.riramzy.pillfllow.utils.checkChuteExit
 import com.riramzy.pillfllow.utils.resolveBoundaryCollision
 import com.riramzy.pillfllow.utils.resolveInterPillCollision
-import kotlin.math.sqrt
 
 class PhysicsEngine(
     private val jarRadius: Float,
