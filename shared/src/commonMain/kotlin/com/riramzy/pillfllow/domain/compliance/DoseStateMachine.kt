@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.domain
+package com.riramzy.pillfllow.domain.compliance
 
 import com.riramzy.pillfllow.utils.DoseComplianceStatus
 import com.riramzy.pillfllow.utils.currentTimeMillis
