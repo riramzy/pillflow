@@ -1,5 +1,6 @@
 package com.riramzy.pillfllow.data.local.entity
 
+import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
