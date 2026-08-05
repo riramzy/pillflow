@@ -91,7 +91,7 @@ fun PillFlowTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
+        typography = appTypography(),
         content = content
     )
 }
