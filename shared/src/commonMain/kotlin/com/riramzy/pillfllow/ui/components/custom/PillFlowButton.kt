@@ -35,7 +35,7 @@ fun PillFlowButton(
     modifier: Modifier = Modifier,
     text: String = "Call",
     textAlignment: TextAlign = TextAlign.Center,
-    withIcon: Boolean = true,
+    withIcon: Boolean = false,
     icon: DrawableResource? = Res.drawable.call,
     customColor: Color? = null,
     customTextColor: Color? = null,
@@ -71,7 +71,7 @@ fun PillFlowButton(
                 Text(
                     text = text,
                     style = MaterialTheme.typography.labelLarge,
-                    fontSize = customTextSize?.sp ?: 14.sp,
+                    fontSize = customTextSize?.sp ?: 16.sp,
                     fontWeight = FontWeight.Normal,
                     color = customTextColor
                         ?: MaterialTheme.colorScheme.onPrimary,
@@ -95,7 +95,7 @@ fun PillFlowButton(
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
-                fontSize = customTextSize?.sp ?: 14.sp,
+                fontSize = customTextSize?.sp ?: 16.sp,
                 fontWeight = FontWeight.Normal,
                 color = customTextColor
                     ?: MaterialTheme.colorScheme.onPrimary,
