@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.components.custom
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -36,7 +37,9 @@ import pillfllow.shared.generated.resources.profile
 
 @Composable
 fun PillFlowTopAppBar(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
@@ -87,7 +90,8 @@ fun PillFlowTopAppBar(
                         .background(
                             color = MaterialTheme.colorScheme.primary.copy(0.3f),
                             shape = CircleShape
-                        ),
+                        )
+                        .clickable { onNotificationsClick() },
                 ) {
                     Image(
                         imageVector = vectorResource(Res.drawable.notifications),
@@ -105,7 +109,8 @@ fun PillFlowTopAppBar(
                         .background(
                             color = MaterialTheme.colorScheme.primary.copy(0.3f),
                             shape = CircleShape
-                        ),
+                        )
+                        .clickable { onProfileClick() },
                 ) {
                     Image(
                         painter = painterResource(Res.drawable.profile),
