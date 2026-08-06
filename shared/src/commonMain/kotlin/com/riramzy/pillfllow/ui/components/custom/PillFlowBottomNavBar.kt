@@ -1,6 +1,7 @@
 package com.riramzy.pillfllow.ui.components.custom
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -35,9 +36,12 @@ import pillfllow.shared.generated.resources.settings
 @Composable
 fun PillFlowBottomNavBar(
     modifier: Modifier = Modifier,
+    selectedPage: String = "Home",
+    onHomeClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
+    onCaregiverClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ) {
-    val selectedItem = "Settings"
-
     Card(
         modifier = modifier
             .wrapContentSize(),
@@ -46,7 +50,7 @@ fun PillFlowBottomNavBar(
         ),
         shape = RoundedCornerShape(50.dp)
     ) {
-        when (selectedItem) {
+        when (selectedPage) {
             "Home" -> {
                 Row(
                     modifier = Modifier
@@ -55,9 +59,9 @@ fun PillFlowBottomNavBar(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     PillFlowNavItemExpanded(icon = Res.drawable.home, name = "Home")
-                    PillFlowNavItem(icon = Res.drawable.history)
-                    PillFlowNavItem(icon = Res.drawable.caregiver)
-                    PillFlowNavItem(icon = Res.drawable.settings)
+                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
             "History" -> {
@@ -67,10 +71,10 @@ fun PillFlowBottomNavBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    PillFlowNavItem(icon = Res.drawable.home)
+                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                     PillFlowNavItemExpanded(icon = Res.drawable.history, name = "History")
-                    PillFlowNavItem(icon = Res.drawable.caregiver)
-                    PillFlowNavItem(icon = Res.drawable.settings)
+                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
             "Caregiver" -> {
@@ -80,10 +84,10 @@ fun PillFlowBottomNavBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    PillFlowNavItem(icon = Res.drawable.home)
-                    PillFlowNavItem(icon = Res.drawable.history)
+                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
                     PillFlowNavItemExpanded(icon = Res.drawable.caregiver, name = "Caregiver")
-                    PillFlowNavItem(icon = Res.drawable.settings)
+                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
             "Settings" -> {
@@ -93,10 +97,23 @@ fun PillFlowBottomNavBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    PillFlowNavItem(icon = Res.drawable.home)
-                    PillFlowNavItem(icon = Res.drawable.history)
-                    PillFlowNavItem(icon = Res.drawable.caregiver)
+                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
                     PillFlowNavItemExpanded(icon = Res.drawable.settings, name = "Settings")
+                }
+            }
+            else -> {
+                Row(
+                    modifier = Modifier
+                        .padding(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
         }
@@ -104,7 +121,7 @@ fun PillFlowBottomNavBar(
 }
 
 @Composable
-fun PillFlowNavItem(icon: DrawableResource) {
+fun PillFlowNavItem(icon: DrawableResource, onNavItemClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -112,7 +129,8 @@ fun PillFlowNavItem(icon: DrawableResource) {
             .background(
                 color = MaterialTheme.colorScheme.primary.copy(0.3f),
                 shape = CircleShape
-            ),
+            )
+            .clickable { onNavItemClick() }
     ) {
         Icon(
             imageVector = vectorResource(icon),
