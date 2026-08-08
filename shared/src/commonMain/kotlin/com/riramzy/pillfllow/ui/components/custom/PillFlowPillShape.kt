@@ -52,7 +52,8 @@ fun PillFlowPillShape(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
                             shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp)
                         )
-                        .size(8.dp),
+                        .width(10.dp)
+                        .height(8.dp),
                 )
                 Box(
                     modifier = modifier
@@ -60,7 +61,8 @@ fun PillFlowPillShape(
                             color = MaterialTheme.colorScheme.primary,
                             shape = RoundedCornerShape(bottomEnd = 10.dp, bottomStart = 10.dp)
                         )
-                        .size(8.dp),
+                        .width(10.dp)
+                        .height(8.dp),
                 )
             }
         }
