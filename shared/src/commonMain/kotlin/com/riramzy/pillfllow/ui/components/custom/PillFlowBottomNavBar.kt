@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -178,7 +179,15 @@ fun PillFlowNavItemExpanded(icon: DrawableResource, name: String) {
 @Composable
 fun PillFlowBottomNavBarPreview() {
     PillFlowTheme {
-        PillFlowBottomNavBar()
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PillFlowBottomNavBar(selectedPage = "Home")
+            PillFlowBottomNavBar(selectedPage = "History")
+            PillFlowBottomNavBar(selectedPage = "Caregiver")
+            PillFlowBottomNavBar(selectedPage = "Settings")
+        }
     }
 }
 
@@ -186,6 +195,14 @@ fun PillFlowBottomNavBarPreview() {
 @Composable
 fun PillFlowBottomNavBarPreviewDark() {
     PillFlowTheme {
-        PillFlowBottomNavBar()
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PillFlowBottomNavBar(selectedPage = "Home")
+            PillFlowBottomNavBar(selectedPage = "History")
+            PillFlowBottomNavBar(selectedPage = "Caregiver")
+            PillFlowBottomNavBar(selectedPage = "Settings")
+        }
     }
 }
