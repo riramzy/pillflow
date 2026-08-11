@@ -17,7 +17,8 @@ import com.riramzy.pillfllow.utils.PillColor
 @Composable
 fun PillFlowPillColor(
     modifier: Modifier = Modifier,
-    color: PillColor = PillColor.CORAL_RED
+    color: PillColor = PillColor.CORAL_RED,
+    isWithBorder: Boolean = false
 ) {
     Box(
         modifier = modifier
@@ -27,8 +28,8 @@ fun PillFlowPillColor(
                 shape = CircleShape
             )
             .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary,
+                width = if (isWithBorder) 1.dp else 0.dp,
+                color = if (isWithBorder) MaterialTheme.colorScheme.primary else color.color,
                 shape = CircleShape
             )
 

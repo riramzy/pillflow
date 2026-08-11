@@ -117,14 +117,14 @@ fun PillFlowComplianceCard(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Normal
                 )
