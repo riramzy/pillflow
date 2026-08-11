@@ -20,13 +20,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.IndicatorColor
-import com.riramzy.pillfllow.utils.Status
 
 @Composable
 fun PillFlowStatusCard(
     modifier: Modifier = Modifier,
-    status: Status = Status.DEFAULT,
+    status: ComplianceStatus = ComplianceStatus.DEFAULT,
     customText: String? = null
 ) {
     var color: Color
@@ -34,22 +34,22 @@ fun PillFlowStatusCard(
     var text: String
 
     when (status) {
-        Status.DEFAULT -> {
+        ComplianceStatus.DEFAULT -> {
             color = MaterialTheme.colorScheme.onPrimary
             backgroundColor = MaterialTheme.colorScheme.primary
             text = "Take"
         }
-        Status.ON_TIME -> {
+        ComplianceStatus.ON_TIME -> {
             color = IndicatorColor.GREEN.color
             backgroundColor = IndicatorColor.GREEN_CONTAINER.color
             text = "On Time"
         }
-        Status.LATE -> {
+        ComplianceStatus.LATE -> {
             color = IndicatorColor.YELLOW.color
             backgroundColor = IndicatorColor.YELLOW_CONTAINER.color
             text = "Late"
         }
-        Status.MISSED -> {
+        ComplianceStatus.MISSED -> {
             color = IndicatorColor.RED.color
             backgroundColor = IndicatorColor.RED_CONTAINER.color
             text = "Missed"
@@ -85,10 +85,10 @@ fun PillFlowStatusCardPreview() {
         Column(
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            PillFlowStatusCard(status = Status.DEFAULT, customText = "Take")
-            PillFlowStatusCard(status = Status.ON_TIME, customText = "Taken: 9.02AM")
-            PillFlowStatusCard(status = Status.LATE, customText = "Late: 30m ago")
-            PillFlowStatusCard(status = Status.MISSED)
+            PillFlowStatusCard(status = ComplianceStatus.DEFAULT, customText = "Take")
+            PillFlowStatusCard(status = ComplianceStatus.ON_TIME, customText = "Taken: 9.02AM")
+            PillFlowStatusCard(status = ComplianceStatus.LATE, customText = "Late: 30m ago")
+            PillFlowStatusCard(status = ComplianceStatus.MISSED)
         }
     }
 }
@@ -100,10 +100,10 @@ fun PillFlowStatusCardPreviewDark() {
         Column(
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            PillFlowStatusCard(status = Status.DEFAULT, customText = "Take")
-            PillFlowStatusCard(status = Status.ON_TIME, customText = "Taken: 9.02AM")
-            PillFlowStatusCard(status = Status.LATE, customText = "Late: 30m ago")
-            PillFlowStatusCard(status = Status.MISSED)
+            PillFlowStatusCard(status = ComplianceStatus.DEFAULT, customText = "Take")
+            PillFlowStatusCard(status = ComplianceStatus.ON_TIME, customText = "Taken: 9.02AM")
+            PillFlowStatusCard(status = ComplianceStatus.LATE, customText = "Late: 30m ago")
+            PillFlowStatusCard(status = ComplianceStatus.MISSED)
         }
     }
 }

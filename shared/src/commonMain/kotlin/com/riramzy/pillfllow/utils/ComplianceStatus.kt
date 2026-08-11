@@ -1,6 +1,6 @@
 package com.riramzy.pillfllow.utils
 
-enum class Status {
+enum class ComplianceStatus {
     DEFAULT,
     ON_TIME,
     LATE,
