@@ -1,6 +1,5 @@
 package com.riramzy.pillfllow.domain.physics
 
-import com.riramzy.pillfllow.data.local.entity.PillEntity
 import com.riramzy.pillfllow.utils.checkChuteExit
 import com.riramzy.pillfllow.utils.resolveBoundaryCollision
 import com.riramzy.pillfllow.utils.resolveInterPillCollision

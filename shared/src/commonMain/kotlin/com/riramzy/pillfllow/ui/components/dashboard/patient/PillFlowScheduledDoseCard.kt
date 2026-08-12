@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.ui.components.dashboard
+package com.riramzy.pillfllow.ui.components.dashboard.patient
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

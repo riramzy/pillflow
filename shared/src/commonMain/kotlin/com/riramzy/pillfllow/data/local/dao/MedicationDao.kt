@@ -10,7 +10,7 @@ import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface PillFlowDao {
+interface MedicationDao {
     @Query("SELECT * FROM medications")
     fun getAllMedications(): Flow<List<MedicationEntity>>
 
@@ -25,6 +25,37 @@ interface PillFlowDao {
 
     @Query("SELECT * FROM scheduled_doses WHERE medicationId = :medicationId")
     fun getScheduledDosesForMedication(medicationId: Long): Flow<List<ScheduledDoseEntity>>
+
+    @Query("SELECT * FROM medications WHERE userId = :userId")
+    fun getMedicationForUser(userId: String): Flow<List<MedicationEntity>>
+
+    @Query("""
+        SELECT 
+            scheduled_doses.id AS id, 
+            medications.name AS name, 
+            medications.dosage AS dosage, 
+            medications.colorHex AS colorHex, 
+            scheduled_doses.scheduledTime AS scheduledTime
+        FROM scheduled_doses
+        INNER JOIN medications ON scheduled_doses.medicationId = medications.id
+        WHERE scheduled_doses.isTaken = 0 AND medications.userId = :userId
+        ORDER BY scheduled_doses.scheduledTime ASC
+    """)
+    fun getPendingDosesForUser(userId: String): Flow<List<PendingDoseWithMedication>>
+
+    @Query("""
+        SELECT 
+            scheduled_doses.id AS id, 
+            medications.name AS name, 
+            medications.dosage AS dosage, 
+            medications.colorHex AS colorHex, 
+            scheduled_doses.scheduledTime AS scheduledTime
+        FROM scheduled_doses
+        INNER JOIN medications ON scheduled_doses.medicationId = medications.id
+        WHERE scheduled_doses.isTaken = 0 AND medications.userId IN (:patientIds)
+        ORDER BY scheduled_doses.scheduledTime ASC
+    """)
+    fun getPendingDosesForPatients(patientIds: List<String>): Flow<List<PendingDoseWithMedication>>
 
     @Query("""
         SELECT 
@@ -46,9 +77,9 @@ interface PillFlowDao {
     @Query("UPDATE scheduled_doses SET isSynced = 1 WHERE id = :id")
     suspend fun markScheduledDoseSynced(id: Long)
 
-    @Query("UPDATE scheduled_doses SET isTaken = :isTaken, takenTime = :takenTime, isSynced = 0 WHERE id = :id")
-    suspend fun markScheduledDoseTaken(id: Long, takenTime: Long, isTaken: Boolean)
+    @Query("UPDATE scheduled_doses SET isTaken = :isTaken, takenTime = :takenTime, complianceStatus = :complianceStatus, isSynced = 0 WHERE id = :id")
+    suspend fun markScheduledDoseTaken(id: Long, takenTime: Long, isTaken: Boolean, complianceStatus: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>)
+    suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<Long>
 }

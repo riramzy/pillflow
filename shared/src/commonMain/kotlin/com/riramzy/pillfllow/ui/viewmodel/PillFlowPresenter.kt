@@ -1,13 +1,14 @@
 package com.riramzy.pillfllow.ui.viewmodel
 
 import androidx.compose.ui.graphics.Color
-import com.riramzy.pillfllow.data.local.dao.PillFlowDao
+import com.riramzy.pillfllow.data.local.dao.MedicationDao
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
-import com.riramzy.pillfllow.data.local.entity.PillEntity
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformHaptics
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.hardware.PlatformSensor
+import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.utils.PillFlowIntent
 import com.riramzy.pillfllow.utils.PillFlowSideEffect
@@ -26,7 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PillFlowPresenter(
-    private val dao: PillFlowDao,
+    private val dao: MedicationDao,
     private val sensor: PlatformSensor = PlatformSensor(),
     private val haptics: PlatformHaptics = PlatformHaptics(),
     private val notifier: PlatformNotifier = PlatformNotifier(),
@@ -44,7 +45,7 @@ class PillFlowPresenter(
 
     fun processIntent(intent: PillFlowIntent) {
         when (intent) {
-            is PillFlowIntent.LogDose -> logDose(intent.doseId)
+            is PillFlowIntent.LogDose -> logDose(intent.doseId, intent.scheduledTime)
             is PillFlowIntent.SelectRole -> _state.update { it.copy(isCaregiver = intent.isCaregiver) }
             is PillFlowIntent.UpdateTilt -> updateTilt(intent.tiltX, intent.tiltY)
             is PillFlowIntent.AddMedication -> addMedication(intent.medication, intent.scheduledTimesMillis)
@@ -97,10 +98,11 @@ class PillFlowPresenter(
         }
     }
 
-    fun logDose(doseId: Long) {
+    fun logDose(doseId: Long, scheduledTime: Long) {
         scope.launch {
             val now = currentTimeMillis()
-            dao.markScheduledDoseTaken(doseId, now, true)
+            val compliance = DoseStateMachine.evaluateCompliance(scheduledTime, now)
+            dao.markScheduledDoseTaken(doseId, now, true, compliance.name)
             haptics.pulseDispensed()
             _sideEffects.emit(PillFlowSideEffect.ShowToast("Dose taken!"))
         }

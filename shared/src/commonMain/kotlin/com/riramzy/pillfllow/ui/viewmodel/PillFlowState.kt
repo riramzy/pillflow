@@ -2,7 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel
 
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
-import com.riramzy.pillfllow.data.local.entity.PillEntity
+import com.riramzy.pillfllow.domain.physics.PillEntity
 
 data class PillFlowState(
     val isLoading: Boolean = true,

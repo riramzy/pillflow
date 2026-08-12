@@ -22,6 +22,7 @@ data class ScheduledDoseEntity(
     val medicationId: Long,
     val takenTime: Long? = null,
     val scheduledTime: Long,
+    val complianceStatus: String = "ON_TIME",
     val isTaken: Boolean = false,
     val isSynced: Boolean = false
 )

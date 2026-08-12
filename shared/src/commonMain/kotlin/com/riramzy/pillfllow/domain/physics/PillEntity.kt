@@ -1,7 +1,6 @@
-package com.riramzy.pillfllow.data.local.entity
+package com.riramzy.pillfllow.domain.physics
 
 import androidx.compose.ui.graphics.Color
-import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.utils.PillShape
 
 data class PillEntity(

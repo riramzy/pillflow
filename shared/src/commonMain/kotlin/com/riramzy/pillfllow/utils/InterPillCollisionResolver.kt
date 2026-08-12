@@ -1,6 +1,6 @@
 package com.riramzy.pillfllow.utils
 
-import com.riramzy.pillfllow.data.local.entity.PillEntity
+import com.riramzy.pillfllow.domain.physics.PillEntity
 
 fun resolveInterPillCollision(
     pills: List<PillEntity>,
