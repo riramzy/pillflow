@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.ui.components
+package com.riramzy.pillfllow.ui.components.dashboard.patient
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -48,12 +48,9 @@ fun PillJarSandbox(
     onLogMedication: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    //val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
     val onSurface = MaterialTheme.colorScheme.onSurface
     val surface = MaterialTheme.colorScheme.surface
-    //val background = MaterialTheme.colorScheme.background
     val primary = MaterialTheme.colorScheme.primary
-    //val primaryContainer = MaterialTheme.colorScheme.primaryContainer
 
     val isDark = isSystemInDarkTheme()
 
