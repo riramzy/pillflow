@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -18,13 +19,14 @@ import com.riramzy.pillfllow.utils.PillColor
 fun PillFlowPillColor(
     modifier: Modifier = Modifier,
     color: PillColor = PillColor.CORAL_RED,
+    customColor: Color? = null,
     isWithBorder: Boolean = false
 ) {
     Box(
         modifier = modifier
             .size(12.dp)
             .background(
-                color = color.color,
+                color = customColor?: color.color,
                 shape = CircleShape
             )
             .border(

@@ -27,7 +27,9 @@ import com.riramzy.pillfllow.utils.IndicatorColor
 fun PillFlowStatusCard(
     modifier: Modifier = Modifier,
     status: ComplianceStatus = ComplianceStatus.DEFAULT,
-    customText: String? = null
+    customText: String? = null,
+    customTextColor: Color? = null,
+    customBackgroundColor: Color? = null
 ) {
     var color: Color
     var backgroundColor: Color
@@ -61,14 +63,14 @@ fun PillFlowStatusCard(
             .width(130.dp)
             .height(20.dp)
             .background(
-                color = backgroundColor,
+                color = customBackgroundColor?: backgroundColor,
                 shape = RoundedCornerShape(32.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = customText ?: text,
-            color = color,
+            color = customTextColor?: color,
             style = MaterialTheme.typography.bodySmall,
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
