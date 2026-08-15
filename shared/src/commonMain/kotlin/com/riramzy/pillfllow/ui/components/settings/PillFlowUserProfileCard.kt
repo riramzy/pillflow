@@ -44,7 +44,8 @@ fun PillFlowUserProfileCard(
     avatar: DrawableResource = Res.drawable.avatar1,
     onEditClick: () -> Unit = {},
     onSignOutClick: () -> Unit = {},
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier
             .fillMaxWidth()
