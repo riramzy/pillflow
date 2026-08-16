@@ -46,6 +46,7 @@ fun PillFlowSelector(
     items: List<Pair<String, @Composable (() -> Unit)>>,
     selectedItem: Pair<String, @Composable (() -> Unit)>? = null,
     onItemSelected: (Pair<String, @Composable (() -> Unit)>) -> Unit = {},
+    onClick: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -73,7 +74,11 @@ fun PillFlowSelector(
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = {
-                    expanded = !expanded
+                    if (onClick != null) {
+                        onClick()
+                    } else {
+                        expanded = !expanded
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
