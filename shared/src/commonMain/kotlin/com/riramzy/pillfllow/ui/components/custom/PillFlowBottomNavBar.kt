@@ -29,9 +29,9 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.caregiver
 import pillfllow.shared.generated.resources.history
 import pillfllow.shared.generated.resources.home
+import pillfllow.shared.generated.resources.prescriptions
 import pillfllow.shared.generated.resources.settings
 
 @Composable
@@ -40,7 +40,7 @@ fun PillFlowBottomNavBar(
     selectedPage: String = "Home",
     onHomeClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
-    onCaregiverClick: () -> Unit = {},
+    onPrescriptionsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {}
 ) {
     Card(
@@ -61,7 +61,7 @@ fun PillFlowBottomNavBar(
                 ) {
                     PillFlowNavItemExpanded(icon = Res.drawable.home, name = "Home")
                     PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
@@ -74,7 +74,7 @@ fun PillFlowBottomNavBar(
                 ) {
                     PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                     PillFlowNavItemExpanded(icon = Res.drawable.history, name = "History")
-                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
@@ -87,7 +87,7 @@ fun PillFlowBottomNavBar(
                 ) {
                     PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                     PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItemExpanded(icon = Res.drawable.caregiver, name = "Caregiver")
+                    PillFlowNavItemExpanded(icon = Res.drawable.prescriptions, name = "Prescriptions")
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
@@ -100,7 +100,7 @@ fun PillFlowBottomNavBar(
                 ) {
                     PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                     PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
                     PillFlowNavItemExpanded(icon = Res.drawable.settings, name = "Settings")
                 }
             }
@@ -113,7 +113,7 @@ fun PillFlowBottomNavBar(
                 ) {
                     PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                     PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItem(icon = Res.drawable.caregiver, onNavItemClick = { onCaregiverClick() })
+                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
