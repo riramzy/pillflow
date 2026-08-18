@@ -60,7 +60,7 @@ fun PillFlowPrescriptionCard(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
-        shape = RoundedCornerShape(32.dp)
+        shape = RoundedCornerShape(25.dp)
     ) {
         Column(
             modifier = Modifier
@@ -88,7 +88,7 @@ fun PillFlowPrescriptionCard(
                     )
 
                     Text(
-                        text = "$medicationName ,$dosage",
+                        text = "$medicationName, $dosage",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
