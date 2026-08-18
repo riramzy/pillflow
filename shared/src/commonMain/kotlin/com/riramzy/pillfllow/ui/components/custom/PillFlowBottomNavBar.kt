@@ -78,7 +78,7 @@ fun PillFlowBottomNavBar(
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
-            "Caregiver" -> {
+            "Prescriptions" -> {
                 Row(
                     modifier = Modifier
                         .padding(6.dp),
@@ -185,7 +185,7 @@ fun PillFlowBottomNavBarPreview() {
         ) {
             PillFlowBottomNavBar(selectedPage = "Home")
             PillFlowBottomNavBar(selectedPage = "History")
-            PillFlowBottomNavBar(selectedPage = "Caregiver")
+            PillFlowBottomNavBar(selectedPage = "Prescriptions")
             PillFlowBottomNavBar(selectedPage = "Settings")
         }
     }
@@ -201,7 +201,7 @@ fun PillFlowBottomNavBarPreviewDark() {
         ) {
             PillFlowBottomNavBar(selectedPage = "Home")
             PillFlowBottomNavBar(selectedPage = "History")
-            PillFlowBottomNavBar(selectedPage = "Caregiver")
+            PillFlowBottomNavBar(selectedPage = "Prescriptions")
             PillFlowBottomNavBar(selectedPage = "Settings")
         }
     }
