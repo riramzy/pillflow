@@ -60,6 +60,8 @@ kotlin {
 
             implementation(libs.room.runtime)
             implementation(libs.sqlite.bundled)
+
+            implementation(libs.koin.compose.viewmodel)
         }
 
         androidMain.dependencies {
@@ -68,6 +70,7 @@ kotlin {
             implementation(libs.firebase.android.auth)
             implementation(libs.firebase.android.firestore)
             implementation(libs.compose.uiTooling)
+            implementation(libs.koin.android)
         }
     }
 }
