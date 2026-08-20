@@ -23,7 +23,7 @@ import com.riramzy.pillfllow.data.local.entity.UserEntity
 )
 @ConstructedBy(PillFlowDatabaseConstructor::class)
 abstract class PillFlowDatabase: RoomDatabase() {
-    abstract val dao: MedicationDao
+    abstract val medicationDao: MedicationDao
     abstract val userDao: UserDao
     abstract val pairingDao: PairingDao
 }
