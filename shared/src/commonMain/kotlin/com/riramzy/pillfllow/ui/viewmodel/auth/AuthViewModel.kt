@@ -2,21 +2,17 @@ package com.riramzy.pillfllow.ui.viewmodel.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.data.local.entity.UserEntity
-import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.utils.UserType
-import com.riramzy.pillfllow.utils.currentTimeMillis
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class AuthViewModel(
-    val userRepo: UserRepo
+    private val authRepo: AuthRepo
 ): ViewModel() {
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state.asStateFlow()
@@ -25,8 +21,12 @@ class AuthViewModel(
         _state.update { it.copy(selectedRole = role) }
     }
 
-    fun onNameChanged(name: String) {
-        _state.update { it.copy(name = name) }
+    fun onFirstNameChanged(firstName: String) {
+        _state.update { it.copy(firstName = firstName) }
+    }
+
+    fun onLastNameChanged(lastName: String) {
+        _state.update { it.copy(lastName = lastName) }
     }
 
     fun onEmailChanged(email: String) {
@@ -35,6 +35,10 @@ class AuthViewModel(
 
     fun onPasswordChanged(password: String) {
         _state.update { it.copy(password = password) }
+    }
+
+    fun onConfirmPasswordChanged(confirmPassword: String) {
+        _state.update { it.copy(confirmPassword = confirmPassword) }
     }
 
     fun onToggleAuthMode() {
@@ -49,27 +53,42 @@ class AuthViewModel(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     fun signUp(onSuccess: () -> Unit = {}) {
+        val currentState = state.value
+
+        if (currentState.password != currentState.confirmPassword) {
+            _state.update { it.copy(errorMessage = "Passwords do not match") }
+            return
+        }
+
+        if (currentState.password.length < 6) {
+            _state.update { it.copy(errorMessage = "Password must be at least 6 characters") }
+            return
+        }
+
+        if (currentState.firstName.isBlank() || currentState.email.isBlank()) {
+            _state.update { it.copy(errorMessage = "Please fill in all fields") }
+            return
+        }
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             try {
-                val newUserId = Uuid.random().toString()
-
-                userRepo.insertUser(
-                    UserEntity(
-                        id = newUserId,
-                        name = state.value.name,
-                        email = state.value.email,
-                        userType = state.value.selectedRole.toString(),
-                        createdAt = currentTimeMillis(),
-                        avatarRes = "avatar1"
-                    )
+                val result = authRepo.signUp(
+                    email = state.value.email,
+                    pass = state.value.password,
+                    firstName = state.value.firstName,
+                    lastName = state.value.lastName,
+                    role = state.value.selectedRole
                 )
 
-                _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = newUserId) }
-                onSuccess()
+                result.onSuccess { user ->
+                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = user.id) }
+                    onSuccess()
+                }.onFailure { error ->
+                    _state.update { it.copy(isLoading = false, errorMessage = error.message) }
+                }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
@@ -81,21 +100,16 @@ class AuthViewModel(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             try {
-                val user = userRepo.getUserByIdOnce(state.value.userId)
+                val result = authRepo.signIn(
+                    email = state.value.email,
+                    pass = state.value.password
+                )
 
-                if (user != null) {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            isAuthenticated = true,
-                            name = user.name,
-                            userId = user.id,
-                            email = user.email,
-                            selectedRole = UserType.valueOf(user.userType)
-                        )
-                    }
-
+                result.onSuccess { user ->
+                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = user.id) }
                     onSuccess()
+                }.onFailure { error ->
+                    _state.update { it.copy(isLoading = false, errorMessage = error.message) }
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, errorMessage = e.message) }

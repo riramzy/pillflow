@@ -10,7 +10,7 @@ data class AuthState(
     val email: String = "",
     val password: String = "",
     val confirmPassword: String = "",
-    val isSignUp: Boolean = true,
+    val isSignUp: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isAuthenticated: Boolean = false

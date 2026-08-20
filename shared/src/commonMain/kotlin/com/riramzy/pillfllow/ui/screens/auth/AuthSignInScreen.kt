@@ -1,0 +1,251 @@
+package com.riramzy.pillfllow.ui.screens.auth
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
+import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
+import com.riramzy.pillfllow.ui.state.auth.AuthState
+import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
+import com.riramzy.pillfllow.utils.UserType
+import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
+import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.pillflow_logo
+
+@Composable
+fun AuthSignInScreen(
+    authViewModel: AuthViewModel = koinViewModel(),
+    onAuthSuccess: (UserType) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val state by authViewModel.state.collectAsStateWithLifecycle()
+
+    AuthSignInScreenContent(
+        state = state,
+        onEmailChanged = authViewModel::onEmailChanged,
+        onPasswordChanged = authViewModel::onPasswordChanged,
+        onToggleAuthMode = authViewModel::onToggleAuthMode,
+        onSubmit = {
+            authViewModel.authenticate(
+                onSuccess = { onAuthSuccess(state.selectedRole) }
+            )
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun AuthSignInScreenContent(
+    state: AuthState = AuthState(),
+    onEmailChanged: (String) -> Unit = {},
+    onPasswordChanged: (String) -> Unit = {},
+    onToggleAuthMode: () -> Unit = {},
+    onSubmit: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                color = MaterialTheme.colorScheme.surface
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.TopCenter)
+                .padding(top = 100.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .wrapContentSize()
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.pillflow_logo),
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .size(50.dp)
+                )
+
+                Text(
+                    text = "PillFlow",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Text(
+                text = "Medication adherence, reimagined",
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary.copy(0.5f)
+            )
+        }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(15.dp)
+                .align(Alignment.Center),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            shape = RoundedCornerShape(25.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(30.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Login as a ${state.selectedRole.label}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        text = when (state.selectedRole) {
+                            UserType.PATIENT -> "Schedule your pills and add some fun to the process"
+                            UserType.CAREGIVER -> "Support your loved ones and stay on top of their medication schedules"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    PillFlowInputField(
+                        label = "Email",
+                        placeholder = "Enter your email",
+                        value = state.email,
+                        onValueChange = { onEmailChanged(it) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                    )
+
+                    PillFlowInputField(
+                        label = "Password",
+                        placeholder = "Enter your password",
+                        value = state.password,
+                        onValueChange = { onPasswordChanged(it) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Visibility Toggle",
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clickable { passwordVisible = !passwordVisible }
+                            )
+                        }
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    PillFlowButton(
+                        text = if (state.isLoading) "Logging In..." else "Sign In",
+                        isEnabled = !state.isLoading,
+                        onClick = { onSubmit() },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text(
+                        text = "Don't have an account? Sign Up",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onToggleAuthMode() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AuthSignInScreenPreview() {
+    PillFlowTheme {
+        AuthSignInScreenContent()
+    }
+}
+
+@Preview(uiMode = UI_MODE_NIGHT_YES)
+@Composable
+fun AuthSignInScreenPreviewDark() {
+    PillFlowTheme {
+        AuthSignInScreenContent()
+    }
+}
+
