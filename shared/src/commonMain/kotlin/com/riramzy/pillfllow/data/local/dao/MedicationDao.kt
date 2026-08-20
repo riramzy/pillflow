@@ -35,6 +35,7 @@ interface MedicationDao {
             medications.name AS name, 
             medications.dosage AS dosage, 
             medications.colorHex AS colorHex, 
+            medications.shape AS shape,
             scheduled_doses.scheduledTime AS scheduledTime
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
@@ -49,6 +50,7 @@ interface MedicationDao {
             medications.name AS name, 
             medications.dosage AS dosage, 
             medications.colorHex AS colorHex, 
+            medications.shape AS shape,
             scheduled_doses.scheduledTime AS scheduledTime
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
@@ -63,6 +65,7 @@ interface MedicationDao {
             medications.name AS name, 
             medications.dosage AS dosage, 
             medications.colorHex AS colorHex, 
+            medications.shape AS shape,
             scheduled_doses.scheduledTime AS scheduledTime
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
