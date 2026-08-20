@@ -1,12 +1,17 @@
 package com.riramzy.pillfllow.ui.components.dashboard.patient
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,15 +24,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,301 +38,242 @@ import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.domain.physics.PhysicsEngine
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
+import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.PillShape
 import kotlinx.coroutines.isActive
 
 @Composable
-fun PillJarSandbox(
+fun PillFlowPillJarSandbox(
     pillsState: List<PillEntity>,
     tiltX: Float,
     tiltY: Float,
     onLogMedication: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val onSurface = MaterialTheme.colorScheme.onSurface
-    val surface = MaterialTheme.colorScheme.surface
-    val primary = MaterialTheme.colorScheme.primary
-
-    val isDark = isSystemInDarkTheme()
-
-    BoxWithConstraints(
+    Card(
         modifier = modifier
-            .fillMaxSize()
-            .background(surface)
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f)
+        )
     ) {
-        val width = constraints.maxWidth.toFloat()
-        val height = constraints.maxHeight.toFloat()
-        val center = remember(width, height) { Vector2D(width / 2f + 40f, height / 2.5f) }
-        val radius = remember(width) { width * 0.38f }
-        val chuteWidth = 160f
-        val activePills = remember { mutableStateListOf<PillEntity>().apply { addAll(pillsState) } }
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(470.dp)
+        ) {
+            val width = constraints.maxWidth.toFloat()
+            val height = constraints.maxHeight.toFloat()
+            val center = remember(width, height) { Vector2D(width / 2f + 16f, height / 2f + 14f) }
+            val radius = remember(width) { width * 0.36f }
+            val chuteWidth = 200f
+            val handleWidth = 110f
 
-        var triggerRedraw by remember { mutableStateOf(0) }
+            val activePills = remember { mutableStateListOf<PillEntity>().apply { addAll(pillsState) } }
+            var triggerRedraw by remember { mutableStateOf(0) }
+            val jarCenterOffset = Offset(center.x, center.y)
 
-        val currentTick = triggerRedraw
-        val jarCenterOffset = Offset(center.x, center.y)
-        val handleWidth = 140f
-        val handleTopLeft = Offset(center.x - radius - handleWidth + 20f, center.y - chuteWidth / 2f)
+            LaunchedEffect(pillsState) {
+                activePills.clear()
+                activePills.addAll(pillsState)
+            }
 
-        LaunchedEffect(pillsState) {
-            activePills.clear()
-            activePills.addAll(pillsState)
-        }
+            val engine = remember(center, radius) {
+                PhysicsEngine(
+                    jarRadius = radius,
+                    jarCenter = center,
+                    chuteWidth = chuteWidth,
+                    onPillLogged = { pillId ->
+                        activePills.removeAll { it.id == pillId }
+                        onLogMedication(pillId)
+                    }
+                )
+            }
 
-        val engine = remember(center, radius) {
-            PhysicsEngine(
-                jarRadius = radius,
-                jarCenter = center,
-                chuteWidth = chuteWidth,
-                onPillLogged = { pillId ->
-                    activePills.removeAll { it.id == pillId }
-                    onLogMedication(pillId)
-                }
-            )
-        }
-
-        LaunchedEffect(Unit) {
-            var lastNanos = withFrameNanos { it }
-            while (isActive) {
-                withFrameNanos { currentNanos ->
-                    val elapsedSeconds = ((currentNanos - lastNanos) / 1_000_000_000f).coerceAtMost(0.033f)
-                    lastNanos = currentNanos
-                    engine.update(activePills, tiltX, tiltY, elapsedSeconds)
-                    triggerRedraw++
+            LaunchedEffect(Unit) {
+                var lastNanos = withFrameNanos { it }
+                while (isActive) {
+                    withFrameNanos { currentNanos ->
+                        val elapsedSeconds = ((currentNanos - lastNanos) / 1_000_000_000f).coerceAtMost(0.033f)
+                        lastNanos = currentNanos
+                        engine.update(activePills, tiltX, tiltY, elapsedSeconds)
+                        triggerRedraw++
+                    }
                 }
             }
-        }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 48.dp),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Text(
-                text = "TILT TO GUIDE PILLS → DISH OPENING",
-                color = onSurface.copy(alpha = 0.4f),
-                letterSpacing = 2.sp,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+            // 1. HEADER
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(25.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Interactive Jar",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
 
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 1. GLASS BASE
-            // Dish circle backing
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        if (isDark) Color.White.copy(alpha = 0.11f) else Color.White.copy(alpha = 0.4f),
-                        primary.copy(alpha = 0.06f),
-                        Color.Transparent
-                    ),
-                    center = jarCenterOffset,
-                    radius = radius
-                ),
+                Text(
+                    text = "Tilt to guide pills to the left handle!",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            // 2. THE STANDALONE 3D GLASS DISH
+            PillFlowPillsDish(
+                center = jarCenterOffset,
                 radius = radius,
-                center = jarCenterOffset
-            )
-
-            // Glass opening/chute backing
-            drawRoundRect(
-                color = primary.copy(alpha = 0.04f),
-                topLeft = handleTopLeft,
-                size = Size(handleWidth, chuteWidth),
-                cornerRadius = CornerRadius(30f, 30f)
-            )
-
-            // 2. GLASS RIM
-            // Glass opening rim
-            drawRoundRect(
-                color = primary.copy(alpha = 0.2f),
-                topLeft = handleTopLeft,
-                size = Size(handleWidth, chuteWidth),
-                cornerRadius = CornerRadius(30f, 30f),
-                style = Stroke(width = 6f)
-            )
-
-            // Main glass dish rim
-            drawArc(
-                color = primary.copy(alpha = 0.15f),
-                startAngle = 195f,
-                sweepAngle = 330f,
-                useCenter = false,
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2),
-                style = Stroke(width = 38f, cap = StrokeCap.Round)
+                chuteWidth = chuteWidth,
+                handleWidth = handleWidth
             )
 
             // 3. PILLS RENDERING
-            activePills.forEach { pill ->
-                val baseColor = pill.color
-                val secondaryColor = pill.color.copy(0.7f)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                triggerRedraw
 
-                when (pill.shape) {
-                    PillShape.CIRCLE -> {
-                        // 1. CIRCLE (3D Sphere)
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.6f),
-                                    baseColor,
-                                    baseColor.copy(alpha = 0.85f)
+                activePills.forEach { pill ->
+                    val baseColor = pill.color
+                    val secondaryColor = pill.color.copy(0.7f)
+
+                    when (pill.shape) {
+                        PillShape.CIRCLE -> {
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.6f),
+                                        baseColor,
+                                        baseColor.copy(alpha = 0.85f)
+                                    ),
+                                    center = Offset(pill.position.x - pill.radius * 0.3f, pill.position.y - pill.radius * 0.3f),
+                                    radius = pill.radius
                                 ),
-                                center = Offset(pill.position.x - pill.radius * 0.3f, pill.position.y - pill.radius * 0.3f),
-                                radius = pill.radius
-                            ),
-                            radius = pill.radius,
-                            center = Offset(pill.position.x, pill.position.y),
+                                radius = pill.radius,
+                                center = Offset(pill.position.x, pill.position.y)
+                            )
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.4f),
+                                radius = pill.radius * 0.2f,
+                                center = Offset(pill.position.x - pill.radius * 0.4f, pill.position.y - pill.radius * 0.4f)
+                            )
+                        }
 
-                        )
-                        // Micro specular highlight dot
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.4f),
-                            radius = pill.radius * 0.2f,
-                            center = Offset(pill.position.x - pill.radius * 0.4f, pill.position.y - pill.radius * 0.4f)
-                        )
-                    }
+                        PillShape.OVAL -> {
+                            val ovalWidth = pill.radius * 2.2f * 1.2f
+                            val ovalHeight = pill.radius * 1.3f * 1.2f
+                            val topLeft = Offset(pill.position.x - ovalWidth / 2f, pill.position.y - ovalHeight / 2f)
 
-                    PillShape.OVAL -> {
-                        // 2. OVAL (Smooth caplet)
-                        val ovalWidth = pill.radius * 2.2f * 1.2f
-                        val ovalHeight = pill.radius * 1.3f * 1.2f
-                        val topLeft = Offset(pill.position.x - ovalWidth / 2f, pill.position.y - ovalHeight / 2f)
-                        
-                        drawOval(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.5f),
-                                    baseColor,
-                                    baseColor.copy(alpha = 0.85f)
+                            drawOval(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.5f),
+                                        baseColor,
+                                        baseColor.copy(alpha = 0.85f)
+                                    ),
+                                    center = Offset(pill.position.x - ovalWidth * 0.2f, pill.position.y - ovalHeight * 0.2f),
+                                    radius = ovalWidth / 1.5f
                                 ),
-                                center = Offset(pill.position.x - ovalWidth * 0.2f, pill.position.y - ovalHeight * 0.2f),
-                                radius = ovalWidth / 1.5f
-                            ),
-                            topLeft = topLeft,
-                            size = Size(ovalWidth, ovalHeight)
-                        )
+                                topLeft = topLeft,
+                                size = Size(ovalWidth, ovalHeight)
+                            )
 
-                        // Specular highlight line along top edge
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.4f),
-                            start = Offset(pill.position.x - ovalWidth * 0.25f, pill.position.y - ovalHeight * 0.2f),
-                            end = Offset(pill.position.x + ovalWidth * 0.25f, pill.position.y - ovalHeight * 0.2f),
-                            strokeWidth = 3f,
-                            cap = StrokeCap.Round
-                        )
-                    }
+                            drawLine(
+                                color = Color.White.copy(alpha = 0.4f),
+                                start = Offset(pill.position.x - ovalWidth * 0.25f, pill.position.y - ovalHeight * 0.2f),
+                                end = Offset(pill.position.x + ovalWidth * 0.25f, pill.position.y - ovalHeight * 0.2f),
+                                strokeWidth = 3f,
+                                cap = StrokeCap.Round
+                            )
+                        }
 
-                    PillShape.CAPSULE -> {
-                        // 3. TWO-COLORED CAPSULE (Exact 50/50 split)
-                        val capWidth = pill.radius * 1.3f * 1.2f
-                        val capHeight = pill.radius * 2.4f * 1.2f
-                        val topLeft = Offset(pill.position.x - capWidth / 2f, pill.position.y - capHeight / 2f)
-                        // Sharp 50/50 color stop split
-                        val splitBrush = Brush.linearGradient(
-                            colorStops = arrayOf(
-                                0.0f to baseColor,
-                                0.49f to baseColor,
-                                0.50f to secondaryColor,
-                                1.0f to secondaryColor
-                            ),
-                            start = Offset(pill.position.x, topLeft.y),
-                            end = Offset(pill.position.x, topLeft.y + capHeight)
-                        )
-                        drawRoundRect(
-                            brush = splitBrush,
-                            topLeft = topLeft,
-                            size = Size(capWidth, capHeight),
-                            cornerRadius = CornerRadius(capWidth / 2f, capWidth / 2f)
-                        )
-                        // Specular highlight line along left side of capsule
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.45f),
-                            start = Offset(pill.position.x - capWidth * 0.25f, topLeft.y + capHeight * 0.15f),
-                            end = Offset(pill.position.x - capWidth * 0.25f, topLeft.y + capHeight * 0.85f),
-                            strokeWidth = 3f,
-                            cap = StrokeCap.Round
-                        )
+                        PillShape.CAPSULE -> {
+                            val capWidth = pill.radius * 1.3f * 1.2f
+                            val capHeight = pill.radius * 2.4f * 1.2f
+                            val topLeft = Offset(pill.position.x - capWidth / 2f, pill.position.y - capHeight / 2f)
+
+                            val splitBrush = Brush.linearGradient(
+                                colorStops = arrayOf(
+                                    0.0f to baseColor,
+                                    0.49f to baseColor,
+                                    0.50f to secondaryColor,
+                                    1.0f to secondaryColor
+                                ),
+                                start = Offset(pill.position.x, topLeft.y),
+                                end = Offset(pill.position.x, topLeft.y + capHeight)
+                            )
+                            drawRoundRect(
+                                brush = splitBrush,
+                                topLeft = topLeft,
+                                size = Size(capWidth, capHeight),
+                                cornerRadius = CornerRadius(capWidth / 2f, capWidth / 2f)
+                            )
+
+                            drawLine(
+                                color = Color.White.copy(alpha = 0.45f),
+                                start = Offset(pill.position.x - capWidth * 0.25f, topLeft.y + capHeight * 0.15f),
+                                end = Offset(pill.position.x - capWidth * 0.25f, topLeft.y + capHeight * 0.85f),
+                                strokeWidth = 3f,
+                                cap = StrokeCap.Round
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        // BLURRED HIGHLIGHT LAYER
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(radius = 4.dp, edgeTreatment = BlurredEdgeTreatment.Unbounded)
-        ) {
-            // Inner bright highlight edge
-            drawArc(
-                color = if (isDark) Color.White.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.4f),
-                startAngle = 195f,
-                sweepAngle = 330f,
-                useCenter = false,
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2),
-                style = Stroke(width = 10f, cap = StrokeCap.Round)
-            )
-
-            // Specular light reflection on top-right
-            val curvedHighlightBrush = Brush.sweepGradient(
-                0.70f to Color.Transparent,
-                0.75f to (if (isDark) Color.White.copy(alpha = 0.35f) else Color.White),
-                0.88f to (if (isDark) Color.White.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.6f)),
-                1.00f to Color.Transparent,
-                center = jarCenterOffset
-            )
-
-            drawArc(
-                brush = curvedHighlightBrush,
-                startAngle = 250f,
-                sweepAngle = 140f,
-                useCenter = false,
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2),
-                style = Stroke(width = 10f, cap = StrokeCap.Round)
+            // 4. BOTTOM BADGE
+            PillFlowStatusCard(
+                customText = "${activePills.size} pills remaining",
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 20.dp)
             )
         }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun PillJarSandboxPreview() {
+fun PillFlowPillJarSandboxPreview() {
     val dummyPills = listOf(
         PillEntity(id = "1", name = "Aspirin", color = Color.Red, shape = PillShape.CIRCLE, radius = 35f, position = Vector2D(400f, 600f)),
         PillEntity(id = "2", name = "Vitamin C", color = Color.Magenta, shape = PillShape.OVAL, radius = 35f, position = Vector2D(500f, 650f)),
         PillEntity(id = "3", name = "Antibiotic", color = Color.Blue, shape = PillShape.CAPSULE, radius = 30f, position = Vector2D(450f, 750f))
     )
     PillFlowTheme {
-        PillJarSandbox(
+        PillFlowPillJarSandbox(
             pillsState = dummyPills,
             tiltX = 0f,
             tiltY = 0.5f,
-            onLogMedication = {}
+            onLogMedication = {},
+            modifier = Modifier.padding(15.dp)
         )
     }
 }
 
-@Preview(uiMode = UI_MODE_NIGHT_YES)
+@Preview(uiMode = UI_MODE_NIGHT_YES, showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-fun PillJarSandboxDarkPreview() {
+fun PillFlowPillJarSandboxDarkPreview() {
     val dummyPills = listOf(
         PillEntity(id = "1", name = "Aspirin", color = Color.Red, shape = PillShape.CIRCLE, radius = 35f, position = Vector2D(400f, 600f)),
         PillEntity(id = "2", name = "Vitamin C", color = Color.Magenta, shape = PillShape.OVAL, radius = 35f, position = Vector2D(500f, 650f)),
         PillEntity(id = "3", name = "Antibiotic", color = Color.Blue, shape = PillShape.CAPSULE, radius = 30f, position = Vector2D(450f, 750f))
     )
     PillFlowTheme {
-        PillJarSandbox(
+        PillFlowPillJarSandbox(
             pillsState = dummyPills,
             tiltX = 0f,
             tiltY = 0.5f,
-            onLogMedication = {}
+            onLogMedication = {},
+            modifier = Modifier.padding(15.dp)
         )
     }
 }
