@@ -8,7 +8,8 @@ fun resolveBoundaryCollision(
     jarRadius: Float,
     jarCenter: Vector2D,
     chuteWidth: Float,
-    restitution: Float
+    restitution: Float,
+    onCollision: (() -> Unit)? = null
 ) {
     val delta = pill.position - jarCenter
     val distance = delta.length()
@@ -24,6 +25,10 @@ fun resolveBoundaryCollision(
             pill.position -= normal * (distance - limit)
             val dotProduct = pill.velocity.dot(normal)
             pill.velocity = (pill.velocity - normal * 2f * dotProduct) * restitution
+
+            if (dotProduct > 20f) {
+                onCollision?.invoke()
+            }
         }
     }
 }

@@ -4,7 +4,8 @@ import com.riramzy.pillfllow.domain.physics.PillEntity
 
 fun resolveInterPillCollision(
     pills: List<PillEntity>,
-    restitution: Float
+    restitution: Float,
+    onCollision: (() -> Unit)? = null
 ) {
     for (i in pills.indices) {
         for (j in i + 1 until pills.size) {
@@ -28,9 +29,12 @@ fun resolveInterPillCollision(
                     val impulseVector = normal * impulse
                     pill1.velocity -= impulseVector
                     pill2.velocity += impulseVector
+
+                    if (normalVelocity < -25f) {
+                        onCollision?.invoke()
+                    }
                 }
             }
-
         }
     }
 }
