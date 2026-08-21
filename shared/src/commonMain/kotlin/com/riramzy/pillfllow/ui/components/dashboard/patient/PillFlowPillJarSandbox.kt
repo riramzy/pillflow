@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -35,6 +36,7 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.riramzy.pillfllow.domain.hardware.PlatformHaptics
 import com.riramzy.pillfllow.domain.physics.PhysicsEngine
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
@@ -81,17 +83,26 @@ fun PillFlowPillJarSandbox(
                 activePills.addAll(pillsState)
             }
 
+            val haptics = remember { PlatformHaptics() }
+
             val engine = remember(center, radius) {
                 PhysicsEngine(
                     jarRadius = radius,
                     jarCenter = center,
                     chuteWidth = chuteWidth,
                     onPillLogged = { pillId ->
+                        haptics.pulseDispensed()
                         activePills.removeAll { it.id == pillId }
                         onLogMedication(pillId)
+                    },
+                    onCollision = {
+                        haptics.tickCollision()
                     }
                 )
             }
+
+            val currentTiltX by rememberUpdatedState(tiltX)
+            val currentTiltY by rememberUpdatedState(tiltY)
 
             LaunchedEffect(Unit) {
                 var lastNanos = withFrameNanos { it }
@@ -99,7 +110,7 @@ fun PillFlowPillJarSandbox(
                     withFrameNanos { currentNanos ->
                         val elapsedSeconds = ((currentNanos - lastNanos) / 1_000_000_000f).coerceAtMost(0.033f)
                         lastNanos = currentNanos
-                        engine.update(activePills, tiltX, tiltY, elapsedSeconds)
+                        engine.update(activePills, currentTiltX, currentTiltY, elapsedSeconds)
                         triggerRedraw++
                     }
                 }
