@@ -23,28 +23,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPillColor
 import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
+import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.IndicatorColor
-
-data class DayCompliance(
-    val dayName: String,
-    val status: ComplianceStatus
-)
-
-val defaultSampleDays = listOf(
-    DayCompliance("Mon", ComplianceStatus.ON_TIME),
-    DayCompliance("Tue", ComplianceStatus.LATE),
-    DayCompliance("Wed", ComplianceStatus.MISSED),
-    DayCompliance("Thu", ComplianceStatus.ON_TIME),
-    DayCompliance("Fri", ComplianceStatus.LATE),
-    DayCompliance("Sat", ComplianceStatus.MISSED),
-    DayCompliance("Sun", ComplianceStatus.ON_TIME)
-)
+import com.riramzy.pillfllow.utils.defaultSampleDays
 
 @Composable
 fun PillFlowPatientWeeklyOverviewCard(
-    weeklyDays: List<DayCompliance> = defaultSampleDays,
+    weeklyDays: List<ComplianceDayUiModel> = defaultSampleDays,
     weeklyRatePercentage: Int = 95,
     modifier: Modifier = Modifier
 ) {

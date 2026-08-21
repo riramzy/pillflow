@@ -54,21 +54,24 @@ fun PillFlowPatientDailyStatusCard(
                 .wrapContentHeight()
                 .padding(20.dp),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(15.dp)
         ) {
-            Text(
-                text = "$patientName's Daily Status",
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Column {
+                Text(
+                    text = "$patientName's Daily Status",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-            Text(
-                text = lastUpdatedText,
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
+                Text(
+                    text = lastUpdatedText,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
 
             PillFlowStatusCard(
                 status = status,

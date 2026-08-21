@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.IndicatorColor
@@ -39,20 +40,9 @@ import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
 import pillfllow.shared.generated.resources.avatar3
 
-data class PairedPatientModel(
-    val id: String = "1",
-    val name: String = "Mary",
-    val relation: String = "Mom",
-    val avatar: DrawableResource = Res.drawable.avatar1,
-    val status: ComplianceStatus = ComplianceStatus.ON_TIME,
-    val lateDosesCount: Int = 0,
-    val missedDosesCount: Int = 0,
-    val compliancePercentage: Int = 100
-)
-
 @Composable
 fun PillFlowPatientCarousel(
-    patients: List<PairedPatientModel> = emptyList(),
+    patients: List<PairedPatientUiModel> = emptyList(),
     selectedPatientId: String = "",
     onPatientSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -231,14 +221,15 @@ fun PatientCard(
 fun PillFlowPatientCarouselPreview() {
     PillFlowTheme {
         val sampleList = listOf(
-            PairedPatientModel(id = "1", name = "Mary", relation = "Mom", avatar = Res.drawable.avatar2),
-            PairedPatientModel(id = "2", name = "John", relation = "Dad", avatar = Res.drawable.avatar1),
-            PairedPatientModel(id = "3", name = "Jane", relation = "Sister", avatar = Res.drawable.avatar3)
+            PairedPatientUiModel(id = "1", name = "Mary", relation = "Mom", avatar = Res.drawable.avatar2),
+            PairedPatientUiModel(id = "2", name = "John", relation = "Dad", avatar = Res.drawable.avatar1),
+            PairedPatientUiModel(id = "3", name = "Jane", relation = "Sister", avatar = Res.drawable.avatar3)
         )
 
         PillFlowPatientCarousel(
             patients = sampleList,
-            selectedPatientId = "1"
+            selectedPatientId = "1",
+            modifier = Modifier.padding(15.dp)
         )
     }
 }
@@ -248,13 +239,14 @@ fun PillFlowPatientCarouselPreview() {
 fun PillFlowPatientCarouselPreviewDark() {
     PillFlowTheme {
         val sampleList = listOf(
-            PairedPatientModel(id = "1", name = "Mary", relation = "Mom", avatar = Res.drawable.avatar2),
-            PairedPatientModel(id = "2", name = "John", relation = "Dad", avatar = Res.drawable.avatar1),
-            PairedPatientModel(id = "3", name = "Jane", relation = "Sister", avatar = Res.drawable.avatar3)
+            PairedPatientUiModel(id = "1", name = "Mary", relation = "Mom", avatar = Res.drawable.avatar2),
+            PairedPatientUiModel(id = "2", name = "John", relation = "Dad", avatar = Res.drawable.avatar1),
+            PairedPatientUiModel(id = "3", name = "Jane", relation = "Sister", avatar = Res.drawable.avatar3)
         )
         PillFlowPatientCarousel(
             patients = sampleList,
-            selectedPatientId = "1"
+            selectedPatientId = "1",
+            modifier = Modifier.padding(15.dp)
         )
     }
 }
