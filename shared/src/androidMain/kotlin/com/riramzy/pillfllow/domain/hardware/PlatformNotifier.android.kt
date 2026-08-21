@@ -2,10 +2,13 @@ package com.riramzy.pillfllow.domain.hardware
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.core.app.NotificationCompat
 
 actual class PlatformNotifier {
     @SuppressLint("ScheduleExactAlarm")
@@ -65,5 +68,33 @@ actual class PlatformNotifier {
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
         }
+    }
+
+    actual fun sendInstantNudge(context: Any?, title: String, message: String) {
+        val ctx = context as? Context ?: return
+        val manager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+        val channelId = "pillflow_nudge_channel"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Caregiver Nudges",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "High-priority caregiver medication reminders"
+                enableVibration(true)
+            }
+            manager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(ctx, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        manager.notify((System.currentTimeMillis() % 10000).toInt(), notification)
     }
 }

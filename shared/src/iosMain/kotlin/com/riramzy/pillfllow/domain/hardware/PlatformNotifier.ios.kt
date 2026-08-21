@@ -8,9 +8,11 @@ import platform.Foundation.NSCalendarUnitMonth
 import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSDate
 import platform.Foundation.dateWithTimeIntervalSince1970
+import platform.Foundation.timeIntervalSince1970
 import platform.UserNotifications.UNCalendarNotificationTrigger
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
+import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNUserNotificationCenter
 
 actual class PlatformNotifier {
@@ -55,5 +57,26 @@ actual class PlatformNotifier {
     actual fun cancelReminder(context: Any?, doseId: String) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         center.removePendingNotificationRequestsWithIdentifiers(listOf(doseId))
+    }
+
+    actual fun sendInstantNudge(context: Any?, title: String, message: String) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        val content = UNMutableNotificationContent().apply {
+            setTitle(title)
+            setBody(message)
+            setSound(UNNotificationSound.defaultSound())
+        }
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            "nudge_${NSDate().timeIntervalSince1970}",
+            content,
+            null
+        )
+
+        center.addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("PillFlow Error: Failed to dispatch instant nudge: ${error.localizedDescription}")
+            }
+        }
     }
 }

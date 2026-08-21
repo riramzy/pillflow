@@ -9,4 +9,6 @@ expect class PlatformNotifier() {
     )
 
     fun cancelReminder(context: Any? = null, doseId: String)
+
+    fun sendInstantNudge(context: Any? = null, title: String, message: String)
 }
