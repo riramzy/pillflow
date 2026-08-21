@@ -12,7 +12,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.domain.hardware.PlatformSensor
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
@@ -56,6 +61,21 @@ fun PatientDashboardScreenContent(
     logDose: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val sensor = remember { PlatformSensor() }
+    var tiltX by remember { mutableStateOf(0f) }
+    var tiltY by remember { mutableStateOf(0f) }
+
+
+    DisposableEffect(Unit) {
+        sensor.startListening { x, y ->
+            tiltX = x
+            tiltY = y
+        }
+        onDispose {
+            sensor.stopListening()
+        }
+    }
+
     Scaffold(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
         floatingActionButton = { PillFlowBottomNavBar() },
@@ -96,8 +116,8 @@ fun PatientDashboardScreenContent(
             item {
                 PillFlowPillJarSandbox(
                     pillsState = state.pills,
-                    tiltX = 0f,
-                    tiltY = 0f,
+                    tiltX = tiltX,
+                    tiltY = tiltY,
                     onLogMedication = { pillId ->
                         pillId.toLongOrNull()?.let { id ->
                             logDose(id)
@@ -208,7 +228,7 @@ fun PatientDashboardScreenPreview() {
                         color = PillColor.CORAL_RED.color,
                         radius = 32f,
                         shape = PillShape.CIRCLE,
-                        position = Vector2D(x = 7f, y = 7f)
+                        position = Vector2D(x = 0f, y = 0f)
                     ),
                     PillEntity(
                         id = "2",
@@ -216,7 +236,7 @@ fun PatientDashboardScreenPreview() {
                         color = PillColor.CITRUS_GOLD.color,
                         radius = 32f,
                         shape = PillShape.CAPSULE,
-                        position = Vector2D(x = 3f, y = 3f)
+                        position = Vector2D(x = 1f, y = 1f)
                     )
                 ),
                 complianceStatus = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
@@ -268,7 +288,7 @@ fun PatientDashboardScreenPreviewDark() {
                         color = PillColor.CORAL_RED.color,
                         radius = 32f,
                         shape = PillShape.CIRCLE,
-                        position = Vector2D(x = 7f, y = 7f)
+                        position = Vector2D(x = 1.3f, y = 2.2f)
                     ),
                     PillEntity(
                         id = "2",
@@ -276,7 +296,7 @@ fun PatientDashboardScreenPreviewDark() {
                         color = PillColor.CITRUS_GOLD.color,
                         radius = 32f,
                         shape = PillShape.CAPSULE,
-                        position = Vector2D(x = 3f, y = 3f)
+                        position = Vector2D(x = 1.2f, y = 2f)
                     )
                 ),
                 complianceStatus = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,

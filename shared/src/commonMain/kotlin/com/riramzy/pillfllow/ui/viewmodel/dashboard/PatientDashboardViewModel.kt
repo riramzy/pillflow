@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
+import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.repo.AuthRepo
@@ -29,7 +30,8 @@ import kotlinx.coroutines.launch
 
 class PatientDashboardViewModel(
     private val medicationRepo: MedicationRepo,
-    private val authRepo: AuthRepo
+    private val authRepo: AuthRepo,
+    private val platformNotifier: PlatformNotifier = PlatformNotifier()
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PatientDashboardState())
@@ -169,6 +171,8 @@ class PatientDashboardViewModel(
                 isTaken = true,
                 complianceStatus = compliance.name
             )
+
+            platformNotifier.cancelReminder(doseId = doseId.toString())
         }
     }
 }
