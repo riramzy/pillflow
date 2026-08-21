@@ -31,6 +31,7 @@ data class CaregiverPatientPairingEntity (
     @PrimaryKey val pairingId: String,
     val caregiverId: String,
     val patientId: String,
+    val phoneNumber: String = "",
     val relation: String,
     val pairingCode: String,
     val status: String,
