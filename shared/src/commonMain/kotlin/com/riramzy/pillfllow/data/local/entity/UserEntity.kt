@@ -9,6 +9,7 @@ data class UserEntity (
     val firstName: String,
     val lastName: String,
     val email: String,
+    val phoneNumber: String = "+1234567890",
     val userType: String,
     val avatarRes: String,
     val createdAt: Long
