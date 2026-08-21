@@ -5,6 +5,9 @@ import com.riramzy.pillfllow.data.repo.AuthRepoImpl
 import com.riramzy.pillfllow.data.repo.MedicationRepoImpl
 import com.riramzy.pillfllow.data.repo.PairingRepoImpl
 import com.riramzy.pillfllow.data.repo.UserRepoImpl
+import com.riramzy.pillfllow.domain.hardware.PlatformHaptics
+import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
+import com.riramzy.pillfllow.domain.hardware.PlatformSensor
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.repo.PairingRepo
@@ -20,6 +23,10 @@ val appModule: Module = module {
     single { get<PillFlowDatabase>().medicationDao }
     single { get<PillFlowDatabase>().pairingDao }
     single<FirebaseAuth> { Firebase.auth }
+
+    single { PlatformNotifier() }
+    single { PlatformHaptics() }
+    single { PlatformSensor() }
 
     single<UserRepo> { UserRepoImpl(get()) }
     single<MedicationRepo> { MedicationRepoImpl(get()) }

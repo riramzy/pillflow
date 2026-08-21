@@ -9,7 +9,15 @@ import org.koin.dsl.module
 
 val viewModelModule: Module = module {
     viewModel { AuthViewModel(authRepo = get()) }
-    viewModel { PatientDashboardViewModel(medicationRepo = get(), authRepo = get()) }
-    viewModel { CaregiverDashboardViewModel(pairingRepo = get(), medicationRepo = get()) }
 
+    viewModel { PatientDashboardViewModel(medicationRepo = get(), authRepo = get()) }
+
+    viewModel {
+        CaregiverDashboardViewModel(
+            pairingRepo = get(),
+            medicationRepo = get(),
+            authRepo = get(),
+            userRepo = get()
+        )
+    }
 }
