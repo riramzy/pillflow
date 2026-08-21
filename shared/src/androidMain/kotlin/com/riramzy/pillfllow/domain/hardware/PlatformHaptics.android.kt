@@ -5,11 +5,18 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import org.koin.mp.KoinPlatformTools
 
 actual class PlatformHaptics {
+    private fun resolveContext(context: Any?): Context? {
+        return (context as? Context) ?: runCatching {
+            KoinPlatformTools.defaultContext().get().get<Context>()
+        }.getOrNull()
+    }
+
     @SuppressLint("MissingPermission")
     actual fun tickCollision(context: Any?) {
-        val vibrator = getVibrator(context as? Context ?: return) ?: return
+        val vibrator = getVibrator(resolveContext(context) ?: return) ?: return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
@@ -23,7 +30,7 @@ actual class PlatformHaptics {
 
     @SuppressLint("MissingPermission")
     actual fun pulseDispensed(context: Any?) {
-        val vibrator = getVibrator(context as? Context ?: return) ?: return
+        val vibrator = getVibrator(resolveContext(context) ?: return) ?: return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))

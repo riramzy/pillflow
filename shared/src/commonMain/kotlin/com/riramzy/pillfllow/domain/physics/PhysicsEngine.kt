@@ -8,7 +8,8 @@ class PhysicsEngine(
     private val jarRadius: Float,
     private val jarCenter: Vector2D,
     private val chuteWidth: Float = 120f,
-    private val onPillLogged: (String) -> Unit
+    private val onPillLogged: (String) -> Unit,
+    private val onCollision: (() -> Unit)? = null
 ) {
     private val restitution = 0.45f
     private val friction = 0.98f
@@ -27,10 +28,10 @@ class PhysicsEngine(
             pill.velocity = (pill.velocity + gravity * deltaTime) * friction
             pill.position += pill.velocity * deltaTime
 
-            resolveBoundaryCollision(pill, jarRadius, jarCenter, chuteWidth, restitution)
+            resolveBoundaryCollision(pill, jarRadius, jarCenter, chuteWidth, restitution, onCollision)
             checkChuteExit(pill, jarCenter, jarRadius, onPillLogged)
         }
 
-        resolveInterPillCollision(pills, restitution)
+        resolveInterPillCollision(pills, restitution, onCollision)
     }
 }

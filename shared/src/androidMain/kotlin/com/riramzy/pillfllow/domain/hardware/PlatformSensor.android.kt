@@ -5,6 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import org.koin.mp.KoinPlatformTools
 
 actual class PlatformSensor: SensorEventListener {
     private var sensorManager: SensorManager? = null
@@ -13,7 +14,10 @@ actual class PlatformSensor: SensorEventListener {
 
     actual fun startListening(context: Any?, onUpdate: (tiltX: Float, tiltY: Float) -> Unit) {
         listener = onUpdate
-        val androidContext = context as? Context ?: return
+
+        val androidContext = (context as? Context) ?: runCatching {
+            KoinPlatformTools.defaultContext().get().get<Context>()
+        }.getOrNull() ?: return
 
         sensorManager = androidContext.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
