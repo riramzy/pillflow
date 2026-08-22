@@ -1,6 +1,7 @@
 package com.riramzy.pillfllow.data.repo
 
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
+import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
@@ -55,4 +56,8 @@ class MedicationRepoImpl(
     override fun getUnsyncedScheduledDoses(): Flow<List<ScheduledDoseEntity>> = medicationDao.getUnsyncedScheduledDoses()
 
     override suspend fun markScheduledDoseSynced(id: Long) = medicationDao.markScheduledDoseSynced(id)
+
+    override fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>> = medicationDao.getDoseHistoryForUser(userId)
+
+    override suspend fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity> = medicationDao.getDoseHistoryForUserOnce(userId)
 }

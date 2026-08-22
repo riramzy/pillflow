@@ -1,5 +1,6 @@
 package com.riramzy.pillfllow.domain.repo
 
+import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
@@ -18,4 +19,6 @@ interface MedicationRepo {
     suspend fun markScheduledDoseSynced(id: Long)
     suspend fun markScheduledDoseTaken(id: Long, takenTime: Long, isTaken: Boolean, complianceStatus: String)
     suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<Long>
+    fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>>
+    suspend fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity>
 }

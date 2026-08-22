@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
@@ -85,4 +86,42 @@ interface MedicationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<Long>
+
+    @Query("""
+    SELECT 
+        scheduled_doses.id AS id,
+        scheduled_doses.medicationId AS medicationId,
+        medications.name AS name,
+        medications.dosage AS dosage,
+        medications.colorHex AS colorHex,
+        medications.shape AS shape,
+        scheduled_doses.scheduledTime AS scheduledTime,
+        scheduled_doses.takenTime AS takenTime,
+        scheduled_doses.complianceStatus AS complianceStatus,
+        scheduled_doses.isTaken AS isTaken
+    FROM scheduled_doses
+    INNER JOIN medications ON scheduled_doses.medicationId = medications.id
+    WHERE medications.userId = :userId
+    ORDER BY scheduled_doses.scheduledTime DESC
+""")
+    fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>>
+
+    @Query("""
+    SELECT 
+        scheduled_doses.id AS id,
+        scheduled_doses.medicationId AS medicationId,
+        medications.name AS name,
+        medications.dosage AS dosage,
+        medications.colorHex AS colorHex,
+        medications.shape AS shape,
+        scheduled_doses.scheduledTime AS scheduledTime,
+        scheduled_doses.takenTime AS takenTime,
+        scheduled_doses.complianceStatus AS complianceStatus,
+        scheduled_doses.isTaken AS isTaken
+    FROM scheduled_doses
+    INNER JOIN medications ON scheduled_doses.medicationId = medications.id
+    WHERE medications.userId = :userId
+    ORDER BY scheduled_doses.scheduledTime DESC
+""")
+    fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity>
 }
