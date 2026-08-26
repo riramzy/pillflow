@@ -90,6 +90,8 @@ fun AddMedicineSheet(
         is24Hour = false
     )
 
+    var medicationInstructions by remember { mutableStateOf("") }
+
     if (showTimeDialog) {
         val isLastDose = currentDoseIndex == totalDoses - 1
 
@@ -174,6 +176,13 @@ fun AddMedicineSheet(
                 placeholder = "e.g. 500mg",
                 value = medicationDosage,
                 onValueChange = { medicationDosage = it }
+            )
+
+            PillFlowInputField(
+                label = "Instructions",
+                placeholder = "e.g. Take with a full glass of water",
+                value = medicationInstructions,
+                onValueChange = { medicationInstructions = it }
             )
 
             PillFlowSelector(
