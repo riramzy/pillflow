@@ -35,6 +35,7 @@ import com.riramzy.pillfllow.utils.PillShape
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.delete
 import pillfllow.shared.generated.resources.edit
 import pillfllow.shared.generated.resources.next
 import pillfllow.shared.generated.resources.note
@@ -50,6 +51,7 @@ fun PillFlowPrescriptionCard(
     instructionsText: String = "Take with a full glass of water",
     nextDoseText: String = "Next dose in 2 hours",
     onEditClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -95,23 +97,47 @@ fun PillFlowPrescriptionCard(
                     )
                 }
 
-                IconButton(
-                    onClick = { onEditClick() },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier
-                        .size(35.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Image(
-                        imageVector = vectorResource(Res.drawable.edit),
-                        contentDescription = "Edit",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                    IconButton(
+                        onClick = { onEditClick() },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
                         modifier = Modifier
-                            .size(14.dp)
-                    )
+                            .size(35.dp)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.edit),
+                            contentDescription = "Edit",
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                            modifier = Modifier
+                                .size(14.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { onDeleteClick() },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        modifier = Modifier
+                            .size(35.dp)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.delete),
+                            contentDescription = "Delete",
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.error),
+                            modifier = Modifier
+                                .size(14.dp)
+                        )
+                    }
                 }
+
             }
 
             Column(

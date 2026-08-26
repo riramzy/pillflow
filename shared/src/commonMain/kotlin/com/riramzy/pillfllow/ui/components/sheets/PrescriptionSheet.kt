@@ -28,6 +28,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPillColor
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPillShape
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSelector
+import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
@@ -35,7 +36,8 @@ import com.riramzy.pillfllow.utils.getTodayTimeInMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddMedicineSheet(
+fun PrescriptionSheet(
+    initialMedication: PrescriptionUiModel? = null,
     onMedicationSaved: (
         name: String,
         dosage: String,
@@ -48,9 +50,13 @@ fun AddMedicineSheet(
     ) -> Unit = { _, _, _, _, _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
-    var medicationName by remember { mutableStateOf("") }
+    var medicationName by remember(initialMedication) {
+        mutableStateOf(initialMedication?.medicationName ?: "")
+    }
 
-    var medicationDosage by remember { mutableStateOf("") }
+    var medicationDosage by remember(initialMedication) {
+        mutableStateOf(initialMedication?.dosage ?: "")
+    }
 
     val shapesList: List<Pair<String, @Composable () -> Unit>> = listOf(
         Pair(PillShape.CIRCLE.label, { PillFlowPillShape(shape = PillShape.CIRCLE) }),
@@ -58,7 +64,9 @@ fun AddMedicineSheet(
         Pair(PillShape.CAPSULE.label, { PillFlowPillShape(shape = PillShape.CAPSULE) })
     )
 
-    var selectedShape: Pair<String, @Composable () -> Unit>? by remember { mutableStateOf(null) }
+    var selectedShape: Pair<String, @Composable () -> Unit>? by remember(initialMedication) {
+        mutableStateOf(shapesList.find { it.first.equals(initialMedication?.pillShape?.label, true) })
+    }
 
     val colorsList: List<Pair<String, @Composable () -> Unit>> = listOf(
         Pair(PillColor.CORAL_RED.label, { PillFlowPillColor(color = PillColor.CORAL_RED) }),
@@ -68,7 +76,9 @@ fun AddMedicineSheet(
         Pair(PillColor.MINT_GREEN.label, { PillFlowPillColor(color = PillColor.MINT_GREEN) })
     )
 
-    var selectedColor: Pair<String, @Composable () -> Unit>? by remember { mutableStateOf(null) }
+    var selectedColor: Pair<String, @Composable () -> Unit>? by remember(initialMedication) {
+        mutableStateOf(colorsList.find { it.first.equals(initialMedication?.pillColor?.label, true) })
+    }
 
     val repetitionList: List<Pair<String, @Composable () -> Unit>> = listOf(
         Pair("Once Daily", { Text("1x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }),
@@ -76,7 +86,13 @@ fun AddMedicineSheet(
         Pair("3 Times Daily", { Text("3x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) })
     )
 
-    var selectedRepetition: Pair<String, @Composable () -> Unit>? by remember { mutableStateOf(null) }
+    var selectedRepetition: Pair<String, @Composable () -> Unit>? by remember(initialMedication) {
+        mutableStateOf(
+            repetitionList.find {
+                initialMedication?.scheduleText?.startsWith(it.first) == true
+            }
+        )
+    }
 
     var selectedTime: Pair<String, @Composable () -> Unit>? by remember { mutableStateOf(null) }
 
@@ -94,7 +110,11 @@ fun AddMedicineSheet(
 
     var accumulatedMillis by remember { mutableStateOf(mutableListOf<Long>()) }
 
-    var selectedTimeText by remember { mutableStateOf<String?>(null) }
+    var selectedTimeText by remember(initialMedication) {
+        mutableStateOf(
+            initialMedication?.scheduleText?.substringAfter(", ")
+        )
+    }
 
     val timePickerState = rememberTimePickerState(
         initialHour = 8,
@@ -102,7 +122,9 @@ fun AddMedicineSheet(
         is24Hour = false
     )
 
-    var medicationInstructions by remember { mutableStateOf("") }
+    var medicationInstructions by remember(initialMedication) {
+        mutableStateOf(initialMedication?.instructionsText ?: "")
+    }
 
     if (showTimeDialog) {
         val isLastDose = currentDoseIndex == totalDoses - 1
@@ -163,7 +185,7 @@ fun AddMedicineSheet(
         verticalArrangement = Arrangement.spacedBy(30.dp)
     ) {
         Text(
-            text = "Add Medication",
+            text = if (initialMedication != null) "Edit Prescription" else "Add Prescription",
             style = MaterialTheme.typography.bodySmall,
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
@@ -241,7 +263,7 @@ fun AddMedicineSheet(
 
         PillFlowButton(
             modifier = Modifier.fillMaxWidth(),
-            text = "Save Prescription",
+            text = if (initialMedication != null) "Update Prescription" else "Save Prescription",
             onClick = {
                 onMedicationSaved(
                     medicationName,
@@ -260,16 +282,16 @@ fun AddMedicineSheet(
 
 @Preview(showBackground = true)
 @Composable
-fun AddMedicineSheetPreview() {
+fun PrescriptionSheetPreview() {
     PillFlowTheme {
-        AddMedicineSheet()
+        PrescriptionSheet()
     }
 }
 
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, backgroundColor = 0xFF000000)
 @Composable
-fun AddMedicineSheetPreviewDark() {
+fun PrescriptionSheetPreviewDark() {
     PillFlowTheme {
-        AddMedicineSheet()
+        PrescriptionSheet()
     }
 }
