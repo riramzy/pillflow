@@ -7,6 +7,7 @@ import kotlinx.coroutines.IO
 
 fun getRoomDatabase(builder: RoomDatabase.Builder<PillFlowDatabase>): PillFlowDatabase {
     return builder
+        .fallbackToDestructiveMigration(true)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

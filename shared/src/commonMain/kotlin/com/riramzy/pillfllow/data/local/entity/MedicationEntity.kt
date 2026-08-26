@@ -26,5 +26,6 @@ data class MedicationEntity(
     val timeOfDay: String,
     val colorHex: String,
     val shape: String = "CAPSULE",
+    val instructions: String = "",
     val isSynced: Boolean = false
 )
