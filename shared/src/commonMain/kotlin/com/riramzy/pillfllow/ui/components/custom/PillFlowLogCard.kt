@@ -26,7 +26,6 @@ import com.riramzy.pillfllow.utils.IndicatorColor
 
 @Composable
 fun PillFlowLogCard(
-    patientName: String = "Mary",
     actionTitle: String = "July 29, Aspirin 500mg",
     actionDescription: String = "Scheduled 8:00 AM",
     timestampText: String = "Logged 8:02 AM",
@@ -66,7 +65,7 @@ fun PillFlowLogCard(
 
             Column {
                 Text(
-                    text = "$patientName, $actionTitle",
+                    text = actionTitle,
                     style = MaterialTheme.typography.bodySmall,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
@@ -93,7 +92,6 @@ fun PillFlowLogCardPreview() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Nudge sent by Sarah",
                 timestampText = "Logged 8:40 AM",
@@ -101,7 +99,6 @@ fun PillFlowLogCardPreview() {
             )
 
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Logged 8:02 AM",
@@ -109,7 +106,6 @@ fun PillFlowLogCardPreview() {
             )
 
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Logged 8:32 AM",
@@ -117,7 +113,6 @@ fun PillFlowLogCardPreview() {
             )
 
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Dose Missed",
@@ -136,7 +131,6 @@ fun PillFlowLogCardPreviewDark() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Nudge sent by Sarah",
                 timestampText = "Logged 8:40 AM",
@@ -144,7 +138,6 @@ fun PillFlowLogCardPreviewDark() {
             )
 
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Logged 8:02 AM",
@@ -152,7 +145,6 @@ fun PillFlowLogCardPreviewDark() {
             )
 
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Logged 8:32 AM",
@@ -160,7 +152,6 @@ fun PillFlowLogCardPreviewDark() {
             )
 
             PillFlowLogCard(
-                patientName = "Mary",
                 actionTitle = "July 29, Aspirin 500mg",
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Dose Missed",
