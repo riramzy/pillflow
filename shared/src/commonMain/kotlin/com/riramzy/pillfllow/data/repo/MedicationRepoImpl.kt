@@ -46,7 +46,15 @@ class MedicationRepoImpl(
         return ids
     }
 
-    override suspend fun deleteMedicationById(id: Long) = medicationDao.deleteMedicationById(id)
+    override suspend fun getPendingDoseIdsForMedication(medicationId: Long): List<Long> = medicationDao.getPendingDoseIdsForMedication(medicationId)
+
+    override suspend fun deleteMedicationById(id: Long) {
+        val pendingDoseIds = medicationDao.getPendingDoseIdsForMedication(id)
+        pendingDoseIds.forEach { doseId ->
+            platformNotifier.cancelReminder(doseId = doseId.toString())
+        }
+        medicationDao.deleteMedicationById(id)
+    }
 
     override suspend fun getUnsyncedMedications(): List<MedicationEntity> = medicationDao.getUnsyncedMedications()
 

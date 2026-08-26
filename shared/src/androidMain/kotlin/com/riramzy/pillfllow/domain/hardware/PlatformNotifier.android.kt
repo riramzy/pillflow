@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import org.koin.mp.KoinPlatformTools
 
 actual class PlatformNotifier {
     @SuppressLint("ScheduleExactAlarm")
@@ -18,7 +19,7 @@ actual class PlatformNotifier {
         pillName: String,
         triggerTimeMillis: Long
     ) {
-        val androidContext = context as? Context ?: return
+        val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
         val intent = Intent().apply {
@@ -50,7 +51,7 @@ actual class PlatformNotifier {
     }
 
     actual fun cancelReminder(context: Any?, doseId: String) {
-        val androidContext = context as? Context ?: return
+        val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
         val intent = Intent().apply {
@@ -71,7 +72,7 @@ actual class PlatformNotifier {
     }
 
     actual fun sendInstantNudge(context: Any?, title: String, message: String) {
-        val ctx = context as? Context ?: return
+        val ctx = resolveContext(context) ?: return
         val manager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
         val channelId = "pillflow_nudge_channel"
 
@@ -96,5 +97,11 @@ actual class PlatformNotifier {
             .build()
 
         manager.notify((System.currentTimeMillis() % 10000).toInt(), notification)
+    }
+
+    private fun resolveContext(context: Any?): Context? {
+        return (context as? Context) ?: runCatching {
+            KoinPlatformTools.defaultContext().get().get<Context>()
+        }.getOrNull()
     }
 }

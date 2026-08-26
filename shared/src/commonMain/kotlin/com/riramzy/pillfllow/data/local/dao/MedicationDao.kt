@@ -21,6 +21,9 @@ interface MedicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMedication(medication: MedicationEntity): Long
 
+    @Query("SELECT id FROM scheduled_doses WHERE medicationId = :medicationId AND isTaken = 0")
+    suspend fun getPendingDoseIdsForMedication(medicationId: Long): List<Long>
+
     @Query("DELETE FROM medications WHERE id = :id")
     suspend fun deleteMedicationById(id: Long)
 
