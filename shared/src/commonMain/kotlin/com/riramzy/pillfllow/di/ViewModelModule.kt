@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.di
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.CaregiverDashboardViewModel
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
+import com.riramzy.pillfllow.ui.viewmodel.history.HistoryViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -17,6 +18,15 @@ val viewModelModule: Module = module {
             pairingRepo = get(),
             medicationRepo = get(),
             authRepo = get(),
+            userRepo = get()
+        )
+    }
+
+    viewModel {
+        HistoryViewModel(
+            medicationRepo = get(),
+            authRepo = get(),
+            pairingRepo = get(),
             userRepo = get()
         )
     }
