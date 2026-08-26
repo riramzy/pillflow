@@ -45,6 +45,9 @@ class MedicationRepoImpl(
         }
         return ids
     }
+
+    override suspend fun deleteMedicationById(id: Long) = medicationDao.deleteMedicationById(id)
+
     override suspend fun getUnsyncedMedications(): List<MedicationEntity> = medicationDao.getUnsyncedMedications()
 
     override suspend fun markMedicationSynced(id: Long) = medicationDao.markMedicationSynced(id)

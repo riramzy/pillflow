@@ -10,6 +10,7 @@ interface MedicationRepo {
     fun getAllMedications(): Flow<List<MedicationEntity>>
     suspend fun getUnsyncedMedications(): List<MedicationEntity>
     suspend fun insertMedication(medication: MedicationEntity): Long
+    suspend fun deleteMedicationById(id: Long)
     suspend fun markMedicationSynced(id: Long)
     fun getMedicationForUser(userId: String): Flow<List<MedicationEntity>>
     fun getPendingDosesForUser(userId: String): Flow<List<PendingDoseWithMedication>>
