@@ -31,11 +31,21 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowSelector
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.getTodayTimeInMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMedicineSheet(
-    onMedicationSaved: () -> Unit = {},
+    onMedicationSaved: (
+        name: String,
+        dosage: String,
+        instructions: String,
+        frequency: String,
+        timeOfDay: String,
+        colorHex: String,
+        shape: String,
+        scheduledTimesMillis: List<Long>
+    ) -> Unit = { _, _, _, _, _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var medicationName by remember { mutableStateOf("") }
@@ -82,6 +92,8 @@ fun AddMedicineSheet(
 
     var accumulatedTimes by remember { mutableStateOf(mutableListOf<String>()) }
 
+    var accumulatedMillis by remember { mutableStateOf(mutableListOf<Long>()) }
+
     var selectedTimeText by remember { mutableStateOf<String?>(null) }
 
     val timePickerState = rememberTimePickerState(
@@ -120,6 +132,7 @@ fun AddMedicineSheet(
                         val timeStr = "$displayHour:$formattedMinute $amPm"
 
                         accumulatedTimes.add(timeStr)
+                        accumulatedMillis.add(getTodayTimeInMillis(hour, minute))
 
                         if (!isLastDose) {
                             currentDoseIndex++
@@ -219,6 +232,7 @@ fun AddMedicineSheet(
                 selectedItem = selectedTimeText?.let { Pair(it, { Text("⏰") }) },
                 onClick = {
                     accumulatedTimes = mutableListOf()
+                    accumulatedMillis = mutableListOf()
                     currentDoseIndex = 0
                     showTimeDialog = true
                 }
@@ -228,7 +242,18 @@ fun AddMedicineSheet(
         PillFlowButton(
             modifier = Modifier.fillMaxWidth(),
             text = "Save Prescription",
-            onClick = { onMedicationSaved() }
+            onClick = {
+                onMedicationSaved(
+                    medicationName,
+                    medicationDosage,
+                    medicationInstructions,
+                    selectedRepetition?.first ?: "Once Daily",
+                    selectedTimeText ?: "08:00 AM",
+                    selectedColor?.first ?: "SKY_BLUE",
+                    selectedShape?.first ?: "CAPSULE",
+                    accumulatedMillis
+                )
+            }
         )
     }
 }
