@@ -1,5 +1,7 @@
 package com.riramzy.pillfllow.utils
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
@@ -16,4 +18,11 @@ actual fun openPhoneDialer(phoneNumber: String) {
     }
 
     context.startActivity(intent)
+}
+
+actual fun copyToClipboard(text: String) {
+    val context = KoinPlatformTools.defaultContext().get().get<Context>()
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newPlainText("Pairing Code", text)
+    clipboard.setPrimaryClip(clip)
 }
