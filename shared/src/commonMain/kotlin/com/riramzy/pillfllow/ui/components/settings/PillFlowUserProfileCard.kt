@@ -112,7 +112,7 @@ fun PillFlowUserProfileCard(
                 IconButton(
                     onClick = { onEditClick() },
                     modifier = Modifier
-                        .size(24.dp),
+                        .size(35.dp),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.primary
@@ -122,7 +122,7 @@ fun PillFlowUserProfileCard(
                         imageVector = vectorResource(Res.drawable.edit),
                         contentDescription = "Edit",
                         modifier = Modifier
-                            .size(10.dp),
+                            .size(18.dp),
                     )
                 }
             }
