@@ -31,6 +31,7 @@ data class ComplianceDayUiModel(
 )
 
 data class PairedPatientUiModel(
+    val pairingId: String = "",
     val id: String = "1",
     val name: String = "Mary",
     val relation: String = "Mom",
