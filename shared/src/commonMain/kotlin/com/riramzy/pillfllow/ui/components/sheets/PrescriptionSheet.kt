@@ -184,13 +184,24 @@ fun PrescriptionSheet(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(30.dp)
     ) {
-        Text(
-            text = if (initialMedication != null) "Edit Prescription" else "Add Prescription",
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Column {
+            Text(
+                text = if (initialMedication != null) "Edit Prescription" else "Add Prescription",
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Text(
+                text = if (initialMedication != null) "Update medication details" else "Add medication details",
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
 
         Column(
             modifier = Modifier
