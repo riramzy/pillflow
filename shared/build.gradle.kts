@@ -74,6 +74,9 @@ kotlin {
             implementation(libs.koin.android)
         }
     }
+    sourceSets.commonTest.dependencies {
+        implementation(kotlin("test"))
+    }
 }
 
 room {
