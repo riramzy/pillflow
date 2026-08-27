@@ -15,6 +15,9 @@ class PairingRepoImpl(
     override suspend fun deletePairing(pairing: CaregiverPatientPairingEntity) = pairingDao.deletePairing(pairing)
     override suspend fun getPairingsForCaregiverOnce(caregiverId: String): List<CaregiverPatientPairingEntity> = pairingDao.getPairingsForCaregiverOnce(caregiverId)
     override fun getPairingsByPairingCode(pairingCode: String): Flow<CaregiverPatientPairingEntity?> = pairingDao.getPairingsByPairingCode(pairingCode)
+    override suspend fun deletePendingPairingsForPatient(patientId: String): Int = pairingDao.deletePendingPairingsForPatient(patientId)
     override suspend fun getPairingsByPairingCodeOnce(pairingCode: String): CaregiverPatientPairingEntity? = pairingDao.getPairingsByPairingCodeOnce(pairingCode)
     override suspend fun getPairingsForPatientOnce(patientId: String): List<CaregiverPatientPairingEntity> = pairingDao.getPairingsForPatientOnce(patientId)
+    override suspend fun deletePairingById(pairingId: String): Int = pairingDao.deletePairingById(pairingId)
+    override suspend fun getPendingPairingByCode(pairingCode: String): CaregiverPatientPairingEntity? = pairingDao.getPendingPairingByCode(pairingCode)
 }
