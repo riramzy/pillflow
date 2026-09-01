@@ -51,6 +51,7 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation(libs.androidx.navigation.compose)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
