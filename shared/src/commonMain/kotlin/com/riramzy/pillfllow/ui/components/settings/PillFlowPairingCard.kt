@@ -31,6 +31,7 @@ fun PillFlowPairingCard(
     pairingCode: String = "819263",
     onCopyClick: () -> Unit = {},
     onRegenerateClick: () -> Unit = {},
+    isRegenerating: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -78,8 +79,9 @@ fun PillFlowPairingCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                for (char in pairingCode) {
-                    PairingCodeCard(code = char.toString())
+                for (i in 0 until 6) {
+                    val digitChar = pairingCode.getOrNull(i)?.toString() ?: "-"
+                    PairingCodeCard(code = digitChar)
                 }
             }
 
@@ -94,12 +96,14 @@ fun PillFlowPairingCard(
                     text = "Copy Code",
                     customColor = MaterialTheme.colorScheme.primaryContainer,
                     customTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    isEnabled = !isRegenerating && pairingCode.isNotBlank(),
                     onClick = { onCopyClick() }
                 )
 
                 PillFlowButton(
                     modifier = Modifier.weight(1f),
                     text = "Regenerate",
+                    isEnabled = !isRegenerating,
                     onClick = { onRegenerateClick() }
                 )
             }

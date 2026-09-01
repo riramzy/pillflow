@@ -242,6 +242,7 @@ fun PatientSettingsScreenContent(
                         }
                     },
                     onRegenerateClick = { onRegenerateCode() },
+                    isRegenerating = state.isRegenerating,
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )
             }

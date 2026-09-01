@@ -37,6 +37,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPatientCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
+import com.riramzy.pillfllow.ui.components.settings.PillFlowEmptyPatientsCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPatientPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.components.sheets.ConfirmPairingSheet
@@ -330,16 +331,21 @@ fun CaregiverSettingsScreenContent(
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    state.activePatients.forEach { patient ->
-                        PillFlowPatientCard(
-                            patient = patient,
-                            onPatientClick = {
-                                if (patient.phoneNumber.isNotBlank()) {
-                                    openPhoneDialer(patient.phoneNumber)
-                                }
-                            },
-                            onUnlinkClick = { patientToUnlink = patient }
-                        )
+
+                    if (state.activePatients.isEmpty()) {
+                        PillFlowEmptyPatientsCard()
+                    } else {
+                        state.activePatients.forEach { patient ->
+                            PillFlowPatientCard(
+                                patient = patient,
+                                onPatientClick = {
+                                    if (patient.phoneNumber.isNotBlank()) {
+                                        openPhoneDialer(patient.phoneNumber)
+                                    }
+                                },
+                                onUnlinkClick = { patientToUnlink = patient }
+                            )
+                        }
                     }
                 }
             }
