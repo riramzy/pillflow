@@ -6,8 +6,8 @@ import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
+import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
-import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionsState
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.currentTimeMillis
@@ -26,12 +26,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class PrescriptionsViewModel(
+class PatientPrescriptionsViewModel(
     private val medicationRepo: MedicationRepo,
     private val authRepo: AuthRepo,
 ): ViewModel() {
-    private val _state = MutableStateFlow(PrescriptionsState())
-    val state: StateFlow<PrescriptionsState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(PatientPrescriptionsState())
+    val state: StateFlow<PatientPrescriptionsState> = _state.asStateFlow()
 
     init {
         observePrescriptions()
@@ -77,7 +77,7 @@ class PrescriptionsViewModel(
                         )
                     }
 
-                    PrescriptionsState(
+                    PatientPrescriptionsState(
                         prescriptions = prescriptions,
                         activeCount = medications.size,
                         nextDoseTime = nextTime,
@@ -169,7 +169,7 @@ class PrescriptionsViewModel(
     }
 }
 
-private fun formatRelativeNextDose(
+fun formatRelativeNextDose(
     scheduledTime: Long?,
     now: Long
 ): String {

@@ -3,7 +3,7 @@ package com.riramzy.pillfllow.ui.state.prescriptions
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
 
-data class PrescriptionsState(
+data class PatientPrescriptionsState(
     val prescriptions: List<PrescriptionUiModel> = emptyList(),
     val activeCount: Int = 0,
     val nextDoseTime: String = "--:--",

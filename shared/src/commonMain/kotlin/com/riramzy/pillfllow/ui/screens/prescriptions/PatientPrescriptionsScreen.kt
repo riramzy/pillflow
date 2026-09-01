@@ -34,22 +34,22 @@ import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowEmptyPrescripti
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.components.sheets.PrescriptionSheet
+import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
-import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PrescriptionsViewModel
+import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PatientPrescriptionsViewModel
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun PrescriptionsScreen(
-    prescriptionsViewModel: PrescriptionsViewModel = koinViewModel(),
+fun PatientPrescriptionsScreen(
+    prescriptionsViewModel: PatientPrescriptionsViewModel = koinViewModel(),
     modifier: Modifier = Modifier
 ) {
     val state by prescriptionsViewModel.state.collectAsStateWithLifecycle()
 
-    PrescriptionsScreenContent(
+    PatientPrescriptionsScreenContent(
         state = state,
         onOpenAddSheet = prescriptionsViewModel::openAddSheet,
         onOpenEditSheet = prescriptionsViewModel::openEditSheet,
@@ -62,8 +62,8 @@ fun PrescriptionsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrescriptionsScreenContent(
-    state: PrescriptionsState = PrescriptionsState(),
+fun PatientPrescriptionsScreenContent(
+    state: PatientPrescriptionsState = PatientPrescriptionsState(),
     onOpenAddSheet: () -> Unit = {},
     onOpenEditSheet: (Long) -> Unit = {},
     onCloseAddSheet: () -> Unit = {},
@@ -238,10 +238,10 @@ fun PrescriptionsScreenContent(
 
 @Preview
 @Composable
-fun PrescriptionsScreenPreview() {
+fun PatientPrescriptionsScreenPreview() {
     PillFlowTheme {
-        PrescriptionsScreenContent(
-            state = PrescriptionsState(
+        PatientPrescriptionsScreenContent(
+            state = PatientPrescriptionsState(
                 prescriptions = listOf(
                     PrescriptionUiModel(
                         id = 1,
@@ -278,10 +278,10 @@ fun PrescriptionsScreenPreview() {
 
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-fun PrescriptionsScreenPreviewDark() {
+fun PatientPrescriptionsScreenPreviewDark() {
     PillFlowTheme {
-        PrescriptionsScreenContent(
-            state = PrescriptionsState(
+        PatientPrescriptionsScreenContent(
+            state = PatientPrescriptionsState(
                 prescriptions = listOf(
                     PrescriptionUiModel(
                         id = 1,
