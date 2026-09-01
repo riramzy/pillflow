@@ -51,7 +51,7 @@ class HistoryViewModel(
     private fun observeUserAndRole() {
         viewModelScope.launch(Dispatchers.IO) {
             authRepo.currentUser.collectLatest { user ->
-                if (user?.userType == "caregiver") {
+                if (user?.userType?.equals("CAREGIVER", ignoreCase = true) == true) {
                     user.let { caregiver ->
                         pairingRepo.getPairingsForCaregiver(caregiver.id).collectLatest { pairings ->
                             val now = currentTimeMillis()
