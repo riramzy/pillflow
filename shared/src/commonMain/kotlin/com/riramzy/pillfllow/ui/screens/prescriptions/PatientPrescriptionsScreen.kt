@@ -199,7 +199,7 @@ fun PatientPrescriptionsScreenContent(
             if (state.isEmpty) {
                 item {
                     PillFlowEmptyPrescriptionCard(
-                        onAddFirstPrescriptionClick = onOpenAddSheet,
+                        onButtonClick = onOpenAddSheet,
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }

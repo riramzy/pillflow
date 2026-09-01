@@ -46,8 +46,12 @@ import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.add
 import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
+import pillfllow.shared.generated.resources.pills
+import pillfllow.shared.generated.resources.profile
+import pillfllow.shared.generated.resources.settings
 
 @Composable
 fun CaregiverPrescriptionsScreen(
@@ -204,62 +208,80 @@ fun CaregiverPrescriptionsScreenContent(
                 }
             }
 
-            if (state.pairedPatients.isNotEmpty()) {
-                item {
-                    PillFlowPatientCarousel(
-                        patients = state.pairedPatients,
-                        selectedPatientId = state.selectedPatientId ?: "1",
-                        onPatientSelected = onSelectedPatient,
-                        modifier = Modifier.padding(horizontal = 15.dp)
-                    )
-                }
-            }
-
-            if (state.isEmpty) {
+            if (state.pairedPatients.isEmpty()) {
                 item {
                     PillFlowEmptyPrescriptionCard(
-                        onAddFirstPrescriptionClick = onOpenAddSheet,
+                        title = "No Paired Patients Yet",
+                        description = "Link with a patient using their 6-digit pairing code in Settings to view and manage their prescriptions.",
+                        buttonText = "Go to Settings",
+                        buttonIcon = Res.drawable.settings,
+                        icon = Res.drawable.profile,
+                        onButtonClick = onNavigateToSettings,
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
             } else {
                 item {
-                    PillFlowPrescriptionsSummaryCard(
-                        activeCount = state.activeCount,
-                        nextDoseTime = state.nextDoseTime,
-                        nextDoseMedication = state.nextDoseMedication,
+                    PillFlowPatientCarousel(
+                        patients = state.pairedPatients,
+                        selectedPatientId = state.selectedPatientId
+                            ?: state.pairedPatients.first().id,
+                        onPatientSelected = onSelectedPatient,
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
 
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Active Prescriptions",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                if (state.isEmpty) {
+                    item {
+                        PillFlowEmptyPrescriptionCard(
+                            title = "No Prescriptions Yet",
+                            description = "No medications scheduled for this patient. Add their daily prescriptions to monitor adherence.",
+                            buttonText = "Add First Prescription",
+                            buttonIcon = Res.drawable.add,
+                            icon = Res.drawable.pills,
+                            onButtonClick = onOpenAddSheet,
+                            modifier = Modifier.padding(horizontal = 15.dp)
                         )
+                    }
+                } else {
+                    item {
+                        PillFlowPrescriptionsSummaryCard(
+                            activeCount = state.activeCount,
+                            nextDoseTime = state.nextDoseTime,
+                            nextDoseMedication = state.nextDoseMedication,
+                            modifier = Modifier.padding(horizontal = 15.dp)
+                        )
+                    }
 
-                        state.prescriptions.forEach { prescription ->
-                            PillFlowPrescriptionCard(
-                                medicationName = prescription.medicationName,
-                                dosage = prescription.dosage,
-                                pillShape = prescription.pillShape,
-                                pillColor = prescription.pillColor,
-                                scheduleText = prescription.scheduleText,
-                                instructionsText = prescription.instructionsText,
-                                nextDoseText = prescription.nextDoseText,
-                                onEditClick = { onOpenEditSheet(prescription.id) },
-                                onDeleteClick = { prescriptionToDelete = prescription }
+                    item {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(20.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Active Prescriptions",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
+
+                            state.prescriptions.forEach { prescription ->
+                                PillFlowPrescriptionCard(
+                                    medicationName = prescription.medicationName,
+                                    dosage = prescription.dosage,
+                                    pillShape = prescription.pillShape,
+                                    pillColor = prescription.pillColor,
+                                    scheduleText = prescription.scheduleText,
+                                    instructionsText = prescription.instructionsText,
+                                    nextDoseText = prescription.nextDoseText,
+                                    onEditClick = { onOpenEditSheet(prescription.id) },
+                                    onDeleteClick = { prescriptionToDelete = prescription }
+                                )
+                            }
                         }
                     }
                 }

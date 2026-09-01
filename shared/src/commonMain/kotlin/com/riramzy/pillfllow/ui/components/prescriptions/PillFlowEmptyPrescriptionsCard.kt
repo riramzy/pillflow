@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.add
@@ -34,7 +35,12 @@ import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PillFlowEmptyPrescriptionCard(
-    onAddFirstPrescriptionClick: () -> Unit = {},
+    title: String = "No Prescriptions Yet",
+    description: String = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
+    buttonText: String = "Add First Prescription",
+    buttonIcon: DrawableResource? = Res.drawable.add,
+    icon: DrawableResource = Res.drawable.pills,
+    onButtonClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -53,7 +59,7 @@ fun PillFlowEmptyPrescriptionCard(
                 .wrapContentHeight()
                 .padding(15.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -65,7 +71,7 @@ fun PillFlowEmptyPrescriptionCard(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    imageVector = vectorResource(Res.drawable.pills),
+                    imageVector = vectorResource(icon),
                     contentDescription = "Empty Prescription",
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
@@ -74,7 +80,7 @@ fun PillFlowEmptyPrescriptionCard(
             }
 
             Text(
-                text = "No Prescriptions Yet",
+                text = title,
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
@@ -82,7 +88,7 @@ fun PillFlowEmptyPrescriptionCard(
             )
 
             Text(
-                text = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
+                text = description,
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
@@ -90,10 +96,10 @@ fun PillFlowEmptyPrescriptionCard(
             )
 
             PillFlowButton(
-                text = "Add First Prescription",
+                text = buttonText,
                 withIcon = true,
-                icon = Res.drawable.add,
-                onClick = { onAddFirstPrescriptionClick() },
+                icon = buttonIcon ?: Res.drawable.add,
+                onClick = { onButtonClick() },
                 modifier = Modifier.fillMaxWidth()
             )
         }
