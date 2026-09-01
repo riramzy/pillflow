@@ -60,11 +60,16 @@ import pillfllow.shared.generated.resources.pillflow_logo
 @Composable
 fun AuthSignInScreen(
     authViewModel: AuthViewModel = koinViewModel(),
+    selectedRole: UserType = UserType.PATIENT,
     onAuthSuccess: (UserType) -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedRole) {
+        authViewModel.onRoleSelected(selectedRole)
+    }
 
     AuthSignInScreenContent(
         state = state,
