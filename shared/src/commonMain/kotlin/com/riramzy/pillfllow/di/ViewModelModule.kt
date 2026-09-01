@@ -4,7 +4,8 @@ import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.CaregiverDashboardViewModel
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
 import com.riramzy.pillfllow.ui.viewmodel.history.HistoryViewModel
-import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PrescriptionsViewModel
+import com.riramzy.pillfllow.ui.viewmodel.prescriptions.CaregiverPrescriptionsViewModel
+import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PatientPrescriptionsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.settings.CaregiverSettingsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.settings.PatientSettingsViewModel
 import org.koin.core.module.Module
@@ -44,9 +45,18 @@ val viewModelModule: Module = module {
     }
 
     viewModel {
-        PrescriptionsViewModel(
+        PatientPrescriptionsViewModel(
             medicationRepo = get(),
             authRepo = get()
+        )
+    }
+
+    viewModel {
+        CaregiverPrescriptionsViewModel(
+            medicationRepo = get(),
+            authRepo = get(),
+            pairingRepo = get(),
+            userRepo = get()
         )
     }
 
