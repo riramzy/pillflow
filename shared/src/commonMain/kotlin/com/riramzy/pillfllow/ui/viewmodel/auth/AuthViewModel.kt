@@ -45,19 +45,19 @@ class AuthViewModel(
         _state.update { it.copy(isSignUp = !it.isSignUp) }
     }
 
-    fun authenticate(onSuccess: () -> Unit = {}) {
-        if (state.value.isSignUp) {
-            signUp(onSuccess)
-        } else {
-            signIn(onSuccess)
-        }
-    }
-
     fun signUp(onSuccess: () -> Unit = {}) {
         val currentState = state.value
 
-        if (currentState.password != currentState.confirmPassword) {
-            _state.update { it.copy(errorMessage = "Passwords do not match") }
+        if (currentState.firstName.isBlank() ||
+            currentState.lastName.isBlank() ||
+            currentState.email.isBlank() ||
+            currentState.password.isBlank()) {
+            _state.update { it.copy(errorMessage = "Please fill in all fields") }
+            return
+        }
+
+        if (!currentState.email.contains("@") || !currentState.email.contains(".")) {
+            _state.update { it.copy(errorMessage = "Please enter a valid email address") }
             return
         }
 
@@ -66,8 +66,8 @@ class AuthViewModel(
             return
         }
 
-        if (currentState.firstName.isBlank() || currentState.email.isBlank()) {
-            _state.update { it.copy(errorMessage = "Please fill in all fields") }
+        if (currentState.password != currentState.confirmPassword) {
+            _state.update { it.copy(errorMessage = "Passwords do not match") }
             return
         }
 
@@ -96,6 +96,18 @@ class AuthViewModel(
     }
 
     fun signIn(onSuccess: () -> Unit = {}) {
+        val currentState = state.value
+
+        if (currentState.email.isBlank() || currentState.password.isBlank()) {
+            _state.update { it.copy(errorMessage = "Please enter your email and password") }
+            return
+        }
+
+        if (!currentState.email.contains("@") || !currentState.email.contains(".")) {
+            _state.update { it.copy(errorMessage = "Please enter a valid email address") }
+            return
+        }
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
@@ -115,5 +127,9 @@ class AuthViewModel(
                 _state.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
+    }
+
+    fun onErrorDismissed() {
+        _state.update { it.copy(errorMessage = null) }
     }
 }
