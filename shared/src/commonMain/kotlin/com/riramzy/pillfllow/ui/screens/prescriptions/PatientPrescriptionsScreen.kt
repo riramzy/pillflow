@@ -40,11 +40,15 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PatientPrescriptionsViewModel
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PatientPrescriptionsScreen(
     prescriptionsViewModel: PatientPrescriptionsViewModel = koinViewModel(),
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by prescriptionsViewModel.state.collectAsStateWithLifecycle()
@@ -56,6 +60,9 @@ fun PatientPrescriptionsScreen(
         onCloseAddSheet = prescriptionsViewModel::closeAddSheet,
         onSavePrescription = prescriptionsViewModel::savePrescription,
         onDeletePrescription = prescriptionsViewModel::deletePrescription,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }
@@ -69,6 +76,9 @@ fun PatientPrescriptionsScreenContent(
     onCloseAddSheet: () -> Unit = {},
     onSavePrescription: (String, String, String, String, String, String, String, List<Long>) -> Unit = { _, _, _, _, _, _, _, _ -> },
     onDeletePrescription: (Long) -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
@@ -143,8 +153,11 @@ fun PatientPrescriptionsScreenContent(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
         floatingActionButton = {
             PillFlowBottomNavBar(
-                selectedPage = "Prescriptions",
-
+                selectedPage = Screen.Prescriptions.route,
+                onHomeClick = onNavigateToHome,
+                onHistoryClick = onNavigateToHistory,
+                onPrescriptionsClick = {},
+                onSettingsClick = onNavigateToSettings
             )
                                },
         floatingActionButtonPosition = FabPosition.Center,

@@ -45,6 +45,7 @@ import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.PatientSettingsViewModel
 import com.riramzy.pillfllow.utils.PhysicsSensitivity
+import com.riramzy.pillfllow.utils.Screen
 import com.riramzy.pillfllow.utils.copyToClipboard
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,6 +53,9 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun PatientSettingsScreen(
     patientSettingsViewModel: PatientSettingsViewModel = koinViewModel(),
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by patientSettingsViewModel.state.collectAsStateWithLifecycle()
@@ -63,6 +67,9 @@ fun PatientSettingsScreen(
         onUpdateProfile = patientSettingsViewModel::onUpdateProfile,
         onErrorDismissed = patientSettingsViewModel::onErrorDismissed,
         onSignOut = patientSettingsViewModel::onSignOut,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToPrescriptions = onNavigateToPrescriptions,
         modifier = modifier
     )
 }
@@ -76,6 +83,9 @@ fun PatientSettingsScreenContent(
     onUpdateProfile: (firstName: String, lastName: String, email: String, avatarRes: String) -> Unit = { _, _, _, _ -> },
     onErrorDismissed: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -157,10 +167,12 @@ fun PatientSettingsScreenContent(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
         floatingActionButton = {
             PillFlowBottomNavBar(
-                selectedPage = "Settings",
-
+                selectedPage = Screen.Settings.route,
+                onHomeClick = onNavigateToHome,
+                onHistoryClick = onNavigateToHistory,
+                onPrescriptionsClick = onNavigateToPrescriptions
                 )
-        },
+                               },
         floatingActionButtonPosition = FabPosition.Center,
         snackbarHost = {
             SnackbarHost(

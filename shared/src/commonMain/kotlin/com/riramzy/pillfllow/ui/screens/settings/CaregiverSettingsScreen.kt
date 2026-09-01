@@ -45,6 +45,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.CaregiverSettingsViewModel
+import com.riramzy.pillfllow.utils.Screen
 import com.riramzy.pillfllow.utils.openPhoneDialer
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
@@ -54,6 +55,9 @@ import pillfllow.shared.generated.resources.avatar2
 @Composable
 fun CaregiverSettingsScreen(
     caregiverSettingsViewModel: CaregiverSettingsViewModel = koinViewModel(),
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by caregiverSettingsViewModel.state.collectAsStateWithLifecycle()
@@ -70,6 +74,9 @@ fun CaregiverSettingsScreen(
         onErrorDismissed = caregiverSettingsViewModel::onErrorDismissed,
         onSuccessDismissed = caregiverSettingsViewModel::onSuccessDismissed,
         onSignOut = caregiverSettingsViewModel::onSignOut,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToPrescriptions = onNavigateToPrescriptions,
         modifier = modifier
     )
 }
@@ -88,6 +95,9 @@ fun CaregiverSettingsScreenContent(
     onErrorDismissed: () -> Unit = {},
     onSuccessDismissed: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -232,10 +242,12 @@ fun CaregiverSettingsScreenContent(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
         floatingActionButton = {
             PillFlowBottomNavBar(
-                selectedPage = "Settings",
-
-                )
-        },
+                selectedPage = Screen.Settings.route,
+                onHomeClick = onNavigateToHome,
+                onHistoryClick = onNavigateToHistory,
+                onPrescriptionsClick = onNavigateToPrescriptions
+            )
+                               },
         floatingActionButtonPosition = FabPosition.Center,
         snackbarHost = {
             SnackbarHost(

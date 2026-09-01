@@ -34,6 +34,7 @@ import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.history.HistoryViewModel
 import com.riramzy.pillfllow.utils.ComplianceStatus
+import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
@@ -42,6 +43,9 @@ import pillfllow.shared.generated.resources.avatar2
 @Composable
 fun CaregiverHistoryScreen(
     historyViewModel: HistoryViewModel = koinViewModel(),
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by historyViewModel.state.collectAsStateWithLifecycle()
@@ -49,6 +53,9 @@ fun CaregiverHistoryScreen(
     CaregiverHistoryScreenContent(
         state = state,
         onPatientSelected = historyViewModel::selectPatient,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToPrescriptions = onNavigateToPrescriptions,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }
@@ -57,11 +64,22 @@ fun CaregiverHistoryScreen(
 fun CaregiverHistoryScreenContent(
     state: HistoryState = HistoryState(),
     onPatientSelected: (String) -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
-        floatingActionButton = { PillFlowBottomNavBar() },
+        floatingActionButton = {
+            PillFlowBottomNavBar(
+                selectedPage = Screen.History.route,
+                onHomeClick = onNavigateToHome,
+                onHistoryClick = {},
+                onPrescriptionsClick = onNavigateToPrescriptions,
+                onSettingsClick = onNavigateToSettings
+            )
+                               },
         floatingActionButtonPosition = FabPosition.Center,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()

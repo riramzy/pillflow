@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import com.riramzy.pillfllow.utils.Screen
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
@@ -37,7 +38,7 @@ import pillfllow.shared.generated.resources.settings
 @Composable
 fun PillFlowBottomNavBar(
     modifier: Modifier = Modifier,
-    selectedPage: String = "Home",
+    selectedPage: String = Screen.Home.route,
     onHomeClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onPrescriptionsClick: () -> Unit = {},
@@ -52,7 +53,7 @@ fun PillFlowBottomNavBar(
         shape = RoundedCornerShape(50.dp)
     ) {
         when (selectedPage) {
-            "Home" -> {
+            Screen.Home.route -> {
                 Row(
                     modifier = Modifier
                         .padding(6.dp),
@@ -65,7 +66,7 @@ fun PillFlowBottomNavBar(
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
-            "History" -> {
+            Screen.History.route -> {
                 Row(
                     modifier = Modifier
                         .padding(6.dp),
@@ -78,7 +79,7 @@ fun PillFlowBottomNavBar(
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
-            "Prescriptions" -> {
+            Screen.Prescriptions.route -> {
                 Row(
                     modifier = Modifier
                         .padding(6.dp),
@@ -91,7 +92,7 @@ fun PillFlowBottomNavBar(
                     PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
                 }
             }
-            "Settings" -> {
+            Screen.Settings.route -> {
                 Row(
                     modifier = Modifier
                         .padding(6.dp),
@@ -183,10 +184,10 @@ fun PillFlowBottomNavBarPreview() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PillFlowBottomNavBar(selectedPage = "Home")
-            PillFlowBottomNavBar(selectedPage = "History")
-            PillFlowBottomNavBar(selectedPage = "Prescriptions")
-            PillFlowBottomNavBar(selectedPage = "Settings")
+            PillFlowBottomNavBar(selectedPage = Screen.Home.route)
+            PillFlowBottomNavBar(selectedPage = Screen.History.route)
+            PillFlowBottomNavBar(selectedPage = Screen.Prescriptions.route)
+            PillFlowBottomNavBar(selectedPage = Screen.Settings.route)
         }
     }
 }
@@ -199,10 +200,10 @@ fun PillFlowBottomNavBarPreviewDark() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PillFlowBottomNavBar(selectedPage = "Home")
-            PillFlowBottomNavBar(selectedPage = "History")
-            PillFlowBottomNavBar(selectedPage = "Prescriptions")
-            PillFlowBottomNavBar(selectedPage = "Settings")
+            PillFlowBottomNavBar(selectedPage = Screen.Home.route)
+            PillFlowBottomNavBar(selectedPage = Screen.History.route)
+            PillFlowBottomNavBar(selectedPage = Screen.Prescriptions.route)
+            PillFlowBottomNavBar(selectedPage = Screen.Settings.route)
         }
     }
 }

@@ -32,6 +32,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.CaregiverDashboardViewModel
 import com.riramzy.pillfllow.utils.ComplianceStatus
+import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
@@ -41,6 +42,9 @@ import pillfllow.shared.generated.resources.avatar3
 @Composable
 fun CaregiverDashboardScreen(
     caregiverDashboardViewModel: CaregiverDashboardViewModel = koinViewModel(),
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state = caregiverDashboardViewModel.state.collectAsStateWithLifecycle()
@@ -50,6 +54,9 @@ fun CaregiverDashboardScreen(
         selectPatient = caregiverDashboardViewModel::selectPatient,
         callPatient = caregiverDashboardViewModel::callPatient,
         nudgePatient = caregiverDashboardViewModel::nudgePatient,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToPrescriptions = onNavigateToPrescriptions,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }
@@ -60,11 +67,22 @@ fun CaregiverDashboardScreenContent(
     selectPatient: (String) -> Unit = {},
     callPatient: (String) -> Unit = {},
     nudgePatient: (String) -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
-        floatingActionButton = { PillFlowBottomNavBar() },
+        floatingActionButton = {
+            PillFlowBottomNavBar(
+                selectedPage = Screen.Home.route,
+                onHomeClick = {},
+                onHistoryClick = onNavigateToHistory,
+                onPrescriptionsClick = onNavigateToPrescriptions,
+                onSettingsClick = onNavigateToSettings
+            )
+        },
         floatingActionButtonPosition = FabPosition.Center,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()

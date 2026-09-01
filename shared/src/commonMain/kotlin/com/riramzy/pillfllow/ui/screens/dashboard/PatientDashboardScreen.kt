@@ -39,11 +39,15 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PatientDashboardScreen(
     patientDashboardViewModel: PatientDashboardViewModel = koinViewModel(),
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by patientDashboardViewModel.state.collectAsStateWithLifecycle()
@@ -51,6 +55,9 @@ fun PatientDashboardScreen(
     PatientDashboardScreenContent(
         state = state,
         logDose = patientDashboardViewModel::logDose,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToPrescriptions = onNavigateToPrescriptions,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }
@@ -59,6 +66,9 @@ fun PatientDashboardScreen(
 fun PatientDashboardScreenContent(
     state: PatientDashboardState = PatientDashboardState(),
     logDose: (Long) -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToPrescriptions: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val sensor = remember { PlatformSensor() }
@@ -78,7 +88,15 @@ fun PatientDashboardScreenContent(
 
     Scaffold(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
-        floatingActionButton = { PillFlowBottomNavBar() },
+        floatingActionButton = {
+            PillFlowBottomNavBar(
+                selectedPage = Screen.Home.route,
+                onHomeClick = {},
+                onHistoryClick = onNavigateToHistory,
+                onPrescriptionsClick = onNavigateToPrescriptions,
+                onSettingsClick = onNavigateToSettings
+            )
+                               },
         floatingActionButtonPosition = FabPosition.Center,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()

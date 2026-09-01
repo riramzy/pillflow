@@ -43,6 +43,7 @@ import com.riramzy.pillfllow.ui.viewmodel.prescriptions.CaregiverPrescriptionsVi
 import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
@@ -51,6 +52,9 @@ import pillfllow.shared.generated.resources.avatar2
 @Composable
 fun CaregiverPrescriptionsScreen(
     caregiverPrescriptionsViewModel: CaregiverPrescriptionsViewModel = koinViewModel(),
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by caregiverPrescriptionsViewModel.state.collectAsStateWithLifecycle()
@@ -63,6 +67,9 @@ fun CaregiverPrescriptionsScreen(
         onCloseAddSheet = caregiverPrescriptionsViewModel::closeAddSheet,
         onSavePrescription = caregiverPrescriptionsViewModel::savePrescription,
         onDeletePrescription = caregiverPrescriptionsViewModel::deletePrescription,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }
@@ -77,6 +84,9 @@ fun CaregiverPrescriptionsScreenContent(
     onCloseAddSheet: () -> Unit = {},
     onSavePrescription: (String, String, String, String, String, String, String, List<Long>) -> Unit = { _, _, _, _, _, _, _, _ -> },
     onDeletePrescription: (Long) -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
@@ -151,10 +161,13 @@ fun CaregiverPrescriptionsScreenContent(
         topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
         floatingActionButton = {
             PillFlowBottomNavBar(
-                selectedPage = "Prescriptions",
-
-                )
-        },
+                selectedPage = Screen.Prescriptions.route,
+                onHomeClick = onNavigateToHome,
+                onHistoryClick = onNavigateToHistory,
+                onPrescriptionsClick = {},
+                onSettingsClick = onNavigateToSettings
+            )
+                               },
         floatingActionButtonPosition = FabPosition.Center,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
