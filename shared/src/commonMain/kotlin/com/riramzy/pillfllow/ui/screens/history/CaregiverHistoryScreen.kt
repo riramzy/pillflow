@@ -26,8 +26,10 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
+import com.riramzy.pillfllow.ui.components.history.PillFlowEmptyHistoryCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
+import com.riramzy.pillfllow.ui.components.history.PillFlowNoPatientsHistoryCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
@@ -116,7 +118,14 @@ fun CaregiverHistoryScreenContent(
                 }
             }
 
-            if (state.pairedPatients.isNotEmpty()) {
+            if (!state.hasPairedPatients) {
+                item {
+                    PillFlowNoPatientsHistoryCard(
+                        onLinkPatientClick = onNavigateToSettings,
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
+            } else {
                 item {
                     PillFlowPatientCarousel(
                         patients = state.pairedPatients,
@@ -125,65 +134,72 @@ fun CaregiverHistoryScreenContent(
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
-            }
 
-            item {
-                PillFlowMonthlyScoreCard(
-                    monthYearText = state.monthYearTitle,
-                    scorePercentage = state.scorePercentage,
-                    onTimeCount = state.onTimeCount,
-                    lateCount = state.lateCount,
-                    missedCount = state.missedCount,
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Monthly Heatmap",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    PillFlowMonthlyHeatmapCard(
-                        monthDays = state.monthlyComplianceDays,
+                item {
+                    PillFlowMonthlyScoreCard(
                         monthYearText = state.monthYearTitle,
+                        scorePercentage = state.scorePercentage,
+                        onTimeCount = state.onTimeCount,
+                        lateCount = state.lateCount,
+                        missedCount = state.missedCount,
+                        modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
-            }
 
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Log Records",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    state.logRecords.forEach { log ->
-                        PillFlowLogCard(
-                            actionTitle = log.actionTitle,
-                            actionDescription = log.actionDescription,
-                            timestampText = log.timestampText,
-                            status = log.status
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Monthly Heatmap",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
                         )
+
+                        PillFlowMonthlyHeatmapCard(
+                            monthDays = state.monthlyComplianceDays,
+                            monthYearText = state.monthYearTitle,
+                        )
+                    }
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Log Records",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        if (state.logRecords.isEmpty()) {
+                            PillFlowEmptyHistoryCard(
+                                title = "No History for ${state.selectedPatientName}",
+                                description = "Adherence logs for ${state.selectedPatientName} will appear here once doses are taken or missed."
+                            )
+                        } else {
+                            state.logRecords.forEach { log ->
+                                PillFlowLogCard(
+                                    actionTitle = log.actionTitle,
+                                    actionDescription = log.actionDescription,
+                                    timestampText = log.timestampText,
+                                    status = log.status
+                                )
+                            }
+                        }
                     }
                 }
             }

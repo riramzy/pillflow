@@ -25,6 +25,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
+import com.riramzy.pillfllow.ui.components.history.PillFlowEmptyHistoryCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
@@ -159,13 +160,21 @@ fun PatientHistoryScreenContent(
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    state.logRecords.forEach { log ->
-                        PillFlowLogCard(
-                            actionTitle = log.actionTitle,
-                            actionDescription = log.actionDescription,
-                            timestampText = log.timestampText,
-                            status = log.status
+
+                    if (!state.hasRecords) {
+                        PillFlowEmptyHistoryCard(
+                            title = "No Medication History Yet",
+                            description = "Your adherence logs and compliance metrics will appear here once doses are taken."
                         )
+                    } else {
+                        state.logRecords.forEach { log ->
+                            PillFlowLogCard(
+                                actionTitle = log.actionTitle,
+                                actionDescription = log.actionDescription,
+                                timestampText = log.timestampText,
+                                status = log.status
+                            )
+                        }
                     }
                 }
             }

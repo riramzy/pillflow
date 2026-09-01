@@ -16,7 +16,14 @@ data class HistoryState(
     val monthlyComplianceDays: List<MonthDaysCompliance> = emptyList(),
     val logRecords: List<HistoryLogRecordUiModel> = emptyList(),
     val isLoading: Boolean = false
-)
+) {
+    val hasPairedPatients: Boolean get() = pairedPatients.isNotEmpty()
+    val hasRecords: Boolean get() = logRecords.isNotEmpty()
+    val selectedPatient: PairedPatientUiModel?
+        get() = pairedPatients.find { it.id == selectedPatientId }
+    val selectedPatientName: String
+        get() = selectedPatient?.name ?: ""
+}
 
 data class HistoryLogRecordUiModel(
     val id: String,
