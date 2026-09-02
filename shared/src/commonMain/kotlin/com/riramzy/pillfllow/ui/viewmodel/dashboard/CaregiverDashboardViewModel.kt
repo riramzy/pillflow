@@ -285,7 +285,7 @@ class CaregiverDashboardViewModel(
         val patientName = _state.value.patients.firstOrNull { it.id == patientId }?.name ?: "Patient"
         val previousAlert = _state.value.dailyStatusAlertText
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
                     dailyStatusAlertText = "Nudge reminder sent to $patientName!",

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.utils.UserType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,7 +73,7 @@ class AuthViewModel(
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             try {
@@ -108,7 +110,7 @@ class AuthViewModel(
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             try {
