@@ -15,6 +15,9 @@ interface MedicationDao {
     @Query("SELECT * FROM medications")
     fun getAllMedications(): Flow<List<MedicationEntity>>
 
+    @Query("SELECT * FROM medications")
+    fun getAllMedicationsOnce(): List<MedicationEntity>
+
     @Query("SELECT * FROM medications WHERE isSynced = 0")
     suspend fun getUnsyncedMedications(): List<MedicationEntity>
 

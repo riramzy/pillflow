@@ -32,8 +32,8 @@ val appModule: Module = module {
     single { PlatformHaptics() }
     single { PlatformSensor() }
 
-    single<UserRepo> { UserRepoImpl(get()) }
-    single<MedicationRepo> { MedicationRepoImpl(get()) }
-    single<PairingRepo> { PairingRepoImpl(get()) }
+    single<UserRepo> { UserRepoImpl(get(), get()) }
+    single<MedicationRepo> { MedicationRepoImpl(get(), get(), get()) }
+    single<PairingRepo> { PairingRepoImpl(get(), get(), get()) }
     single<AuthRepo> { AuthRepoImpl(get(), get(), get()) }
 }
