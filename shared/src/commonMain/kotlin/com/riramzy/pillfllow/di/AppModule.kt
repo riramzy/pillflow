@@ -15,6 +15,8 @@ import com.riramzy.pillfllow.domain.repo.UserRepo
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.auth
+import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.firestore
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -22,7 +24,9 @@ val appModule: Module = module {
     single { get<PillFlowDatabase>().userDao }
     single { get<PillFlowDatabase>().medicationDao }
     single { get<PillFlowDatabase>().pairingDao }
+
     single<FirebaseAuth> { Firebase.auth }
+    single<FirebaseFirestore> { Firebase.firestore }
 
     single { PlatformNotifier() }
     single { PlatformHaptics() }
@@ -31,5 +35,5 @@ val appModule: Module = module {
     single<UserRepo> { UserRepoImpl(get()) }
     single<MedicationRepo> { MedicationRepoImpl(get()) }
     single<PairingRepo> { PairingRepoImpl(get()) }
-    single<AuthRepo> { AuthRepoImpl(get(), get()) }
+    single<AuthRepo> { AuthRepoImpl(get(), get(), get()) }
 }
