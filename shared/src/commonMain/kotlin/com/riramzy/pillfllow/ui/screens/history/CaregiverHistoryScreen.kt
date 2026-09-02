@@ -22,14 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
-import com.riramzy.pillfllow.ui.components.history.PillFlowEmptyHistoryCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
-import com.riramzy.pillfllow.ui.components.history.PillFlowNoPatientsHistoryCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
@@ -39,8 +38,10 @@ import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.add
 import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
+import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverHistoryScreen(
@@ -120,9 +121,13 @@ fun CaregiverHistoryScreenContent(
 
             if (!state.hasPairedPatients) {
                 item {
-                    PillFlowNoPatientsHistoryCard(
-                        onLinkPatientClick = onNavigateToSettings,
-                        modifier = Modifier.padding(horizontal = 15.dp)
+                    PillFlowEmptyStateCard(
+                        title = "No Paired Patients",
+                        description = "Link a patient using their unique pairing code in Settings to track their daily adherence and review monthly compliance logs.",
+                        icon = Res.drawable.user_patient,
+                        buttonText = "Link Patient",
+                        buttonIcon = Res.drawable.add,
+                        onButtonClick = onNavigateToSettings
                     )
                 }
             } else {
@@ -186,7 +191,7 @@ fun CaregiverHistoryScreenContent(
                         )
 
                         if (state.logRecords.isEmpty()) {
-                            PillFlowEmptyHistoryCard(
+                            PillFlowEmptyStateCard(
                                 title = "No History for ${state.selectedPatientName}",
                                 description = "Adherence logs for ${state.selectedPatientName} will appear here once doses are taken or missed."
                             )

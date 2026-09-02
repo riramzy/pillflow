@@ -9,6 +9,7 @@ data class PatientDashboardState(
     val user: UserEntity? = null,
     val scheduledDoses: List<ScheduledDoseUiModel> = emptyList(),
     val pills: List<PillEntity> = emptyList(),
+    val hasPrescriptions: Boolean = false,
     val complianceStatus: ComplianceStatus = ComplianceStatus.ON_TIME,
     val complianceTitle: String = "All Set For Today!",
     val complianceSubtitle: String = "All scheduled doses completed",
@@ -18,7 +19,10 @@ data class PatientDashboardState(
     val totalDoses: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
-)
+) {
+    val isNewUserWithoutPrescriptions: Boolean
+        get() = !hasPrescriptions && scheduledDoses.isEmpty()
+}
 
 
 data class ScheduledDoseUiModel(

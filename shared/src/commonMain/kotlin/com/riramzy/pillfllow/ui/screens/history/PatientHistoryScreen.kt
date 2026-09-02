@@ -22,10 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
-import com.riramzy.pillfllow.ui.components.history.PillFlowEmptyHistoryCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
@@ -162,9 +162,9 @@ fun PatientHistoryScreenContent(
 
 
                     if (!state.hasRecords) {
-                        PillFlowEmptyHistoryCard(
-                            title = "No Medication History Yet",
-                            description = "Your adherence logs and compliance metrics will appear here once doses are taken."
+                        PillFlowEmptyStateCard(
+                            title = "No History for ${state.selectedPatientName}",
+                            description = "Adherence logs for ${state.selectedPatientName} will appear here once doses are taken or missed."
                         )
                     } else {
                         state.logRecords.forEach { log ->

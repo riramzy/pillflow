@@ -29,9 +29,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
-import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowEmptyPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.components.sheets.PrescriptionSheet
@@ -50,8 +50,8 @@ import pillfllow.shared.generated.resources.add
 import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
 import pillfllow.shared.generated.resources.pills
-import pillfllow.shared.generated.resources.profile
 import pillfllow.shared.generated.resources.settings
+import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverPrescriptionsScreen(
@@ -210,14 +210,13 @@ fun CaregiverPrescriptionsScreenContent(
 
             if (state.pairedPatients.isEmpty()) {
                 item {
-                    PillFlowEmptyPrescriptionCard(
+                    PillFlowEmptyStateCard(
                         title = "No Paired Patients Yet",
                         description = "Link with a patient using their 6-digit pairing code in Settings to view and manage their prescriptions.",
+                        icon = Res.drawable.user_patient,
                         buttonText = "Go to Settings",
                         buttonIcon = Res.drawable.settings,
-                        icon = Res.drawable.profile,
-                        onButtonClick = onNavigateToSettings,
-                        modifier = Modifier.padding(horizontal = 15.dp)
+                        onButtonClick = onNavigateToSettings
                     )
                 }
             } else {
@@ -233,12 +232,12 @@ fun CaregiverPrescriptionsScreenContent(
 
                 if (state.isEmpty) {
                     item {
-                        PillFlowEmptyPrescriptionCard(
+                        PillFlowEmptyStateCard(
                             title = "No Prescriptions Yet",
-                            description = "No medications scheduled for this patient. Add their daily prescriptions to monitor adherence.",
+                            description = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
+                            icon = Res.drawable.pills,
                             buttonText = "Add First Prescription",
                             buttonIcon = Res.drawable.add,
-                            icon = Res.drawable.pills,
                             onButtonClick = onOpenAddSheet,
                             modifier = Modifier.padding(horizontal = 15.dp)
                         )

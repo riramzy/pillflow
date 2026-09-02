@@ -29,6 +29,7 @@ import com.riramzy.pillfllow.domain.hardware.PlatformSensor
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
@@ -41,6 +42,10 @@ import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
+import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.add
+import pillfllow.shared.generated.resources.compliance_ontime
+import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PatientDashboardScreen(
@@ -187,11 +192,13 @@ fun PatientDashboardScreenContent(
                     )
 
                     if (state.scheduledDoses.isEmpty()) {
-                        Text(
-                            text = "No pending doses for today. You're all caught up!",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            fontSize = 12.sp
+                        PillFlowEmptyStateCard(
+                            title = if (state.isNewUserWithoutPrescriptions) "No Medications Scheduled" else "All Caught Up!",
+                            description = if (state.isNewUserWithoutPrescriptions) "Add your medications to schedule doses." else "Great job! All daily doses completed",
+                            icon = if (state.isNewUserWithoutPrescriptions) Res.drawable.pills else Res.drawable.compliance_ontime,
+                            buttonText = if (state.isNewUserWithoutPrescriptions) "Add Prescription" else null,
+                            buttonIcon = if (state.isNewUserWithoutPrescriptions) Res.drawable.add else null,
+                            onButtonClick = onNavigateToPrescriptions
                         )
                     } else {
                         state.scheduledDoses.forEach { scheduledDose ->

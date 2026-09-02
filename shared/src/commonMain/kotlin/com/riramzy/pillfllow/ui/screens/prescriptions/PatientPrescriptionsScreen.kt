@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
-import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowEmptyPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.components.sheets.PrescriptionSheet
@@ -42,6 +42,9 @@ import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.Screen
 import org.koin.compose.viewmodel.koinViewModel
+import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.add
+import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PatientPrescriptionsScreen(
@@ -198,7 +201,12 @@ fun PatientPrescriptionsScreenContent(
 
             if (state.isEmpty) {
                 item {
-                    PillFlowEmptyPrescriptionCard(
+                    PillFlowEmptyStateCard(
+                        title = "No Prescriptions Yet",
+                        description = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
+                        icon = Res.drawable.pills,
+                        buttonText = "Add First Prescription",
+                        buttonIcon = Res.drawable.add,
                         onButtonClick = onOpenAddSheet,
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowActivityCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientDailyStatusCard
@@ -38,6 +39,9 @@ import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
 import pillfllow.shared.generated.resources.avatar3
+import pillfllow.shared.generated.resources.history
+import pillfllow.shared.generated.resources.settings
+import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverDashboardScreen(
@@ -117,73 +121,94 @@ fun CaregiverDashboardScreenContent(
                 }
             }
 
-            item {
-                PillFlowPatientCarousel(
-                    patients = state.patients,
-                    selectedPatientId = state.selectedPatientId,
-                    onPatientSelected = selectPatient,
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                PillFlowPatientDailyStatusCard(
-                    patientName = state.activePatient?.name ?: "",
-                    lastUpdatedText = state.lastUpdatedText,
-                    status = state.selectedPatientDailyStatus,
-                    statusAlertText = state.dailyStatusAlertText,
-                    onCallClick = { callPatient(state.selectedPatientId) },
-                    onNudgeClick = { nudgePatient(state.selectedPatientId) },
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(15.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Weekly Overview",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    PillFlowPatientWeeklyOverviewCard(
-                        weeklyRatePercentage = state.weeklyRatePercentage,
-                        weeklyDays = state.weeklyCompliance,
+            if (state.patients.isEmpty()) {
+                item {
+                    PillFlowEmptyStateCard(
+                        title = "No Patients Linked Yet",
+                        description = "Connect with your family members to monitor their medication adherence, send reminder nudges, and receive missed dose alerts in real-time.",
+                        icon = Res.drawable.user_patient,
+                        buttonText = "Link a Patient in Settings",
+                        buttonIcon = Res.drawable.settings,
+                        onButtonClick = onNavigateToSettings
                     )
                 }
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(15.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Live Activity",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+            } else {
+                item {
+                    PillFlowPatientCarousel(
+                        patients = state.patients,
+                        selectedPatientId = state.selectedPatientId,
+                        onPatientSelected = selectPatient,
+                        modifier = Modifier.padding(horizontal = 15.dp)
                     )
+                }
 
-                    state.recentActivities.forEach { action ->
-                        PillFlowActivityCard(
-                            patientName = action.patientName,
-                            actionDescription = action.actionDescription,
-                            timestampText = action.timestampText,
-                            status = action.status
+                item {
+                    PillFlowPatientDailyStatusCard(
+                        patientName = state.activePatient?.name ?: "",
+                        lastUpdatedText = state.lastUpdatedText,
+                        status = state.selectedPatientDailyStatus,
+                        statusAlertText = state.dailyStatusAlertText,
+                        onCallClick = { callPatient(state.selectedPatientId) },
+                        onNudgeClick = { nudgePatient(state.selectedPatientId) },
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(15.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Weekly Overview",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
                         )
+
+                        PillFlowPatientWeeklyOverviewCard(
+                            weeklyRatePercentage = state.weeklyRatePercentage,
+                            weeklyDays = state.weeklyCompliance,
+                        )
+                    }
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(15.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Live Activity",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        if (state.recentActivities.isEmpty()) {
+                            PillFlowEmptyStateCard(
+                                title = "No Activity Yet",
+                                description = "Live dose updates and adherence logs for ${state.activePatient?.name ?: "your patient"} will appear here in real-time.",
+                                icon = Res.drawable.history
+                            )
+                        } else {
+                            state.recentActivities.forEach { action ->
+                                PillFlowActivityCard(
+                                    patientName = action.patientName,
+                                    actionDescription = action.actionDescription,
+                                    timestampText = action.timestampText,
+                                    status = action.status
+                                )
+                            }
+                        }
                     }
                 }
             }

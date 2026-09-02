@@ -34,10 +34,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
+import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPatientCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
-import com.riramzy.pillfllow.ui.components.settings.PillFlowEmptyPatientsCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPatientPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.components.sheets.ConfirmPairingSheet
@@ -52,6 +52,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
+import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverSettingsScreen(
@@ -333,7 +334,11 @@ fun CaregiverSettingsScreenContent(
 
 
                     if (state.activePatients.isEmpty()) {
-                        PillFlowEmptyPatientsCard()
+                        PillFlowEmptyStateCard(
+                            title = "No Linked Patients Yet",
+                            description = "Enter a 6-digit code provided by your patient above to link accounts and monitor their daily adherence.",
+                            icon = Res.drawable.user_patient
+                        )
                     } else {
                         state.activePatients.forEach { patient ->
                             PillFlowPatientCard(
