@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.ui.components.history
+package com.riramzy.pillfllow.ui.components.custom
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,20 +25,20 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.add
-import pillfllow.shared.generated.resources.unlink
+import pillfllow.shared.generated.resources.history
 
 @Composable
-fun PillFlowNoPatientsHistoryCard(
-    title: String = "No Paired Patients",
-    description: String = "Link a patient using their unique pairing code in Settings to track their daily adherence and review monthly compliance logs.",
-    icon: DrawableResource = Res.drawable.unlink,
-    onLinkPatientClick: () -> Unit = {},
+fun PillFlowEmptyStateCard(
+    title: String = "No Medication History Yet",
+    description: String = "Your adherence logs and compliance metrics will appear here once doses are taken.",
+    icon: DrawableResource = Res.drawable.history,
+    buttonText: String? = null,
+    buttonIcon: DrawableResource? = null,
+    onButtonClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -93,29 +93,31 @@ fun PillFlowNoPatientsHistoryCard(
                 textAlign = TextAlign.Start
             )
 
-            PillFlowButton(
-                text = "Link Patient",
-                withIcon = true,
-                icon = Res.drawable.add,
-                onClick = onLinkPatientClick,
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-            )
+            if (buttonText != null && onButtonClick != null) {
+                PillFlowButton(
+                    text = buttonText,
+                    withIcon = buttonIcon != null,
+                    icon = buttonIcon,
+                    onClick = onButtonClick,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                )
+            }
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PillFlowNoPatientsHistoryCardPreview() {
+fun PillFlowEmptyStateCardPreview() {
     PillFlowTheme {
-        PillFlowNoPatientsHistoryCard(modifier = Modifier.padding(15.dp))
+        PillFlowEmptyStateCard(modifier = Modifier.padding(15.dp))
     }
 }
 
 @Preview(uiMode = UI_MODE_NIGHT_YES, showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-fun PillFlowNoPatientsHistoryCardPreviewDark() {
+fun PillFlowEmptyStateCardPreviewDark() {
     PillFlowTheme {
-        PillFlowNoPatientsHistoryCard(modifier = Modifier.padding(15.dp))
+        PillFlowEmptyStateCard(modifier = Modifier.padding(15.dp))
     }
 }
