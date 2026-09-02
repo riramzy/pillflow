@@ -37,7 +37,15 @@ class AuthRepoImpl(
         role: UserType
     ): Result<UserEntity> = runCatching {
         val authResult = firebaseAuth.createUserWithEmailAndPassword(email, pass)
-        val uid = authResult.user?.uid ?: throw Exception("User ID not found")
+        val firebaseUser = authResult.user ?: throw Exception("User ID not found")
+        val uid = firebaseUser.uid
+
+        try {
+            firebaseUser.updateProfile(displayName = "$firstName $lastName|${role.name}")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw Exception("Failed to update user profile")
+        }
 
         val userEntity = UserEntity(
             id = uid,
@@ -55,11 +63,41 @@ class AuthRepoImpl(
 
     override suspend fun signIn(
         email: String,
-        pass: String
+        pass: String,
     ): Result<UserEntity> = runCatching {
         val authResult = firebaseAuth.signInWithEmailAndPassword(email, pass)
-        val uid = authResult.user?.uid ?: throw Exception("User ID not found")
-        userRepo.getUserByIdOnce(uid) ?: throw Exception("User not found")
+        val firebaseUser = authResult.user ?: throw Exception("User ID not found")
+        val uid = firebaseUser.uid
+
+        val existingUser = userRepo.getUserByIdOnce(uid)
+        if (existingUser != null && existingUser.firstName.isNotBlank()) {
+            return@runCatching existingUser
+        }
+
+        val displayName = firebaseUser.displayName ?: ""
+        val nameParts = displayName.substringBefore("|").trim().split(" ")
+        val roleStr = displayName.substringAfter("|", "PATIENT")
+
+        val fallbackFirstName = firebaseUser.email
+            ?.substringBefore("@")
+            ?.replaceFirstChar { it.uppercase() }
+            ?: "User"
+
+        val firstName = nameParts.firstOrNull()?.ifBlank { null } ?: fallbackFirstName
+        val lastName = nameParts.drop(1).joinToString(" ").ifBlank { "" }
+
+        val userEntity = UserEntity(
+            id = uid,
+            firstName = firstName,
+            lastName = lastName,
+            email = firebaseUser.email ?: email,
+            userType = roleStr,
+            createdAt = currentTimeMillis(),
+            avatarRes = "avatar1"
+        )
+
+        userRepo.insertUser(userEntity)
+        userEntity
     }
 
     override suspend fun signOut(): Result<Unit> = runCatching {
