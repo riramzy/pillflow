@@ -127,7 +127,8 @@ fun CaregiverHistoryScreenContent(
                         icon = Res.drawable.user_patient,
                         buttonText = "Link Patient",
                         buttonIcon = Res.drawable.add,
-                        onButtonClick = onNavigateToSettings
+                        onButtonClick = onNavigateToSettings,
+                        modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
             } else {

@@ -216,7 +216,8 @@ fun CaregiverPrescriptionsScreenContent(
                         icon = Res.drawable.user_patient,
                         buttonText = "Go to Settings",
                         buttonIcon = Res.drawable.settings,
-                        onButtonClick = onNavigateToSettings
+                        onButtonClick = onNavigateToSettings,
+                        modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
             } else {
