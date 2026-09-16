@@ -19,13 +19,20 @@ import com.riramzy.pillfllow.data.local.entity.UserEntity
         UserEntity::class,
         CaregiverPatientPairingEntity::class
     ],
-    version = 2
+    version = 6
 )
 @ConstructedBy(PillFlowDatabaseConstructor::class)
 abstract class PillFlowDatabase: RoomDatabase() {
     abstract val medicationDao: MedicationDao
     abstract val userDao: UserDao
     abstract val pairingDao: PairingDao
+
+    suspend fun clearDatabase() {
+        userDao.clearAllUsers()
+        medicationDao.clearAllMedications()
+        medicationDao.clearAllScheduledDoses()
+        pairingDao.clearAllPairings()
+    }
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")

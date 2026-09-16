@@ -24,6 +24,9 @@ interface MedicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMedication(medication: MedicationEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMedications(medications: List<MedicationEntity>)
+
     @Query("SELECT id FROM scheduled_doses WHERE medicationId = :medicationId AND isTaken = 0")
     suspend fun getPendingDoseIdsForMedication(medicationId: Long): List<Long>
 
@@ -133,4 +136,10 @@ interface MedicationDao {
     ORDER BY scheduled_doses.scheduledTime DESC
 """)
     fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity>
+
+    @Query("DELETE FROM medications")
+    suspend fun clearAllMedications()
+
+    @Query("DELETE FROM scheduled_doses")
+    suspend fun clearAllScheduledDoses()
 }

@@ -45,4 +45,7 @@ interface PairingDao {
 
     @Query("DELETE FROM pairings WHERE patientId = :patientId AND status = 'PENDING'")
     suspend fun deletePendingPairingsForPatient(patientId: String): Int
+
+    @Query("DELETE FROM pairings")
+    suspend fun clearAllPairings()
 }
