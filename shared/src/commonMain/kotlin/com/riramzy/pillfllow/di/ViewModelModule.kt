@@ -8,11 +8,19 @@ import com.riramzy.pillfllow.ui.viewmodel.prescriptions.CaregiverPrescriptionsVi
 import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PatientPrescriptionsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.settings.CaregiverSettingsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.settings.PatientSettingsViewModel
+import com.riramzy.pillfllow.ui.viewmodel.splash.SplashViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule: Module = module {
+    viewModel {
+        SplashViewModel(
+            authRepo = get(),
+            sessionManager = get()
+        )
+    }
+
     viewModel {
         AuthViewModel(
             authRepo = get()
