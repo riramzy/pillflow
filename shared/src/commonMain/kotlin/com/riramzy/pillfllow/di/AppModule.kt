@@ -12,6 +12,7 @@ import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.domain.session.SessionManager
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.auth
@@ -31,9 +32,10 @@ val appModule: Module = module {
     single { PlatformNotifier() }
     single { PlatformHaptics() }
     single { PlatformSensor() }
+    single { SessionManager() }
 
     single<UserRepo> { UserRepoImpl(get(), get()) }
     single<MedicationRepo> { MedicationRepoImpl(get(), get(), get()) }
-    single<PairingRepo> { PairingRepoImpl(get(), get(), get()) }
+    single<PairingRepo> { PairingRepoImpl(get(), get(), get(), get()) }
     single<AuthRepo> { AuthRepoImpl(get(), get(), get()) }
 }
