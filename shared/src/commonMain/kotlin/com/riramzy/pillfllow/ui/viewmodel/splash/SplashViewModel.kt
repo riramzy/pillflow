@@ -7,6 +7,8 @@ import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.ui.state.splash.SplashAction
 import com.riramzy.pillfllow.ui.state.splash.SplashNavEvent
 import com.riramzy.pillfllow.ui.state.splash.SplashState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +38,7 @@ class SplashViewModel(
     }
 
     private fun checkSession() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             delay(1000.milliseconds)
             val user = authRepo.getCurrentUser()
 

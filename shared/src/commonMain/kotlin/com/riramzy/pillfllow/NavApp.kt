@@ -1,7 +1,6 @@
 package com.riramzy.pillfllow
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -11,7 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.riramzy.pillfllow.domain.repo.AuthRepo
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.ui.screens.auth.AuthRoleSelectionScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthSignInScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthSignUpScreen
@@ -23,6 +22,7 @@ import com.riramzy.pillfllow.ui.screens.prescriptions.CaregiverPrescriptionsScre
 import com.riramzy.pillfllow.ui.screens.prescriptions.PatientPrescriptionsScreen
 import com.riramzy.pillfllow.ui.screens.settings.CaregiverSettingsScreen
 import com.riramzy.pillfllow.ui.screens.settings.PatientSettingsScreen
+import com.riramzy.pillfllow.ui.screens.splash.SplashScreen
 import com.riramzy.pillfllow.utils.Screen
 import com.riramzy.pillfllow.utils.UserType
 import org.koin.compose.koinInject
@@ -30,24 +30,20 @@ import org.koin.compose.koinInject
 @Composable
 fun NavApp(
     navController: NavHostController = rememberNavController(),
-    authRepo: AuthRepo = koinInject()
+    sessionManager: SessionManager = koinInject()
 ) {
-    val currentUser by authRepo.currentUser.collectAsStateWithLifecycle(initialValue = null)
-    val isCaregiver = currentUser?.userType?.equals("CAREGIVER", ignoreCase = true) == true
+    val currentUser by sessionManager.currentUser.collectAsStateWithLifecycle()
+    val isCaregiver = sessionManager.isCaregiver
     var selectedRole by rememberSaveable { mutableStateOf(UserType.PATIENT) }
-
-    LaunchedEffect(currentUser) {
-        if (currentUser == null) {
-            navController.navigate(Screen.RoleSelection.route) {
-                popUpTo(0) { inclusive = true }
-            }
-        }
-    }
 
     NavHost(
         navController = navController,
-        startDestination = if (currentUser == null) Screen.RoleSelection.route else Screen.Home.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(navController = navController)
+        }
+
         composable(Screen.RoleSelection.route) {
             AuthRoleSelectionScreen(
                 onRoleSelected = { role ->
@@ -63,7 +59,7 @@ fun NavApp(
                 onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                 onAuthSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo(Screen.RoleSelection.route) { inclusive = true }
                     }
                 }
             )
@@ -75,7 +71,7 @@ fun NavApp(
                 onNavigateToSignIn = { navController.navigate(Screen.SignIn.route) },
                 onAuthSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo(Screen.RoleSelection.route) { inclusive = true }
                     }
                 }
             )
@@ -130,17 +126,26 @@ fun NavApp(
         }
 
         composable(Screen.Settings.route) {
+            val onLogoutSuccess = {
+                sessionManager.clearUser()
+                navController.navigate(Screen.RoleSelection.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+
             if (isCaregiver) {
                 CaregiverSettingsScreen(
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
                     onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) }
+                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
+                    onSignOutSuccess = onLogoutSuccess
                 )
             } else {
                 PatientSettingsScreen(
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
                     onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) }
+                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
+                    onSignOutSuccess = onLogoutSuccess
                 )
             }
         }
