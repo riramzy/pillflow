@@ -12,5 +12,12 @@ data class UserEntity (
     val phoneNumber: String = "+1234567890",
     val userType: String,
     val avatarRes: String,
+    val pairedPatientIdsString: String = "",
+    val pairedCaregiverId: String? = null,
     val createdAt: Long
-)
+) {
+
+    val pairedPatientIds: List<String>
+        get() = if (pairedPatientIdsString.isBlank()) emptyList()
+                else pairedPatientIdsString.split(",").filter { it.isNotBlank() }
+}

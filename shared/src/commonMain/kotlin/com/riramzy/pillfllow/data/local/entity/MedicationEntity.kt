@@ -1,24 +1,16 @@
 package com.riramzy.pillfllow.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.riramzy.pillfllow.utils.randomUUID
 
 @Entity(
     tableName = "medications",
-    indices = [Index("userId")],
-    foreignKeys = [
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+    indices = [Index("userId")]
 )
 data class MedicationEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey val id: String = randomUUID(),
     val userId: String,
     val name: String,
     val dosage: String,

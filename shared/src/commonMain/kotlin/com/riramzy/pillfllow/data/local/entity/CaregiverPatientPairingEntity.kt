@@ -1,7 +1,6 @@
 package com.riramzy.pillfllow.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -10,21 +9,7 @@ import androidx.room.PrimaryKey
     indices = [
         Index("caregiverId"),
         Index("patientId"),
-        Index("pairingCode", unique = true)
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["caregiverId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["patientId"],
-            onDelete = ForeignKey.CASCADE
-        )
+        Index("pairingCode")
     ]
 )
 data class CaregiverPatientPairingEntity (

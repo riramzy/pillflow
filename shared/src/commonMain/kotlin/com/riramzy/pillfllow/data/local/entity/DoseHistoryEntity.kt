@@ -1,8 +1,8 @@
 package com.riramzy.pillfllow.data.local.entity
 
 data class DoseHistoryEntity(
-    val id: Long,
-    val medicationId: Long,
+    val id: String,
+    val medicationId: String,
     val name: String,
     val dosage: String,
     val colorHex: String,
