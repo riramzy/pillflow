@@ -17,6 +17,8 @@ import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GeneratePairingCodeUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPatientPairingStatusUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.SetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -36,6 +38,8 @@ val useCaseModule: Module = module {
     factory { GetPatientPairingStatusUseCase(pairingRepo = get()) }
     factory { GeneratePairingCodeUseCase(pairingRepo = get()) }
     factory { UpdateUserProfileUseCase(userRepo = get()) }
+    factory { GetPhysicsSensitivityUseCase(sessionManager = get()) }
+    factory { SetPhysicsSensitivityUseCase(sessionManager = get()) }
 
     factory { GetMedicationsForUserUseCase(medicationRepo = get()) }
     factory { SavePrescriptionUseCase(medicationRepo = get()) }
