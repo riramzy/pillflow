@@ -17,3 +17,16 @@ data class PatientSettingsState(
     val isRegenerating: Boolean = false,
     val errorMessage: String? = null
 )
+
+sealed interface PatientSettingsAction {
+    data object RegenerateCode: PatientSettingsAction
+    data class SelectSensitivity(val sensitivity: PhysicsSensitivity): PatientSettingsAction
+    data class UpdateProfile(
+        val firstName: String,
+        val lastName: String,
+        val email: String,
+        val avatarRes: String
+    ): PatientSettingsAction
+    data object DismissError: PatientSettingsAction
+    data class SignOut(val onSignedOut: () -> Unit = {}): PatientSettingsAction
+}

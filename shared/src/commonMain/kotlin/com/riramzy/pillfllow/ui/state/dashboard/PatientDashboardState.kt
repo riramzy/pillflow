@@ -17,7 +17,7 @@ data class PatientDashboardState(
     val adherenceScore: Int = 100,
     val dosesTaken: Int = 0,
     val totalDoses: Int = 0,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val errorMessage: String? = null
 ) {
     val isNewUserWithoutPrescriptions: Boolean
@@ -26,7 +26,7 @@ data class PatientDashboardState(
 
 
 data class ScheduledDoseUiModel(
-    val id: Long,
+    val id: String,
     val name: String,
     val dosage: String,
     val timeFormatted: String,
@@ -42,3 +42,7 @@ data class ComplianceCardUiModel(
     val subtitle: String,
     val badgeText: String
 )
+
+sealed interface PatientDashboardAction {
+    data class LogDose(val doseId: String, val scheduledTime: Long? = null): PatientDashboardAction
+}

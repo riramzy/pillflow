@@ -21,3 +21,21 @@ data class CaregiverSettingsState(
     val errorMessage: String? = null,
     val successMessage: String? = null
 )
+
+sealed interface CaregiverSettingsAction {
+    data class InputCodeChanged(val code: String): CaregiverSettingsAction
+    data class InitiateLink(val code: String): CaregiverSettingsAction
+    data class RelationChanged(val relation: String): CaregiverSettingsAction
+    data object ConfirmLink: CaregiverSettingsAction
+    data object DismissConfirmSheet: CaregiverSettingsAction
+    data class UnpairPatient(val patientId: String, val pairingId: String): CaregiverSettingsAction
+    data class UpdateProfile(
+        val firstName: String,
+        val lastName: String,
+        val email: String,
+        val avatarRes: String
+    ): CaregiverSettingsAction
+    data object DismissError: CaregiverSettingsAction
+    data object DismissSuccess: CaregiverSettingsAction
+    data class SignOut(val onSignedOut: () -> Unit = {}): CaregiverSettingsAction
+}

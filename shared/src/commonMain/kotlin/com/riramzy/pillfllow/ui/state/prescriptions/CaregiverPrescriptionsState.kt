@@ -9,10 +9,28 @@ data class CaregiverPrescriptionsState(
     val activeCount: Int = 0,
     val nextDoseTime: String = "--:--",
     val nextDoseMedication: String = "None",
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val isAddSheetOpen: Boolean = false,
-    val editingMedicationId: Long? = null,
+    val editingMedicationId: String? = null,
     val errorMessage: String? = null
 ) {
     val isEmpty: Boolean get() = prescriptions.isEmpty()
+}
+
+sealed interface CaregiverPrescriptionsAction {
+    data class SelectPatient(val patientId: String): CaregiverPrescriptionsAction
+    data object OpenAddSheet: CaregiverPrescriptionsAction
+    data class OpenEditSheet(val medicationId: String): CaregiverPrescriptionsAction
+    data object CloseAddSheet: CaregiverPrescriptionsAction
+    data class SavePrescription(
+        val name: String,
+        val dosage: String,
+        val instructions: String,
+        val frequency: String,
+        val timeOfDay: String,
+        val colorHex: String,
+        val shape: String,
+        val scheduledTimesMillis: List<Long> = emptyList()
+    ): CaregiverPrescriptionsAction
+    data class DeletePrescription(val id: String): CaregiverPrescriptionsAction
 }

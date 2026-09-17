@@ -18,7 +18,7 @@ data class CaregiverDashboardState(
     val lastUpdatedText: String = "Updated just now",
     val weeklyCompliance: List<ComplianceDayUiModel> = defaultSampleDays,
     val weeklyRatePercentage: Int = 95,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val errorMessage: String? = null
 ) {
     val activePatient: PairedPatientUiModel?
@@ -50,3 +50,9 @@ data class RecentActivityUiModel(
     val timestampText: String = "Today at 08:02 AM",
     val status: ComplianceStatus = ComplianceStatus.ON_TIME
 )
+
+sealed interface CaregiverDashboardAction {
+    data class SelectPatient(val patientId: String): CaregiverDashboardAction
+    data class CallPatient(val patientId: String): CaregiverDashboardAction
+    data class NudgePatient(val patientId: String): CaregiverDashboardAction
+}

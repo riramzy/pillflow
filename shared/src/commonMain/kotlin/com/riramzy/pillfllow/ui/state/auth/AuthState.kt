@@ -15,3 +15,16 @@ data class AuthState(
     val errorMessage: String? = null,
     val isAuthenticated: Boolean = false
 )
+
+sealed interface AuthAction {
+    data class SelectRole(val role: UserType): AuthAction
+    data class FirstNameChanged(val firstName: String): AuthAction
+    data class LastNameChanged(val lastName: String): AuthAction
+    data class EmailChanged(val email: String): AuthAction
+    data class PasswordChanged(val password: String): AuthAction
+    data class ConfirmPasswordChanged(val confirmPassword: String): AuthAction
+    data object ToggleAuthMode: AuthAction
+    data class SignUp(val onSuccess: () -> Unit = {}): AuthAction
+    data class SignIn(val onSuccess: () -> Unit = {}): AuthAction
+    data object DismissError: AuthAction
+}
