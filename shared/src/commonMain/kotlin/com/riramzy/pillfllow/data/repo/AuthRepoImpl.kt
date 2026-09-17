@@ -6,15 +6,20 @@ import com.riramzy.pillfllow.data.remote.dto.toDto
 import com.riramzy.pillfllow.data.remote.dto.toEntity
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.utils.Result
 import com.riramzy.pillfllow.utils.UserType
 import com.riramzy.pillfllow.utils.currentTimeMillis
+import com.riramzy.pillfllow.utils.safeCall
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class AuthRepoImpl(
     private val firebaseAuth: FirebaseAuth,
@@ -34,72 +39,88 @@ class AuthRepoImpl(
             }
         }
 
+    override suspend fun getCurrentUser(): UserEntity? {
+        val uid = firebaseAuth.currentUser?.uid ?: return null
+        return userRepo.getUserByIdOnce(uid)
+    }
+
     override suspend fun signUp(
         email: String,
         pass: String,
         firstName: String,
         lastName: String,
         role: UserType
-    ): Result<UserEntity> = runCatching {
-        val now = currentTimeMillis()
-        val authResult = firebaseAuth.createUserWithEmailAndPassword(email, pass)
-        val firebaseUser = authResult.user ?: throw Exception("User ID not found")
-        val uid = firebaseUser.uid
+    ): Result<UserEntity> = safeCall {
+        withContext(Dispatchers.IO) {
+            val now = currentTimeMillis()
+            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, pass)
+            val firebaseUser = authResult.user ?: throw Exception("User ID not found")
+            val uid = firebaseUser.uid
 
-        try {
-            firebaseUser.updateProfile(displayName = "$firstName $lastName|${role.name}")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            throw Exception("Failed to update user profile")
+            try {
+                firebaseUser.updateProfile(displayName = "$firstName $lastName|${role.name}")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                throw Exception("Failed to update user profile")
+            }
+
+            val userEntity = UserEntity(
+                id = uid,
+                firstName = firstName,
+                lastName = lastName,
+                email = email,
+                userType = role.toString(),
+                createdAt = currentTimeMillis(),
+                avatarRes = "avatar1"
+            )
+
+            val userDto = userEntity.toDto(updatedAt = now)
+            firestore.
+            collection("users")
+                .document(uid)
+                .set(userDto)
+
+            userRepo.insertUser(userEntity)
+            userEntity
         }
-
-        val userEntity = UserEntity(
-            id = uid,
-            firstName = firstName,
-            lastName = lastName,
-            email = email,
-            userType = role.toString(),
-            createdAt = currentTimeMillis(),
-            avatarRes = "avatar1"
-        )
-
-        val userDto = userEntity.toDto(updatedAt = now)
-        firestore.collection("users").document(uid).set(userDto)
-
-        userRepo.insertUser(userEntity)
-        userEntity
     }
 
     override suspend fun signIn(
         email: String,
         pass: String,
-    ): Result<UserEntity> = runCatching {
-        val authResult = firebaseAuth.signInWithEmailAndPassword(email, pass)
-        val uid = authResult.user?.uid ?: throw Exception("User ID not found")
+    ): Result<UserEntity> = safeCall {
+        withContext(Dispatchers.IO) {
+            val authResult = firebaseAuth.signInWithEmailAndPassword(email, pass)
+            val firebaseUser = authResult.user ?: throw Exception("User ID not found")
+            val uid = firebaseUser.uid
 
-        val remoteUser = runCatching {
-            firestore.collection("users")
-                .document(uid)
-                .get()
-                .data<UserDto>()
-                .toEntity()
-        }.getOrNull()
+            val remoteUser = runCatching {
+                val doc = firestore.collection("users").document(uid).get()
+                if (doc.exists) doc.data<UserDto>().toEntity() else null
+            }.getOrNull()
 
-        val finalUser = remoteUser ?: userRepo.getUserByIdOnce(uid) ?: UserEntity(
-            id = uid,
-            firstName = email.substringBefore("@").replaceFirstChar { it.uppercase() },
-            lastName = "",
-            email = email,
-            userType = "PATIENT",
-            createdAt = currentTimeMillis(),
-            avatarRes = "avatar1"
-        )
+            val displayName = firebaseUser.displayName ?: ""
+            val roleFromProfile = if (displayName.contains("CAREGIVER", ignoreCase = true)) "CAREGIVER" else "PATIENT"
+            val names = displayName.substringBefore("|").trim().split(" ")
+            val fName = names.firstOrNull()?.ifBlank { null } ?: email.substringBefore("@").replaceFirstChar { it.uppercase() }
+            val lName = names.drop(1).joinToString(" ")
 
-        userRepo.insertUser(finalUser)
-        finalUser
+            val finalUser = remoteUser ?: userRepo.getUserByIdOnce(uid) ?: UserEntity(
+                id = uid,
+                firstName = fName,
+                lastName = lName,
+                email = email,
+                userType = roleFromProfile,
+                createdAt = currentTimeMillis(),
+                avatarRes = "avatar1"
+            )
+
+            userRepo.insertUser(finalUser)
+            finalUser
+        }
     }
 
-    override suspend fun signOut(): Result<Unit> = runCatching {
+    override suspend fun signOut(): Result<Unit> = safeCall {
         firebaseAuth.signOut()
     }
 }

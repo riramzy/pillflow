@@ -10,10 +10,11 @@ import com.riramzy.pillfllow.data.remote.dto.toEntity
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.utils.currentTimeMillis
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class PairingRepoImpl(
@@ -32,8 +33,8 @@ class PairingRepoImpl(
         }
     }
 
-    override fun getPairingsForCaregiver(caregiverId: String): Flow<List<CaregiverPatientPairingEntity>> {
-        CoroutineScope(Dispatchers.IO).launch {
+    override fun getPairingsForCaregiver(caregiverId: String): Flow<List<CaregiverPatientPairingEntity>> = channelFlow {
+        launch(Dispatchers.IO) {
             runCatching {
                 firestore
                     .collection("pairings")
@@ -41,23 +42,24 @@ class PairingRepoImpl(
                     .where { "status" equalTo "ACTIVE" }
                     .snapshots
                     .collect { querySnapshot ->
-                        querySnapshot.documents.forEach { doc ->
-                            val entity = doc.data<PairingDto>().toEntity()
-                            pairingDao.insertPairing(entity)
+                        val remoteEntities = querySnapshot.documents.map { doc ->
+                            doc.data<PairingDto>().toEntity()
+                        }
 
-                            val patientDoc = firestore
-                                .collection("users")
-                                .document(entity.patientId)
-                                .get()
+                        val remoteIds = remoteEntities.map { it.pairingId }.toSet()
+                        val localPairings = pairingDao.getPairingsForCaregiverOnce(caregiverId)
 
-                            if (patientDoc.exists) {
-                                userDao.insertUser(patientDoc.data<UserDto>().toEntity())
+                        localPairings.forEach { local ->
+                            if (local.pairingId !in remoteIds) {
+                                pairingDao.deletePairingById(local.pairingId)
                             }
                         }
+
+                        remoteEntities.forEach { pairingDao.insertPairing(it) }
                     }
             }
         }
-        return pairingDao.getPairingsForCaregiver(caregiverId)
+        pairingDao.getPairingsForCaregiver(caregiverId).distinctUntilChanged().collect { send(it) }
     }
 
     override suspend fun getPairingsForCaregiverOnce(caregiverId: String): List<CaregiverPatientPairingEntity> {
@@ -76,22 +78,28 @@ class PairingRepoImpl(
         return pairingDao.getPairingsForCaregiverOnce(caregiverId)
     }
 
-    override fun getPairingsForPatient(patientId: String): Flow<List<CaregiverPatientPairingEntity>> {
-        CoroutineScope(Dispatchers.IO).launch {
+    override fun getPairingsForPatient(patientId: String): Flow<List<CaregiverPatientPairingEntity>> = channelFlow {
+        launch(Dispatchers.IO) {
             runCatching {
                 firestore
                     .collection("pairings")
                     .where { "patientId" equalTo patientId }
                     .snapshots
                     .collect { querySnapshot ->
-                        querySnapshot.documents.forEach { doc ->
-                            val entity = doc.data<PairingDto>().toEntity()
-                            pairingDao.insertPairing(entity)
+                        val remoteEntities = querySnapshot.documents.map { it.data<PairingDto>().toEntity() }
+                        val remoteIds = remoteEntities.map { it.pairingId }.toSet()
+
+                        val localPairings = pairingDao.getPairingsForPatientOnce(patientId)
+                        localPairings.forEach { local ->
+                            if (local.pairingId !in remoteIds) {
+                                pairingDao.deletePairingById(local.pairingId)
+                            }
                         }
+                        remoteEntities.forEach { pairingDao.insertPairing(it) }
                     }
             }
         }
-        return pairingDao.getPairingsForPatient(patientId)
+        pairingDao.getPairingsForPatient(patientId).distinctUntilChanged().collect { send(it) }
     }
 
     override suspend fun getPairingsForPatientOnce(patientId: String): List<CaregiverPatientPairingEntity> {
@@ -173,7 +181,7 @@ class PairingRepoImpl(
                 .where { "status" equalTo "PENDING" }
                 .get()
             querySnapshot.documents.forEach { doc ->
-                doc.reference.delete()
+                firestore.collection("pairings").document(doc.id).delete()
             }
         }
         return count

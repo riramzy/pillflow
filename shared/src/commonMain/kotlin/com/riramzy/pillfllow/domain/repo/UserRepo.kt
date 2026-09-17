@@ -10,4 +10,6 @@ interface UserRepo {
     suspend fun getUserByIdOnce(id: String): UserEntity?
     suspend fun insertUser(user: UserEntity)
     suspend fun updateUser(user: UserEntity): Int
+    suspend fun linkCaregiverAndPatient(caregiverId: String, patientId: String)
+    suspend fun unlinkCaregiverAndPatient(caregiverId: String, patientId: String)
 }
