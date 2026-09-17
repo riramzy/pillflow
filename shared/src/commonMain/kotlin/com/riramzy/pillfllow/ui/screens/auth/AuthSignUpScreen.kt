@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
+import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
@@ -73,21 +74,9 @@ fun AuthSignUpScreen(
 
     AuthSignUpScreenContent(
         state = state,
-        onFirstNameChanged = authViewModel::onFirstNameChanged,
-        onLastNameChanged = authViewModel::onLastNameChanged,
-        onEmailChanged = authViewModel::onEmailChanged,
-        onPasswordChanged = authViewModel::onPasswordChanged,
-        onConfirmPasswordChanged = authViewModel::onConfirmPasswordChanged,
-        onToggleAuthMode = {
-            authViewModel.onToggleAuthMode()
-            onNavigateToSignIn()
-        },
-        onSubmit = {
-            authViewModel.signUp(
-                onSuccess = { onAuthSuccess(state.selectedRole) }
-            )
-        },
-        onErrorDismissed = authViewModel::onErrorDismissed,
+        onAuthSuccess = onAuthSuccess,
+        onNavigateToSignIn = onNavigateToSignIn,
+        onAction = authViewModel::onAction,
         modifier = modifier
     )
 }
@@ -95,14 +84,9 @@ fun AuthSignUpScreen(
 @Composable
 fun AuthSignUpScreenContent(
     state: AuthState = AuthState(),
-    onFirstNameChanged: (String) -> Unit = {},
-    onLastNameChanged: (String) -> Unit = {},
-    onEmailChanged: (String) -> Unit = {},
-    onPasswordChanged: (String) -> Unit = {},
-    onConfirmPasswordChanged: (String) -> Unit = {},
-    onToggleAuthMode: () -> Unit = {},
-    onSubmit: () -> Unit = {},
-    onErrorDismissed: () -> Unit = {},
+    onAuthSuccess: (UserType) -> Unit = {},
+    onNavigateToSignIn: () -> Unit = {},
+    onAction: (AuthAction) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -113,7 +97,7 @@ fun AuthSignUpScreenContent(
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(error)
-            onErrorDismissed()
+            onAction(AuthAction.DismissError)
         }
     }
 
@@ -224,7 +208,7 @@ fun AuthSignUpScreenContent(
                             label = "First Name",
                             placeholder = "Enter your first name",
                             value = state.firstName,
-                            onValueChange = { onFirstNameChanged(it) },
+                            onValueChange = { onAction(AuthAction.FirstNameChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Text,
                                 imeAction = ImeAction.Next
@@ -235,7 +219,7 @@ fun AuthSignUpScreenContent(
                             label = "Last Name",
                             placeholder = "Enter your last name",
                             value = state.lastName,
-                            onValueChange = { onLastNameChanged(it) },
+                            onValueChange = { onAction(AuthAction.LastNameChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Text,
                                 imeAction = ImeAction.Next
@@ -246,7 +230,7 @@ fun AuthSignUpScreenContent(
                             label = "Email",
                             placeholder = "Enter your email",
                             value = state.email,
-                            onValueChange = { onEmailChanged(it) },
+                            onValueChange = { onAction(AuthAction.EmailChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
                                 imeAction = ImeAction.Next
@@ -257,7 +241,7 @@ fun AuthSignUpScreenContent(
                             label = "Password",
                             placeholder = "Enter your password",
                             value = state.password,
-                            onValueChange = { onPasswordChanged(it) },
+                            onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Next
@@ -278,7 +262,7 @@ fun AuthSignUpScreenContent(
                             label = "Confirm Password",
                             placeholder = "Confirm your password",
                             value = state.confirmPassword,
-                            onValueChange = { onConfirmPasswordChanged(it) },
+                            onValueChange = { onAction(AuthAction.ConfirmPasswordChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Next
@@ -302,7 +286,9 @@ fun AuthSignUpScreenContent(
                         PillFlowButton(
                             text = if (state.isLoading) "Creating Account..." else "Sign Up",
                             isEnabled = !state.isLoading,
-                            onClick = { onSubmit() },
+                            onClick = {
+                                onAction(AuthAction.SignUp(onSuccess = { onAuthSuccess(state.selectedRole) }))
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -314,7 +300,10 @@ fun AuthSignUpScreenContent(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onToggleAuthMode() }
+                                .clickable {
+                                    onAction(AuthAction.ToggleAuthMode)
+                                    onNavigateToSignIn()
+                                }
                         )
                     }
                 }

@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
+import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
@@ -61,30 +62,21 @@ import pillfllow.shared.generated.resources.pillflow_logo
 fun AuthSignInScreen(
     authViewModel: AuthViewModel = koinViewModel(),
     selectedRole: UserType = UserType.PATIENT,
-    onAuthSuccess: (UserType) -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
+    onAuthSuccess: (UserType) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedRole) {
-        authViewModel.onRoleSelected(selectedRole)
+        authViewModel.onAction(AuthAction.SelectRole(selectedRole))
     }
 
     AuthSignInScreenContent(
         state = state,
-        onEmailChanged = authViewModel::onEmailChanged,
-        onPasswordChanged = authViewModel::onPasswordChanged,
-        onToggleAuthMode = {
-            authViewModel.onToggleAuthMode()
-            onNavigateToSignUp()
-        },
-        onSubmit = {
-            authViewModel.signIn(
-                onSuccess = { onAuthSuccess(state.selectedRole) }
-            )
-        },
-        onErrorDismissed = authViewModel::onErrorDismissed,
+        onAction = authViewModel::onAction,
+        onNavigateToSignUp = onNavigateToSignUp,
+        onAuthSuccess = onAuthSuccess,
         modifier = modifier
     )
 }
@@ -92,11 +84,9 @@ fun AuthSignInScreen(
 @Composable
 fun AuthSignInScreenContent(
     state: AuthState = AuthState(),
-    onEmailChanged: (String) -> Unit = {},
-    onPasswordChanged: (String) -> Unit = {},
-    onToggleAuthMode: () -> Unit = {},
-    onSubmit: () -> Unit = {},
-    onErrorDismissed: () -> Unit = {},
+    onAction: (AuthAction) -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {},
+    onAuthSuccess: (UserType) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -106,7 +96,7 @@ fun AuthSignInScreenContent(
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(error)
-            onErrorDismissed()
+            onAction(AuthAction.DismissError)
         }
     }
 
@@ -217,7 +207,7 @@ fun AuthSignInScreenContent(
                             label = "Email",
                             placeholder = "Enter your email",
                             value = state.email,
-                            onValueChange = { onEmailChanged(it) },
+                            onValueChange = { onAction(AuthAction.EmailChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
                                 imeAction = ImeAction.Next
@@ -228,7 +218,7 @@ fun AuthSignInScreenContent(
                             label = "Password",
                             placeholder = "Enter your password",
                             value = state.password,
-                            onValueChange = { onPasswordChanged(it) },
+                            onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Next
@@ -252,7 +242,7 @@ fun AuthSignInScreenContent(
                         PillFlowButton(
                             text = if (state.isLoading) "Logging In..." else "Sign In",
                             isEnabled = !state.isLoading,
-                            onClick = { onSubmit() },
+                            onClick = { onAction(AuthAction.SignIn(onSuccess = { onAuthSuccess(state.selectedRole) })) },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -264,7 +254,10 @@ fun AuthSignInScreenContent(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onToggleAuthMode() }
+                                .clickable {
+                                    onAction(AuthAction.ToggleAuthMode)
+                                    onNavigateToSignUp()
+                                }
                         )
                     }
                 }
