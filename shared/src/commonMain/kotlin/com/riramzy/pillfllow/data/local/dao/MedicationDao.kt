@@ -22,22 +22,22 @@ interface MedicationDao {
     suspend fun getUnsyncedMedications(): List<MedicationEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMedication(medication: MedicationEntity): Long
+    suspend fun insertMedication(medication: MedicationEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMedications(medications: List<MedicationEntity>)
 
     @Query("SELECT id FROM scheduled_doses WHERE medicationId = :medicationId AND isTaken = 0")
-    suspend fun getPendingDoseIdsForMedication(medicationId: Long): List<Long>
+    suspend fun getPendingDoseIdsForMedication(medicationId: String): List<String>
 
     @Query("DELETE FROM medications WHERE id = :id")
-    suspend fun deleteMedicationById(id: Long)
+    suspend fun deleteMedicationById(id: String)
 
     @Query("UPDATE medications SET isSynced = 1 WHERE id = :id")
-    suspend fun markMedicationSynced(id: Long)
+    suspend fun markMedicationSynced(id: String)
 
     @Query("SELECT * FROM scheduled_doses WHERE medicationId = :medicationId")
-    fun getScheduledDosesForMedication(medicationId: Long): Flow<List<ScheduledDoseEntity>>
+    fun getScheduledDosesForMedication(medicationId: String): Flow<List<ScheduledDoseEntity>>
 
     @Query("SELECT * FROM medications WHERE userId = :userId")
     fun getMedicationForUser(userId: String): Flow<List<MedicationEntity>>
@@ -91,13 +91,13 @@ interface MedicationDao {
     fun getUnsyncedScheduledDoses(): Flow<List<ScheduledDoseEntity>>
 
     @Query("UPDATE scheduled_doses SET isSynced = 1 WHERE id = :id")
-    suspend fun markScheduledDoseSynced(id: Long)
+    suspend fun markScheduledDoseSynced(id: String)
 
     @Query("UPDATE scheduled_doses SET isTaken = :isTaken, takenTime = :takenTime, complianceStatus = :complianceStatus, isSynced = 0 WHERE id = :id")
-    suspend fun markScheduledDoseTaken(id: Long, takenTime: Long, isTaken: Boolean, complianceStatus: String)
+    suspend fun markScheduledDoseTaken(id: String, takenTime: Long, isTaken: Boolean, complianceStatus: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<Long>
+    suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>)
 
     @Query("""
     SELECT 
@@ -142,4 +142,13 @@ interface MedicationDao {
 
     @Query("DELETE FROM scheduled_doses")
     suspend fun clearAllScheduledDoses()
+
+    @Query("DELETE FROM scheduled_doses WHERE medicationId = :medicationId")
+    suspend fun deleteScheduledDosesByMedicationId(medicationId: String)
+
+    @Query("DELETE FROM scheduled_doses WHERE id = :id")
+    suspend fun deleteScheduledDoseById(id: String)
+
+    @Query("SELECT * FROM scheduled_doses WHERE isTaken = 0")
+    suspend fun getAllPendingScheduledDosesOnce(): List<ScheduledDoseEntity>
 }

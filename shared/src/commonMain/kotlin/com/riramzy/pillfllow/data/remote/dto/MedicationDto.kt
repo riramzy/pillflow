@@ -20,7 +20,7 @@ data class MedicationDto(
 )
 
 fun MedicationDto.toEntity(isSynced: Boolean = false): MedicationEntity = MedicationEntity(
-    id = id.toLongOrNull() ?: 0L,
+    id = id,
     userId = userId,
     name = name,
     dosage = dosage,
@@ -37,7 +37,7 @@ fun MedicationEntity.toDto(
     createdAt: Long = 0L,
     updatedAt: Long = 0L
 ): MedicationDto = MedicationDto(
-    id = id.toString(),
+    id = id,
     userId = userId,
     name = name,
     dosage = dosage,

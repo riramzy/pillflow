@@ -13,6 +13,8 @@ data class UserDto(
     val userType: String = "PATIENT",
     val avatarRes: String = "avatar1",
     val fcmToken: String? = null,
+    val pairedPatientIds: List<String> = emptyList(),
+    val pairedCaregiverId: String? = null,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 )
@@ -25,6 +27,8 @@ fun UserDto.toEntity(): UserEntity = UserEntity(
     phoneNumber = phoneNumber,
     userType = userType,
     avatarRes = avatarRes,
+    pairedPatientIdsString = pairedPatientIds.joinToString(","),
+    pairedCaregiverId = pairedCaregiverId,
     createdAt = createdAt
 )
 
@@ -40,6 +44,8 @@ fun UserEntity.toDto(
     userType = userType,
     avatarRes = avatarRes,
     fcmToken = fcmToken,
+    pairedPatientIds = pairedPatientIds,
+    pairedCaregiverId = pairedCaregiverId,
     createdAt = createdAt,
     updatedAt = updatedAt
 )

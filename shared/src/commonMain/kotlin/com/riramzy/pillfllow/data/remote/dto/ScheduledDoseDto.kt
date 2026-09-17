@@ -18,8 +18,8 @@ data class ScheduledDoseDto(
 )
 
 fun ScheduledDoseDto.toEntity(
-    localId: Long = id.toLongOrNull() ?: 0L,
-    localMedicationId: Long = medicationId.toLongOrNull() ?: 0L,
+    localId: String = id,
+    localMedicationId: String = medicationId,
     isSynced: Boolean = true
 ): ScheduledDoseEntity = ScheduledDoseEntity(
     id = localId,
@@ -33,8 +33,8 @@ fun ScheduledDoseDto.toEntity(
 
 fun ScheduledDoseEntity.toDto(
     userId: String,
-    remoteDoseId: String = id.toString(),
-    remoteMedicationId: String = medicationId.toString(),
+    remoteDoseId: String = id,
+    remoteMedicationId: String = medicationId,
     medicationName: String = "",
     dosage: String = "",
     updatedAt: Long = 0L
