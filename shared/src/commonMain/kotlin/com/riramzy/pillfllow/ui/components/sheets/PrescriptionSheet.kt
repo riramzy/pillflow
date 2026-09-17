@@ -276,6 +276,12 @@ fun PrescriptionSheet(
             modifier = Modifier.fillMaxWidth(),
             text = if (initialMedication != null) "Update Prescription" else "Save Prescription",
             onClick = {
+                val finalScheduledMillis = if (accumulatedMillis.isEmpty() && initialMedication == null) {
+                    listOf(getTodayTimeInMillis(8, 0))
+                } else {
+                    accumulatedMillis
+                }
+
                 onMedicationSaved(
                     medicationName,
                     medicationDosage,
@@ -284,7 +290,7 @@ fun PrescriptionSheet(
                     selectedTimeText ?: "08:00 AM",
                     selectedColor?.first ?: "SKY_BLUE",
                     selectedShape?.first ?: "CAPSULE",
-                    accumulatedMillis
+                    finalScheduledMillis
                 )
             }
         )
