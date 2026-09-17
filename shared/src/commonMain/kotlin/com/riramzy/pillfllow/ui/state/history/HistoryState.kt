@@ -15,7 +15,7 @@ data class HistoryState(
     val missedCount: Int = 0,
     val monthlyComplianceDays: List<MonthDaysCompliance> = emptyList(),
     val logRecords: List<HistoryLogRecordUiModel> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = true
 ) {
     val hasPairedPatients: Boolean get() = pairedPatients.isNotEmpty()
     val hasRecords: Boolean get() = logRecords.isNotEmpty()
@@ -33,3 +33,7 @@ data class HistoryLogRecordUiModel(
     val timestampText: String,
     val status: ComplianceStatus
 )
+
+sealed interface HistoryAction {
+    data class SelectPatient(val patientId: String): HistoryAction
+}
