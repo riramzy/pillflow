@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.components.sheets.PrescriptionSheet
+import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
@@ -58,11 +60,7 @@ fun PatientPrescriptionsScreen(
 
     PatientPrescriptionsScreenContent(
         state = state,
-        onOpenAddSheet = prescriptionsViewModel::openAddSheet,
-        onOpenEditSheet = prescriptionsViewModel::openEditSheet,
-        onCloseAddSheet = prescriptionsViewModel::closeAddSheet,
-        onSavePrescription = prescriptionsViewModel::savePrescription,
-        onDeletePrescription = prescriptionsViewModel::deletePrescription,
+        onAction = prescriptionsViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToSettings = onNavigateToSettings,
@@ -74,35 +72,35 @@ fun PatientPrescriptionsScreen(
 @Composable
 fun PatientPrescriptionsScreenContent(
     state: PatientPrescriptionsState = PatientPrescriptionsState(),
-    onOpenAddSheet: () -> Unit = {},
-    onOpenEditSheet: (Long) -> Unit = {},
-    onCloseAddSheet: () -> Unit = {},
-    onSavePrescription: (String, String, String, String, String, String, String, List<Long>) -> Unit = { _, _, _, _, _, _, _, _ -> },
-    onDeletePrescription: (Long) -> Unit = {},
+    onAction: (PatientPrescriptionsAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     if (state.isAddSheetOpen) {
         ModalBottomSheet(
-            onDismissRequest = onCloseAddSheet,
+            onDismissRequest = { onAction(PatientPrescriptionsAction.CloseAddSheet) },
+            sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             PrescriptionSheet(
                 initialMedication = editingPrescription,
                 onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis ->
-                    onSavePrescription(
-                        name,
-                        dosage,
-                        instructions,
-                        freq,
-                        time,
-                        color,
-                        shape,
-                        scheduledTimeMillis
+                    onAction(
+                        PatientPrescriptionsAction.SavePrescription(
+                            name = name,
+                            dosage = dosage,
+                            instructions = instructions,
+                            frequency = freq,
+                            timeOfDay = time,
+                            colorHex = color,
+                            shape = shape,
+                            scheduledTimesMillis = scheduledTimeMillis
+                        )
                     )
                 },
                 modifier = Modifier.padding(bottom = 25.dp)
@@ -136,7 +134,9 @@ fun PatientPrescriptionsScreenContent(
                     customColor = MaterialTheme.colorScheme.error,
                     customTextColor = MaterialTheme.colorScheme.onError,
                     onClick = {
-                        prescriptionToDelete?.let { onDeletePrescription(it.id) }
+                        prescriptionToDelete?.let { prescription ->
+                            onAction(PatientPrescriptionsAction.DeletePrescription(prescription.id))
+                        }
                         prescriptionToDelete = null
                     }
                 )
@@ -160,7 +160,12 @@ fun PatientPrescriptionsScreenContent(
                 onHomeClick = onNavigateToHome,
                 onHistoryClick = onNavigateToHistory,
                 onPrescriptionsClick = {},
-                onSettingsClick = onNavigateToSettings
+                onSettingsClick = onNavigateToSettings,
+                withActionButton = true,
+                actionButtonIcon = Res.drawable.add,
+                onActionButtonClick = {
+                    onAction(PatientPrescriptionsAction.OpenAddSheet)
+                }
             )
                                },
         floatingActionButtonPosition = FabPosition.Center,
@@ -207,7 +212,9 @@ fun PatientPrescriptionsScreenContent(
                         icon = Res.drawable.pills,
                         buttonText = "Add First Prescription",
                         buttonIcon = Res.drawable.add,
-                        onButtonClick = onOpenAddSheet,
+                        onButtonClick = {
+                            onAction(PatientPrescriptionsAction.OpenAddSheet)
+                        },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
@@ -246,7 +253,9 @@ fun PatientPrescriptionsScreenContent(
                                 scheduleText = prescription.scheduleText,
                                 instructionsText = prescription.instructionsText,
                                 nextDoseText = prescription.nextDoseText,
-                                onEditClick = { onOpenEditSheet(prescription.id) },
+                                onEditClick = {
+                                    onAction(PatientPrescriptionsAction.OpenEditSheet(prescription.id))
+                                },
                                 onDeleteClick = { prescriptionToDelete = prescription }
                             )
                         }
@@ -265,7 +274,7 @@ fun PatientPrescriptionsScreenPreview() {
             state = PatientPrescriptionsState(
                 prescriptions = listOf(
                     PrescriptionUiModel(
-                        id = 1,
+                        id = "1",
                         medicationName = "Aspirin",
                         dosage = "500mg",
                         pillShape = PillShape.CIRCLE,
@@ -275,7 +284,7 @@ fun PatientPrescriptionsScreenPreview() {
                         nextDoseText = "Next Dose (2/3)"
                     ),
                     PrescriptionUiModel(
-                        id = 2,
+                        id = "2",
                         medicationName = "Ibuprofen",
                         dosage = "200mg",
                         pillShape = PillShape.OVAL,
@@ -305,7 +314,7 @@ fun PatientPrescriptionsScreenPreviewDark() {
             state = PatientPrescriptionsState(
                 prescriptions = listOf(
                     PrescriptionUiModel(
-                        id = 1,
+                        id = "1",
                         medicationName = "Aspirin",
                         dosage = "500mg",
                         pillShape = PillShape.CIRCLE,
@@ -315,7 +324,7 @@ fun PatientPrescriptionsScreenPreviewDark() {
                         nextDoseText = "Next Dose (2/3)"
                     ),
                     PrescriptionUiModel(
-                        id = 2,
+                        id = "2",
                         medicationName = "Ibuprofen",
                         dosage = "200mg",
                         pillShape = PillShape.OVAL,
