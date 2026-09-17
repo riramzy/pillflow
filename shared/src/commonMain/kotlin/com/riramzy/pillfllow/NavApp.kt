@@ -33,7 +33,8 @@ fun NavApp(
     sessionManager: SessionManager = koinInject()
 ) {
     val currentUser by sessionManager.currentUser.collectAsStateWithLifecycle()
-    val isCaregiver = sessionManager.isCaregiver
+    val isCaregiver = currentUser?.userType?.equals("CAREGIVER", ignoreCase = true) == true
+
     var selectedRole by rememberSaveable { mutableStateOf(UserType.PATIENT) }
 
     NavHost(
@@ -129,7 +130,8 @@ fun NavApp(
             val onLogoutSuccess = {
                 sessionManager.clearUser()
                 navController.navigate(Screen.RoleSelection.route) {
-                    popUpTo(0) { inclusive = true }
+                    popUpTo(Screen.RoleSelection.route) { inclusive = true }
+                    launchSingleTop = true
                 }
             }
 
