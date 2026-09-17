@@ -29,5 +29,6 @@ actual fun getTodayTimeInMillis(hour: Int, minute: Int): Long {
             add(Calendar.DAY_OF_YEAR, 1)
         }
     }
+
     return cal.timeInMillis
 }
