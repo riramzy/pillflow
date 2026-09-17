@@ -36,6 +36,7 @@ import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCar
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.components.sheets.PrescriptionSheet
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
@@ -65,12 +66,7 @@ fun CaregiverPrescriptionsScreen(
 
     CaregiverPrescriptionsScreenContent(
         state = state,
-        onSelectedPatient = caregiverPrescriptionsViewModel::selectPatient,
-        onOpenAddSheet = caregiverPrescriptionsViewModel::openAddSheet,
-        onOpenEditSheet = caregiverPrescriptionsViewModel::openEditSheet,
-        onCloseAddSheet = caregiverPrescriptionsViewModel::closeAddSheet,
-        onSavePrescription = caregiverPrescriptionsViewModel::savePrescription,
-        onDeletePrescription = caregiverPrescriptionsViewModel::deletePrescription,
+        onAction = caregiverPrescriptionsViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToSettings = onNavigateToSettings,
@@ -82,12 +78,7 @@ fun CaregiverPrescriptionsScreen(
 @Composable
 fun CaregiverPrescriptionsScreenContent(
     state: CaregiverPrescriptionsState = CaregiverPrescriptionsState(),
-    onSelectedPatient: (String) -> Unit = {},
-    onOpenAddSheet: () -> Unit = {},
-    onOpenEditSheet: (Long) -> Unit = {},
-    onCloseAddSheet: () -> Unit = {},
-    onSavePrescription: (String, String, String, String, String, String, String, List<Long>) -> Unit = { _, _, _, _, _, _, _, _ -> },
-    onDeletePrescription: (Long) -> Unit = {},
+    onAction: (CaregiverPrescriptionsAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -97,21 +88,23 @@ fun CaregiverPrescriptionsScreenContent(
 
     if (state.isAddSheetOpen) {
         ModalBottomSheet(
-            onDismissRequest = onCloseAddSheet,
+            onDismissRequest = { onAction(CaregiverPrescriptionsAction.CloseAddSheet) },
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             PrescriptionSheet(
                 initialMedication = editingPrescription,
                 onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis ->
-                    onSavePrescription(
-                        name,
-                        dosage,
-                        instructions,
-                        freq,
-                        time,
-                        color,
-                        shape,
-                        scheduledTimeMillis
+                    onAction(
+                        CaregiverPrescriptionsAction.SavePrescription(
+                            name = name,
+                            dosage = dosage,
+                            instructions = instructions,
+                            frequency = freq,
+                            timeOfDay = time,
+                            colorHex = color,
+                            shape = shape,
+                            scheduledTimesMillis = scheduledTimeMillis
+                        )
                     )
                 },
                 modifier = Modifier.padding(bottom = 25.dp)
@@ -129,6 +122,7 @@ fun CaregiverPrescriptionsScreenContent(
                     text = "Delete Prescription",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.primary
                 )
             },
@@ -136,6 +130,7 @@ fun CaregiverPrescriptionsScreenContent(
                 Text(
                     text = "Are you sure you want to delete ${prescriptionToDelete?.medicationName}? This will cancel all upcoming reminders.",
                     style = MaterialTheme.typography.bodySmall,
+                    fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
@@ -145,7 +140,9 @@ fun CaregiverPrescriptionsScreenContent(
                     customColor = MaterialTheme.colorScheme.error,
                     customTextColor = MaterialTheme.colorScheme.onError,
                     onClick = {
-                        prescriptionToDelete?.let { onDeletePrescription(it.id) }
+                        prescriptionToDelete?.let { prescription ->
+                            onAction(CaregiverPrescriptionsAction.DeletePrescription(prescription.id))
+                        }
                         prescriptionToDelete = null
                     }
                 )
@@ -169,7 +166,12 @@ fun CaregiverPrescriptionsScreenContent(
                 onHomeClick = onNavigateToHome,
                 onHistoryClick = onNavigateToHistory,
                 onPrescriptionsClick = {},
-                onSettingsClick = onNavigateToSettings
+                onSettingsClick = onNavigateToSettings,
+                withActionButton = state.pairedPatients.isNotEmpty(),
+                actionButtonIcon = Res.drawable.add,
+                onActionButtonClick = {
+                    onAction(CaregiverPrescriptionsAction.OpenAddSheet)
+                }
             )
                                },
         floatingActionButtonPosition = FabPosition.Center,
@@ -226,7 +228,9 @@ fun CaregiverPrescriptionsScreenContent(
                         patients = state.pairedPatients,
                         selectedPatientId = state.selectedPatientId
                             ?: state.pairedPatients.first().id,
-                        onPatientSelected = onSelectedPatient,
+                        onPatientSelected = { patientId ->
+                            onAction(CaregiverPrescriptionsAction.SelectPatient(patientId))
+                                            },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
@@ -239,7 +243,7 @@ fun CaregiverPrescriptionsScreenContent(
                             icon = Res.drawable.pills,
                             buttonText = "Add First Prescription",
                             buttonIcon = Res.drawable.add,
-                            onButtonClick = onOpenAddSheet,
+                            onButtonClick = { onAction(CaregiverPrescriptionsAction.OpenAddSheet) },
                             modifier = Modifier.padding(horizontal = 15.dp)
                         )
                     }
@@ -278,7 +282,7 @@ fun CaregiverPrescriptionsScreenContent(
                                     scheduleText = prescription.scheduleText,
                                     instructionsText = prescription.instructionsText,
                                     nextDoseText = prescription.nextDoseText,
-                                    onEditClick = { onOpenEditSheet(prescription.id) },
+                                    onEditClick = { onAction(CaregiverPrescriptionsAction.OpenEditSheet(prescription.id)) },
                                     onDeleteClick = { prescriptionToDelete = prescription }
                                 )
                             }
@@ -298,7 +302,7 @@ fun CaregiverPrescriptionsScreenPreview() {
             state = CaregiverPrescriptionsState(
                 prescriptions = listOf(
                     PrescriptionUiModel(
-                        id = 1,
+                        id = "1",
                         medicationName = "Aspirin",
                         dosage = "500mg",
                         pillShape = PillShape.CIRCLE,
@@ -308,7 +312,7 @@ fun CaregiverPrescriptionsScreenPreview() {
                         nextDoseText = "Next Dose (2/3)"
                     ),
                     PrescriptionUiModel(
-                        id = 2,
+                        id = "2",
                         medicationName = "Ibuprofen",
                         dosage = "200mg",
                         pillShape = PillShape.OVAL,
@@ -374,7 +378,7 @@ fun CaregiverPrescriptionsScreenPreviewDark() {
             state = CaregiverPrescriptionsState(
                 prescriptions = listOf(
                     PrescriptionUiModel(
-                        id = 1,
+                        id = "1",
                         medicationName = "Aspirin",
                         dosage = "500mg",
                         pillShape = PillShape.CIRCLE,
@@ -384,7 +388,7 @@ fun CaregiverPrescriptionsScreenPreviewDark() {
                         nextDoseText = "Next Dose (2/3)"
                     ),
                     PrescriptionUiModel(
-                        id = 2,
+                        id = "2",
                         medicationName = "Ibuprofen",
                         dosage = "200mg",
                         pillShape = PillShape.OVAL,

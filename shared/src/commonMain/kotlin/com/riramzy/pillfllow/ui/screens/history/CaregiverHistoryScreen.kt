@@ -30,6 +30,7 @@ import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
@@ -55,7 +56,7 @@ fun CaregiverHistoryScreen(
 
     CaregiverHistoryScreenContent(
         state = state,
-        onPatientSelected = historyViewModel::selectPatient,
+        onAction = historyViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onNavigateToSettings = onNavigateToSettings,
@@ -66,7 +67,7 @@ fun CaregiverHistoryScreen(
 @Composable
 fun CaregiverHistoryScreenContent(
     state: HistoryState = HistoryState(),
-    onPatientSelected: (String) -> Unit = {},
+    onAction: (HistoryAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -136,7 +137,8 @@ fun CaregiverHistoryScreenContent(
                     PillFlowPatientCarousel(
                         patients = state.pairedPatients,
                         selectedPatientId = state.selectedPatientId,
-                        onPatientSelected = onPatientSelected,
+                        onPatientSelected = { patientId ->
+                            onAction(HistoryAction.SelectPatient(patientId)) },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
