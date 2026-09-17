@@ -12,15 +12,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,8 +33,10 @@ import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.Screen
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.add
 import pillfllow.shared.generated.resources.history
 import pillfllow.shared.generated.resources.home
 import pillfllow.shared.generated.resources.prescriptions
@@ -42,84 +49,138 @@ fun PillFlowBottomNavBar(
     onHomeClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onPrescriptionsClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    withActionButton: Boolean = false,
+    isActionButtonText: Boolean = false,
+    actionButtonText: String = "Add",
+    actionButtonIcon: DrawableResource = Res.drawable.add,
+    onActionButtonClick: () -> Unit = {},
 ) {
-    Card(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
         modifier = modifier
-            .wrapContentSize(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = RoundedCornerShape(50.dp)
+            .wrapContentSize()
     ) {
-        when (selectedPage) {
-            Screen.Home.route -> {
-                Row(
-                    modifier = Modifier
-                        .padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PillFlowNavItemExpanded(icon = Res.drawable.home, name = "Home")
-                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
-                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            shape = RoundedCornerShape(50.dp)
+        ) {
+            when (selectedPage) {
+                Screen.Home.route -> {
+                    Row(
+                        modifier = Modifier
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PillFlowNavItemExpanded(icon = Res.drawable.home, name = "Home")
+                        PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                        PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
+                        PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+                    }
+                }
+                Screen.History.route -> {
+                    Row(
+                        modifier = Modifier
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                        PillFlowNavItemExpanded(icon = Res.drawable.history, name = "History")
+                        PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
+                        PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+                    }
+                }
+                Screen.Prescriptions.route -> {
+                    Row(
+                        modifier = Modifier
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                        PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                        PillFlowNavItemExpanded(icon = Res.drawable.prescriptions, name = "Prescriptions")
+                        PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+                    }
+                }
+                Screen.Settings.route -> {
+                    Row(
+                        modifier = Modifier
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                        PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                        PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
+                        PillFlowNavItemExpanded(icon = Res.drawable.settings, name = "Settings")
+                    }
+                }
+                else -> {
+                    Row(
+                        modifier = Modifier
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
+                        PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
+                        PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
+                        PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+                    }
                 }
             }
-            Screen.History.route -> {
-                Row(
+        }
+
+        if (withActionButton) {
+            if (isActionButtonText) {
+                TextButton(
+                    onClick = { onActionButtonClick() },
                     modifier = Modifier
-                        .padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(start = 8.dp),
+                    colors = buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
                 ) {
-                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
-                    PillFlowNavItemExpanded(icon = Res.drawable.history, name = "History")
-                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
-                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+                    Text(
+                        text = actionButtonText,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .padding(8.dp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    )
                 }
-            }
-            Screen.Prescriptions.route -> {
-                Row(
+            } else {
+                IconButton(
+                    onClick = { onActionButtonClick() },
                     modifier = Modifier
-                        .padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(start = 8.dp)
+                        .size(45.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    shape = CircleShape
                 ) {
-                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
-                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItemExpanded(icon = Res.drawable.prescriptions, name = "Prescriptions")
-                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
-                }
-            }
-            Screen.Settings.route -> {
-                Row(
-                    modifier = Modifier
-                        .padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
-                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
-                    PillFlowNavItemExpanded(icon = Res.drawable.settings, name = "Settings")
-                }
-            }
-            else -> {
-                Row(
-                    modifier = Modifier
-                        .padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
-                    PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
-                    PillFlowNavItem(icon = Res.drawable.prescriptions, onNavItemClick = { onPrescriptionsClick() })
-                    PillFlowNavItem(icon = Res.drawable.settings, onNavItemClick = { onSettingsClick() })
+                    Icon(
+                        painter = painterResource(actionButtonIcon),
+                        modifier = Modifier
+                            .padding(8.dp),
+                        tint = MaterialTheme.colorScheme.primaryContainer,
+                        contentDescription = null,
+                    )
                 }
             }
         }
     }
+
 }
 
 @Composable
