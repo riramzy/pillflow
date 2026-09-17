@@ -34,6 +34,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
+import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
@@ -59,7 +60,7 @@ fun PatientDashboardScreen(
 
     PatientDashboardScreenContent(
         state = state,
-        logDose = patientDashboardViewModel::logDose,
+        onAction = patientDashboardViewModel::onAction,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onNavigateToSettings = onNavigateToSettings,
@@ -70,7 +71,7 @@ fun PatientDashboardScreen(
 @Composable
 fun PatientDashboardScreenContent(
     state: PatientDashboardState = PatientDashboardState(),
-    logDose: (Long) -> Unit = {},
+    onAction: (PatientDashboardAction) -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -79,16 +80,14 @@ fun PatientDashboardScreenContent(
     val sensor = remember { PlatformSensor() }
     var tiltX by remember { mutableStateOf(0f) }
     var tiltY by remember { mutableStateOf(0f) }
+    val multiplier = state.physicsSensitivity.multiplier
 
-
-    DisposableEffect(Unit) {
+    DisposableEffect(multiplier) {
         sensor.startListening { x, y ->
-            tiltX = x
-            tiltY = y
+            tiltX = x * multiplier
+            tiltY = y * multiplier
         }
-        onDispose {
-            sensor.stopListening()
-        }
+        onDispose { sensor.stopListening() }
     }
 
     Scaffold(
@@ -142,9 +141,7 @@ fun PatientDashboardScreenContent(
                     tiltX = tiltX,
                     tiltY = tiltY,
                     onLogMedication = { pillId ->
-                        pillId.toLongOrNull()?.let { id ->
-                            logDose(id)
-                        }
+                        onAction(PatientDashboardAction.LogDose(pillId))
                     },
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )
@@ -226,7 +223,7 @@ fun PatientDashboardScreenPreview() {
             state = PatientDashboardState(
                 scheduledDoses = listOf(
                     ScheduledDoseUiModel(
-                        id = 1,
+                        id = "1",
                         name = "Aspirin",
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
@@ -236,7 +233,7 @@ fun PatientDashboardScreenPreview() {
                         scheduledTime = 0L
                     ),
                     ScheduledDoseUiModel(
-                        id = 2,
+                        id = "2",
                         name = "Vitamin D",
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
@@ -286,7 +283,7 @@ fun PatientDashboardScreenPreviewDark() {
             state = PatientDashboardState(
                 scheduledDoses = listOf(
                     ScheduledDoseUiModel(
-                        id = 1,
+                        id = "1",
                         name = "Aspirin",
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
@@ -296,7 +293,7 @@ fun PatientDashboardScreenPreviewDark() {
                         scheduledTime = 0L
                     ),
                     ScheduledDoseUiModel(
-                        id = 2,
+                        id = "2",
                         name = "Vitamin D",
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",

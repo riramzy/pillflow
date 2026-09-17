@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.screens.dashboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -23,10 +24,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowActivityCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientDailyStatusCard
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientWeeklyOverviewCard
+import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
@@ -55,9 +58,7 @@ fun CaregiverDashboardScreen(
 
     CaregiverDashboardScreenContent(
         state = state.value,
-        selectPatient = caregiverDashboardViewModel::selectPatient,
-        callPatient = caregiverDashboardViewModel::callPatient,
-        nudgePatient = caregiverDashboardViewModel::nudgePatient,
+        onAction = caregiverDashboardViewModel::onAction,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onNavigateToSettings = onNavigateToSettings,
@@ -68,9 +69,7 @@ fun CaregiverDashboardScreen(
 @Composable
 fun CaregiverDashboardScreenContent(
     state: CaregiverDashboardState = CaregiverDashboardState(),
-    selectPatient: (String) -> Unit = {},
-    callPatient: (String) -> Unit = {},
-    nudgePatient: (String) -> Unit = {},
+    onAction: (CaregiverDashboardAction) -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -121,7 +120,14 @@ fun CaregiverDashboardScreenContent(
                 }
             }
 
-            if (state.patients.isEmpty()) {
+            if (state.isLoading) {
+                item {
+                    PillFlowLoadingCard(
+                        message = "Loading Patients...",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            } else if (state.patients.isEmpty()) {
                 item {
                     PillFlowEmptyStateCard(
                         title = "No Patients Linked Yet",
@@ -138,7 +144,9 @@ fun CaregiverDashboardScreenContent(
                     PillFlowPatientCarousel(
                         patients = state.patients,
                         selectedPatientId = state.selectedPatientId,
-                        onPatientSelected = selectPatient,
+                        onPatientSelected = { patientId ->
+                            onAction(CaregiverDashboardAction.SelectPatient(patientId))
+                                            },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
@@ -149,8 +157,8 @@ fun CaregiverDashboardScreenContent(
                         lastUpdatedText = state.lastUpdatedText,
                         status = state.selectedPatientDailyStatus,
                         statusAlertText = state.dailyStatusAlertText,
-                        onCallClick = { callPatient(state.selectedPatientId) },
-                        onNudgeClick = { nudgePatient(state.selectedPatientId) },
+                        onCallClick = { onAction(CaregiverDashboardAction.CallPatient(state.selectedPatientId)) },
+                        onNudgeClick = { onAction(CaregiverDashboardAction.NudgePatient(state.selectedPatientId)) },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
@@ -277,7 +285,7 @@ fun CaregiverDashboardScreenPreview() {
                 dailyStatusAlertText = "All medications on track!",
                 lastUpdatedText = "Updated just now",
                 weeklyRatePercentage = 95,
-                isLoading = false,
+                isLoading = true,
                 errorMessage = null
             )
         )
@@ -344,7 +352,7 @@ fun CaregiverDashboardScreenPreviewDark() {
                 dailyStatusAlertText = "All medications on track!",
                 lastUpdatedText = "Updated just now",
                 weeklyRatePercentage = 95,
-                isLoading = false,
+                isLoading = true,
                 errorMessage = null
             )
         )
