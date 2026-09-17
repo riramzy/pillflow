@@ -19,6 +19,7 @@ import com.riramzy.pillfllow.utils.PillColor
 import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.currentTimeMillis
 import com.riramzy.pillfllow.utils.formatTime
+import com.riramzy.pillfllow.utils.getDayOfMonth
 import com.riramzy.pillfllow.utils.parseColorHex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -60,8 +61,13 @@ class PatientDashboardViewModel(
                     getPendingDosesForUserUseCase(user.id).collectLatest { pendingDoses ->
                         val now = currentTimeMillis()
                         val graceWindowMillis = 30 * 60 * 1000L
+                        val stagingWindowMillis = 30 * 60 * 1000L
 
-                        val mappedPills = pendingDoses.mapIndexed { index, dose ->
+                        val activeDishDoses = pendingDoses.filter { dose ->
+                            now >= (dose.scheduledTime - stagingWindowMillis)
+                        }
+
+                        val mappedPills = activeDishDoses.mapIndexed { index, dose ->
                             val resolvedPillColor = PillColor.entries.firstOrNull {
                                 it.name.equals(dose.colorHex, ignoreCase = true) ||
                                         it.label.equals(dose.colorHex, ignoreCase = true)
@@ -97,9 +103,12 @@ class PatientDashboardViewModel(
                                         it.label.equals(dose.colorHex, ignoreCase = true)
                             } ?: PillColor.CORAL_RED
 
+                            val isTomorrow = getDayOfMonth(dose.scheduledTime) != getDayOfMonth(now)
+
                             val (cardStatus, badgeText) = when {
                                 isOverdue -> ComplianceStatus.MISSED to "Grace Expired"
                                 isDueNow -> ComplianceStatus.LATE to "Due Now"
+                                isTomorrow -> ComplianceStatus.DEFAULT to "Tomorrow"
                                 else -> ComplianceStatus.DEFAULT to "Upcoming"
                             }
 
@@ -119,9 +128,9 @@ class PatientDashboardViewModel(
 
                         _state.update {
                             it.copy(
-                                scheduledDoses = mappedUiDoses,
+                                scheduledDoses = mappedUiDoses, // Keeps all upcoming doses in the list below
                                 pills = mappedPills,
-                                totalDoses = pendingDoses.size,
+                                totalDoses = activeDishDoses.size, // Only counts pills currently in the dish
                                 complianceStatus = complianceInfo.status,
                                 complianceTitle = complianceInfo.title,
                                 complianceSubtitle = complianceInfo.subtitle,
@@ -162,12 +171,17 @@ class PatientDashboardViewModel(
                 badgeText = "${pendingDoses.size} Doses Left"
             )
 
-            else -> ComplianceCardUiModel(
-                status = ComplianceStatus.ON_TIME,
-                title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
-                subtitle = "Scheduled for today",
-                badgeText = "${pendingDoses.size} Doses Left"
-            )
+            else -> {
+                val isTomorrow = getDayOfMonth(earliestDose.scheduledTime) != getDayOfMonth(now)
+                val subtitleText = if (isTomorrow) "Scheduled for tomorrow" else "Scheduled for today"
+
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.ON_TIME,
+                    title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
+                    subtitle = subtitleText,
+                    badgeText = "${pendingDoses.size} Doses Left"
+                )
+            }
         }
     }
 

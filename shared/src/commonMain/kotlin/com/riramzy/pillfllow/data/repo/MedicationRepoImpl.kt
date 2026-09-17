@@ -123,11 +123,16 @@ class MedicationRepoImpl(
         val now = currentTimeMillis()
 
         scheduledDose.forEach { dose ->
+            val med = medicationDao.getAllMedicationsOnce().firstOrNull { it.id == dose.medicationId }
+            val medName = med?.name ?: "Medication"
+
             if (!dose.isTaken && dose.scheduledTime > now) {
+                val reminderTime = (dose.scheduledTime - 30 * 60 * 1000L).coerceAtLeast(now + 1000L)
+
                 platformNotifier.scheduleDoseReminder(
                     doseId = dose.id,
-                    pillName = "Medication",
-                    triggerTimeMillis = dose.scheduledTime
+                    pillName = medName,
+                    triggerTimeMillis = reminderTime
                 )
             }
 
@@ -156,6 +161,10 @@ class MedicationRepoImpl(
         complianceStatus: String
     ) {
         medicationDao.markScheduledDoseTaken(id, takenTime, isTaken, complianceStatus)
+
+        if (isTaken) {
+            platformNotifier.cancelReminder(doseId = id)
+        }
 
         runCatching {
             firestore

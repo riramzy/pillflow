@@ -110,11 +110,15 @@ class HistoryViewModel(
                     MonthDaysCompliance(dayNumber = day.toString(), status = dayStatus)
                 }
 
-                val logRecords = historyDoses.map { record ->
+                val pastOrTakenDoses = historyDoses.filter { record ->
+                    record.isTaken || (now - record.scheduledTime) > graceWindowMillis
+                }
+
+                val logRecords = pastOrTakenDoses.map { record ->
                     val recordStatus = when {
                         record.isTaken && record.complianceStatus == "ON_TIME" -> ComplianceStatus.ON_TIME
                         record.isTaken && record.complianceStatus == "LATE" -> ComplianceStatus.LATE
-                        !record.isTaken && now > (record.scheduledTime + graceWindowMillis) -> ComplianceStatus.MISSED
+                        !record.isTaken && (now - record.scheduledTime) > graceWindowMillis -> ComplianceStatus.MISSED
                         else -> ComplianceStatus.DEFAULT
                     }
 

@@ -24,6 +24,7 @@ actual class PlatformNotifier {
 
         val intent = Intent().apply {
             action = "com.riramzy.pillfllow.DOSE_REMINDER"
+            `package` = androidContext.packageName
             putExtra("DOSE_ID", doseId)
             putExtra("PILL_NAME", pillName)
         }
@@ -71,8 +72,10 @@ actual class PlatformNotifier {
         val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
+
         val intent = Intent().apply {
             action = "com.riramzy.pillfllow.DOSE_REMINDER"
+            `package` = androidContext.packageName
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
