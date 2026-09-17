@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.state.dashboard
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.utils.ComplianceStatus
+import com.riramzy.pillfllow.utils.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.PillColor
 
 data class PatientDashboardState(
@@ -17,6 +18,7 @@ data class PatientDashboardState(
     val adherenceScore: Int = 100,
     val dosesTaken: Int = 0,
     val totalDoses: Int = 0,
+    val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
     val isLoading: Boolean = true,
     val errorMessage: String? = null
 ) {

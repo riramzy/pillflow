@@ -9,6 +9,7 @@ import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
@@ -31,13 +32,23 @@ import kotlinx.coroutines.launch
 class PatientDashboardViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
-    private val logDoseTakenUseCase: LogDoseTakenUseCase
+    private val logDoseTakenUseCase: LogDoseTakenUseCase,
+    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
 
     init {
         loadDashboardData()
+        observePhysicsSensitivity()
+    }
+
+    private fun observePhysicsSensitivity() {
+        viewModelScope.launch(Dispatchers.IO) {
+            getPhysicsSensitivityUseCase().collectLatest { sensitivity ->
+                _state.update { it.copy(physicsSensitivity = sensitivity) }
+            }
+        }
     }
 
     private fun loadDashboardData() {

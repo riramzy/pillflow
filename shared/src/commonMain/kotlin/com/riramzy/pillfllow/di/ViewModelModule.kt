@@ -31,7 +31,8 @@ val viewModelModule: Module = module {
         PatientDashboardViewModel(
             observeCurrentUserUseCase = get(),
             getPendingDosesForUserUseCase = get(),
-            logDoseTakenUseCase = get()
+            logDoseTakenUseCase = get(),
+            getPhysicsSensitivityUseCase = get()
         )
     }
 
@@ -51,7 +52,9 @@ val viewModelModule: Module = module {
             getPatientPairingStatusUseCase = get(),
             generatePairingCodeUseCase = get(),
             updateUserProfileUseCase = get(),
-            logoutUseCase = get()
+            logoutUseCase = get(),
+            getPhysicsSensitivityUseCase = get(),
+            setPhysicsSensitivityUseCase = get()
         )
     }
 

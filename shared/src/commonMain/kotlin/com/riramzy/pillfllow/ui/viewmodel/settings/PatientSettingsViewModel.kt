@@ -6,6 +6,8 @@ import com.riramzy.pillfllow.domain.usecase.auth.LogoutUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GeneratePairingCodeUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPatientPairingStatusUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.SetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
@@ -36,6 +38,8 @@ class PatientSettingsViewModel(
     private val getPatientPairingStatusUseCase: GetPatientPairingStatusUseCase,
     private val generatePairingCodeUseCase: GeneratePairingCodeUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
+    private val setPhysicsSensitivityUseCase: SetPhysicsSensitivityUseCase,
     private val logoutUseCase: LogoutUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(PatientSettingsState())
@@ -43,6 +47,14 @@ class PatientSettingsViewModel(
 
     init {
         observePatientData()
+    }
+
+    init {
+        viewModelScope.launch {
+            getPhysicsSensitivityUseCase().collectLatest { saved ->
+                _state.update { it.copy(physicsSensitivity = saved) }
+            }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -93,10 +105,6 @@ class PatientSettingsViewModel(
         }
     }
 
-    fun onSensitivitySelected(sensitivity: PhysicsSensitivity) {
-        _state.update { it.copy(physicsSensitivity = sensitivity) }
-    }
-
     fun onUpdateProfile(firstName: String, lastName: String, email: String, avatarRes: String) {
         val user = state.value.user ?: return
 
@@ -116,10 +124,28 @@ class PatientSettingsViewModel(
         }
     }
 
+    private fun onRequestChangeSensitivity(newSensitivity: PhysicsSensitivity) {
+        if (newSensitivity != state.value.physicsSensitivity) {
+            _state.update { it.copy(pendingSensitivity = newSensitivity) }
+        }
+    }
+
+    private fun onConfirmChangeSensitivity() {
+        val target = state.value.pendingSensitivity ?: return
+        setPhysicsSensitivityUseCase(target)
+        _state.update { it.copy(physicsSensitivity = target, pendingSensitivity = null) }
+    }
+
+    private fun onDismissSensitivityDialog() {
+        _state.update { it.copy(pendingSensitivity = null) }
+    }
+
     fun onAction(action: PatientSettingsAction) {
         when (action) {
             is PatientSettingsAction.RegenerateCode -> onRegenerateCode()
-            is PatientSettingsAction.SelectSensitivity -> onSensitivitySelected(action.sensitivity)
+            is PatientSettingsAction.RequestChangeSensitivity -> onRequestChangeSensitivity(action.sensitivity)
+            is PatientSettingsAction.ConfirmChangeSensitivity -> onConfirmChangeSensitivity()
+            is PatientSettingsAction.DismissSensitivityDialog -> onDismissSensitivityDialog()
             is PatientSettingsAction.UpdateProfile -> onUpdateProfile(action.firstName, action.lastName, action.email, action.avatarRes)
             is PatientSettingsAction.DismissError -> onErrorDismissed()
             is PatientSettingsAction.SignOut -> onSignOut(action.onSignedOut)

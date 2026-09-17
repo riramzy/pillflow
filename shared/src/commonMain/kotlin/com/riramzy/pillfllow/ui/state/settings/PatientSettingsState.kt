@@ -13,6 +13,7 @@ data class PatientSettingsState(
     val avatarRes: DrawableResource = Res.drawable.avatar1,
     val pairingCode: String = "",
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
+    val pendingSensitivity: PhysicsSensitivity? = null,
     val isLoading: Boolean = false,
     val isRegenerating: Boolean = false,
     val errorMessage: String? = null
@@ -20,7 +21,9 @@ data class PatientSettingsState(
 
 sealed interface PatientSettingsAction {
     data object RegenerateCode: PatientSettingsAction
-    data class SelectSensitivity(val sensitivity: PhysicsSensitivity): PatientSettingsAction
+    data class RequestChangeSensitivity(val sensitivity: PhysicsSensitivity) : PatientSettingsAction
+    data object ConfirmChangeSensitivity : PatientSettingsAction
+    data object DismissSensitivityDialog : PatientSettingsAction
     data class UpdateProfile(
         val firstName: String,
         val lastName: String,
