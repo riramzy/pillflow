@@ -128,9 +128,9 @@ class PatientDashboardViewModel(
 
                         _state.update {
                             it.copy(
-                                scheduledDoses = mappedUiDoses, // Keeps all upcoming doses in the list below
+                                scheduledDoses = mappedUiDoses,
                                 pills = mappedPills,
-                                totalDoses = activeDishDoses.size, // Only counts pills currently in the dish
+                                totalDoses = activeDishDoses.size,
                                 complianceStatus = complianceInfo.status,
                                 complianceTitle = complianceInfo.title,
                                 complianceSubtitle = complianceInfo.subtitle,
@@ -164,22 +164,28 @@ class PatientDashboardViewModel(
                 badgeText = "Grace Expired"
             )
 
-            now >= earliestDose.scheduledTime -> ComplianceCardUiModel(
-                status = ComplianceStatus.LATE,
-                title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
-                subtitle = "Scheduled for today",
-                badgeText = "${pendingDoses.size} Doses Left"
-            )
+            now >= earliestDose.scheduledTime -> {
+                val specificDosesLeft = pendingDoses.count { it.name.equals(earliestDose.name, ignoreCase = true) }
+
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.LATE,
+                    title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
+                    subtitle = "Scheduled for today",
+                    badgeText = "$specificDosesLeft ${if (specificDosesLeft == 1) "Dose" else "Doses"} Left"
+                )
+            }
 
             else -> {
                 val isTomorrow = getDayOfMonth(earliestDose.scheduledTime) != getDayOfMonth(now)
                 val subtitleText = if (isTomorrow) "Scheduled for tomorrow" else "Scheduled for today"
+                val specificDosesLeft = pendingDoses.count { it.name.equals(earliestDose.name, ignoreCase = true) }
+                val badgeText = "$specificDosesLeft ${if (specificDosesLeft == 1) "Dose" else "Doses"} Left"
 
                 ComplianceCardUiModel(
-                    status = ComplianceStatus.ON_TIME,
+                    status = ComplianceStatus.LATE,
                     title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
                     subtitle = subtitleText,
-                    badgeText = "${pendingDoses.size} Doses Left"
+                    badgeText = badgeText
                 )
             }
         }

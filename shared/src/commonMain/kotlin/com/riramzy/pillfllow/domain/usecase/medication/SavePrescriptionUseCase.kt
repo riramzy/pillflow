@@ -40,6 +40,10 @@ class SavePrescriptionUseCase(
         medicationRepo.insertMedication(medication)
 
         if (scheduledTimesMillis.isNotEmpty()) {
+            if (editingMedicationId != null) {
+                medicationRepo.deletePendingDosesForMedication(editingMedicationId)
+            }
+
             val scheduledDoses = scheduledTimesMillis.map { time ->
                 ScheduledDoseEntity(
                     medicationId = medication.id,

@@ -125,7 +125,7 @@ class CaregiverDashboardViewModel(
                         }
 
                         else -> {
-                            ComplianceStatus.ON_TIME to "Next: ${earliestDose.name} ${earliestDose.dosage} is scheduled for ${formatTime(earliestDose.scheduledTime)}"
+                            ComplianceStatus.DEFAULT to "Next: ${earliestDose.name} ${earliestDose.dosage} is scheduled for ${formatTime(earliestDose.scheduledTime)}"
                         }
                     }
 
@@ -226,7 +226,7 @@ class CaregiverDashboardViewModel(
             val (status, action) = when {
                 isOverdue -> ComplianceStatus.MISSED to "missed ${dose.name} ${dose.dosage}"
                 isDueNow -> ComplianceStatus.LATE to "has ${dose.name} ${dose.dosage} due now"
-                else -> ComplianceStatus.ON_TIME to "scheduled for ${dose.name} ${dose.dosage}"
+                else -> ComplianceStatus.DEFAULT to "scheduled for ${dose.name} ${dose.dosage}"
             }
 
             RecentActivityUiModel(
