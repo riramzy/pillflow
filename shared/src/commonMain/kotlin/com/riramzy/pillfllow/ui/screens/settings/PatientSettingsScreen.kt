@@ -41,6 +41,7 @@ import com.riramzy.pillfllow.ui.components.settings.PillFlowPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPhysicsSensitivityCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.components.sheets.UpdateProfileSheet
+import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.PatientSettingsViewModel
@@ -56,20 +57,18 @@ fun PatientSettingsScreen(
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
+    onSignOutSuccess: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by patientSettingsViewModel.state.collectAsStateWithLifecycle()
 
     PatientSettingsScreenContent(
         state = state,
-        onRegenerateCode = patientSettingsViewModel::onRegenerateCode,
-        onSensitivitySelected = patientSettingsViewModel::onSensitivitySelected,
-        onUpdateProfile = patientSettingsViewModel::onUpdateProfile,
-        onErrorDismissed = patientSettingsViewModel::onErrorDismissed,
-        onSignOut = patientSettingsViewModel::onSignOut,
+        onAction = patientSettingsViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
+        onSignOutSuccess = onSignOutSuccess,
         modifier = modifier
     )
 }
@@ -78,14 +77,11 @@ fun PatientSettingsScreen(
 @Composable
 fun PatientSettingsScreenContent(
     state: PatientSettingsState = PatientSettingsState(),
-    onRegenerateCode: () -> Unit = {},
-    onSensitivitySelected: (PhysicsSensitivity) -> Unit = {},
-    onUpdateProfile: (firstName: String, lastName: String, email: String, avatarRes: String) -> Unit = { _, _, _, _ -> },
-    onErrorDismissed: () -> Unit = {},
-    onSignOut: () -> Unit = {},
+    onAction: (PatientSettingsAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
+    onSignOutSuccess: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -119,7 +115,7 @@ fun PatientSettingsScreenContent(
                     customTextColor = MaterialTheme.colorScheme.onError,
                     onClick = {
                         showSignOutDialog = false
-                        onSignOut()
+                        onAction(PatientSettingsAction.SignOut(onSignedOut = onSignOutSuccess))
                     }
                 )
             },
@@ -147,11 +143,54 @@ fun PatientSettingsScreenContent(
                 initialEmail = state.userEmail,
                 initialAvatar = state.user?.avatarRes ?: "avatar1",
                 onSaveProfile = { firstName, lastName, email, avatar ->
-                    onUpdateProfile(firstName, lastName, email, avatar)
+                    onAction(
+                        PatientSettingsAction.UpdateProfile(
+                            firstName = firstName,
+                            lastName = lastName,
+                            email = email,
+                            avatarRes = avatar
+                        )
+                    )
                     showUpdateProfileSheet = false
                 },
             )
         }
+    }
+
+    if (state.pendingSensitivity != null) {
+        AlertDialog(
+            onDismissRequest = { onAction(PatientSettingsAction.DismissSensitivityDialog) },
+            title = {
+                Text(
+                    text = "Change Dish Sensitivity",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to change the dish physics sensitivity to ${state.pendingSensitivity.label}?",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 16.sp
+                )
+            },
+            confirmButton = {
+                PillFlowButton(
+                    text = "Confirm",
+                    onClick = { onAction(PatientSettingsAction.ConfirmChangeSensitivity) }
+                )
+            },
+            dismissButton = {
+                PillFlowButton(
+                    text = "Cancel",
+                    customColor = MaterialTheme.colorScheme.surface,
+                    customTextColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { onAction(PatientSettingsAction.DismissSensitivityDialog) }
+                )
+            }
+        )
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -159,7 +198,7 @@ fun PatientSettingsScreenContent(
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(error)
-            onErrorDismissed()
+            onAction(PatientSettingsAction.DismissError)
         }
     }
 
@@ -241,7 +280,7 @@ fun PatientSettingsScreenContent(
                             }
                         }
                     },
-                    onRegenerateClick = { onRegenerateCode() },
+                    onRegenerateClick = { onAction(PatientSettingsAction.RegenerateCode) },
                     isRegenerating = state.isRegenerating,
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )
@@ -250,7 +289,7 @@ fun PatientSettingsScreenContent(
             item {
                 PillFlowPhysicsSensitivityCard(
                     selectedSensitivity = state.physicsSensitivity,
-                    onSensitivitySelected = { onSensitivitySelected(it) },
+                    onSensitivitySelected = { onAction(PatientSettingsAction.RequestChangeSensitivity(it)) },
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )
             }

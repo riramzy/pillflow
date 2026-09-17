@@ -43,6 +43,7 @@ import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.components.sheets.ConfirmPairingSheet
 import com.riramzy.pillfllow.ui.components.sheets.UpdateProfileSheet
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.CaregiverSettingsViewModel
@@ -60,25 +61,18 @@ fun CaregiverSettingsScreen(
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
+    onSignOutSuccess: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by caregiverSettingsViewModel.state.collectAsStateWithLifecycle()
 
     CaregiverSettingsScreenContent(
         state = state,
-        onInputCodeChanged = caregiverSettingsViewModel::onInputCodeChanged,
-        onInitiateLink = caregiverSettingsViewModel::onInitiateLink,
-        onRelationChanged = caregiverSettingsViewModel::onRelationChanged,
-        onConfirmLink = caregiverSettingsViewModel::onConfirmLink,
-        onDismissConfirmSheet = caregiverSettingsViewModel::onDismissConfirmSheet,
-        onUnpairPatient = caregiverSettingsViewModel::onUnpairPatient,
-        onUpdateProfile = caregiverSettingsViewModel::onUpdateProfile,
-        onErrorDismissed = caregiverSettingsViewModel::onErrorDismissed,
-        onSuccessDismissed = caregiverSettingsViewModel::onSuccessDismissed,
-        onSignOut = caregiverSettingsViewModel::onSignOut,
+        onAction = caregiverSettingsViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
+        onSignOutSuccess = onSignOutSuccess,
         modifier = modifier
     )
 }
@@ -87,19 +81,11 @@ fun CaregiverSettingsScreen(
 @Composable
 fun CaregiverSettingsScreenContent(
     state: CaregiverSettingsState = CaregiverSettingsState(),
-    onInputCodeChanged: (String) -> Unit = {},
-    onInitiateLink: () -> Unit = {},
-    onRelationChanged: (String) -> Unit = {},
-    onConfirmLink: () -> Unit = {},
-    onDismissConfirmSheet: () -> Unit = {},
-    onUnpairPatient: (String) -> Unit = {},
-    onUpdateProfile: (String, String, String, String) -> Unit = { _, _, _, _ -> },
-    onErrorDismissed: () -> Unit = {},
-    onSuccessDismissed: () -> Unit = {},
-    onSignOut: () -> Unit = {},
+    onAction: (CaregiverSettingsAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
+    onSignOutSuccess: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -107,27 +93,27 @@ fun CaregiverSettingsScreenContent(
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(error)
-            onErrorDismissed()
+            onAction(CaregiverSettingsAction.DismissError)
         }
     }
 
     LaunchedEffect(state.successMessage) {
         state.successMessage?.let { success ->
             snackbarHostState.showSnackbar(success)
-            onSuccessDismissed()
+            onAction(CaregiverSettingsAction.DismissSuccess)
         }
     }
 
     if (state.isConfirmSheetOpen) {
         ModalBottomSheet(
-            onDismissRequest = onDismissConfirmSheet,
+            onDismissRequest = { onAction(CaregiverSettingsAction.DismissConfirmSheet) },
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ) {
             ConfirmPairingSheet(
                 patient = state.pendingPatientToLink,
                 relation = state.relationInput,
-                onRelationChange = onRelationChanged,
-                onConfirmClick = onConfirmLink,
+                onRelationChange = { onAction(CaregiverSettingsAction.RelationChanged(it)) },
+                onConfirmClick = { onAction(CaregiverSettingsAction.ConfirmLink) },
             )
         }
     }
@@ -145,7 +131,14 @@ fun CaregiverSettingsScreenContent(
                 initialEmail = state.userEmail,
                 initialAvatar = state.user?.avatarRes ?: "avatar1",
                 onSaveProfile = { firstName, lastName, email, avatar ->
-                    onUpdateProfile(firstName, lastName, email, avatar)
+                    onAction(
+                        CaregiverSettingsAction.UpdateProfile(
+                            firstName = firstName,
+                            lastName = lastName,
+                            email = email,
+                            avatarRes = avatar
+                        )
+                    )
                     showUpdateProfileSheet = false
                 },
             )
@@ -181,7 +174,7 @@ fun CaregiverSettingsScreenContent(
                     customTextColor = MaterialTheme.colorScheme.onError,
                     onClick = {
                         showSignOutDialog = false
-                        onSignOut()
+                        onAction(CaregiverSettingsAction.SignOut(onSignedOut = onSignOutSuccess))
                     }
                 )
             },
@@ -224,7 +217,9 @@ fun CaregiverSettingsScreenContent(
                     customColor = MaterialTheme.colorScheme.tertiary,
                     customTextColor = MaterialTheme.colorScheme.tertiaryContainer,
                     onClick = {
-                        patientToUnlink?.let { onUnpairPatient(it.pairingId) }
+                        patientToUnlink?.let { patient ->
+                            onAction(CaregiverSettingsAction.UnpairPatient(patient.id, patient.pairingId))
+                        }
                         patientToUnlink = null
                     }
                 )
@@ -310,8 +305,8 @@ fun CaregiverSettingsScreenContent(
             item {
                 PillFlowPatientPairingCard(
                     pairingCode = state.inputCode,
-                    onCodeChange = { onInputCodeChanged(it) },
-                    onLinkClick = onInitiateLink,
+                    onCodeChange = { onAction(CaregiverSettingsAction.InputCodeChanged(it)) },
+                    onLinkClick = { onAction(CaregiverSettingsAction.InitiateLink(state.inputCode)) },
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )
             }
