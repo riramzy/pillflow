@@ -16,72 +16,82 @@ import org.koin.dsl.module
 val viewModelModule: Module = module {
     viewModel {
         SplashViewModel(
-            authRepo = get(),
-            sessionManager = get()
+            observeCurrentUserUseCase = get()
         )
     }
 
     viewModel {
         AuthViewModel(
-            authRepo = get()
+            signInUseCase = get(),
+            signUpUseCase = get()
         )
     }
 
     viewModel {
         PatientDashboardViewModel(
-            medicationRepo = get(),
-            authRepo = get()
-        )
-    }
-
-    viewModel {
-        CaregiverDashboardViewModel(
-            pairingRepo = get(),
-            medicationRepo = get(),
-            authRepo = get(),
-            userRepo = get()
-        )
-    }
-
-    viewModel {
-        HistoryViewModel(
-            medicationRepo = get(),
-            authRepo = get(),
-            pairingRepo = get(),
-            userRepo = get()
+            observeCurrentUserUseCase = get(),
+            getPendingDosesForUserUseCase = get(),
+            logDoseTakenUseCase = get()
         )
     }
 
     viewModel {
         PatientPrescriptionsViewModel(
-            medicationRepo = get(),
-            authRepo = get()
-        )
-    }
-
-    viewModel {
-        CaregiverPrescriptionsViewModel(
-            medicationRepo = get(),
-            authRepo = get(),
-            pairingRepo = get(),
-            userRepo = get()
+            observeCurrentUserUseCase = get(),
+            getMedicationsForUserUseCase = get(),
+            getPendingDosesForUserUseCase = get(),
+            savePrescriptionUseCase = get(),
+            deletePrescriptionUseCase = get()
         )
     }
 
     viewModel {
         PatientSettingsViewModel(
-            authRepo = get(),
-            pairingRepo = get(),
-            userRepo = get()
+            observeCurrentUserUseCase = get(),
+            getPatientPairingStatusUseCase = get(),
+            generatePairingCodeUseCase = get(),
+            updateUserProfileUseCase = get(),
+            logoutUseCase = get()
+        )
+    }
+
+    viewModel {
+        CaregiverDashboardViewModel(
+            observeCurrentUserUseCase = get(),
+            getCaregiverPatientsUseCase = get(),
+            getPendingDosesForUserUseCase = get(),
+            nudgePatientUseCase = get()
+        )
+    }
+
+    viewModel {
+        CaregiverPrescriptionsViewModel(
+            observeCurrentUserUseCase = get(),
+            getCaregiverPatientsUseCase = get(),
+            getPendingDosesForUserUseCase = get(),
+            getMedicationsForUserUseCase = get(),
+            savePrescriptionUseCase = get(),
+            deletePrescriptionUseCase = get()
         )
     }
 
     viewModel {
         CaregiverSettingsViewModel(
-            authRepo = get(),
-            userRepo = get(),
-            pairingRepo = get(),
-            medicationRepo = get()
+            observeCurrentUserUseCase = get(),
+            getCaregiverPatientsUseCase = get(),
+            initiatePairingUseCase = get(),
+            confirmPairingUseCase = get(),
+            unlinkPatientUseCase = get(),
+            updateUserProfileUseCase = get(),
+            logoutUseCase = get()
+        )
+    }
+
+    viewModel {
+        HistoryViewModel(
+            observeCurrentUserUseCase = get(),
+            getCaregiverPatientsUseCase = get(),
+            getDoseHistoryForUserUseCase = get()
         )
     }
 }

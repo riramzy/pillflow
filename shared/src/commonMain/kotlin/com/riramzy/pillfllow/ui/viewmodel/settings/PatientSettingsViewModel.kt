@@ -2,14 +2,14 @@ package com.riramzy.pillfllow.ui.viewmodel.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.data.local.entity.CaregiverPatientPairingEntity
-import com.riramzy.pillfllow.data.local.entity.UserEntity
-import com.riramzy.pillfllow.domain.repo.AuthRepo
-import com.riramzy.pillfllow.domain.repo.PairingRepo
-import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.domain.usecase.auth.LogoutUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.GeneratePairingCodeUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.GetPatientPairingStatusUseCase
+import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
+import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
 import com.riramzy.pillfllow.utils.PhysicsSensitivity
-import com.riramzy.pillfllow.utils.currentTimeMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
@@ -32,9 +32,11 @@ import pillfllow.shared.generated.resources.avatar7
 import pillfllow.shared.generated.resources.avatar8
 
 class PatientSettingsViewModel(
-    private val authRepo: AuthRepo,
-    private val pairingRepo: PairingRepo,
-    private val userRepo: UserRepo
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val getPatientPairingStatusUseCase: GetPatientPairingStatusUseCase,
+    private val generatePairingCodeUseCase: GeneratePairingCodeUseCase,
+    private val updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private val logoutUseCase: LogoutUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(PatientSettingsState())
     val state: StateFlow<PatientSettingsState> = _state.asStateFlow()
@@ -46,7 +48,7 @@ class PatientSettingsViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observePatientData() {
         viewModelScope.launch(Dispatchers.IO) {
-            authRepo.currentUser
+            observeCurrentUserUseCase()
                 .filterNotNull()
                 .flatMapLatest { user ->
                     val avatarRes = when (user.avatarRes) {
@@ -69,14 +71,14 @@ class PatientSettingsViewModel(
                         )
                     }
 
-                    pairingRepo.getPairingsForPatient(user.id)
-                }.collectLatest { pairings ->
-                    val pending = pairings.firstOrNull { it.status == "PENDING" }
+                    getPatientPairingStatusUseCase(user.id)
+                }.collectLatest { status ->
+                    val currentUser = state.value.user
 
-                    if (pending != null) {
-                        _state.update { it.copy(pairingCode = pending.pairingCode) }
-                    } else {
-                        generateCodeForUser(user = state.value.user ?: return@collectLatest)
+                    if (status.pendingCode != null) {
+                        _state.update { it.copy(pairingCode = status.pendingCode) }
+                    } else if (!status.hasActivePairing && currentUser != null) {
+                        generatePairingCodeUseCase(currentUser)
                     }
                 }
         }
@@ -86,7 +88,8 @@ class PatientSettingsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val user = state.value.user ?: return@launch
             _state.update { it.copy(isRegenerating = true) }
-            generateCodeForUser(user)
+            generatePairingCodeUseCase(user)
+            _state.update { it.copy(isRegenerating = false) }
         }
     }
 
@@ -96,14 +99,9 @@ class PatientSettingsViewModel(
 
     fun onUpdateProfile(firstName: String, lastName: String, email: String, avatarRes: String) {
         val user = state.value.user ?: return
+
         viewModelScope.launch(Dispatchers.IO) {
-            val updatedUser = user.copy(
-                firstName = firstName,
-                lastName = lastName,
-                email = email,
-                avatarRes = avatarRes
-            )
-            userRepo.updateUser(updatedUser)
+            updateUserProfileUseCase(user, firstName, lastName, email, avatarRes)
         }
     }
 
@@ -112,29 +110,19 @@ class PatientSettingsViewModel(
     }
 
     fun onSignOut(onSignedOut: () -> Unit = {}) {
-        viewModelScope.launch(Dispatchers.IO) {
-            authRepo.signOut()
+        viewModelScope.launch {
+            logoutUseCase()
             onSignedOut()
         }
     }
 
-    private suspend fun generateCodeForUser(user: UserEntity) {
-        val newCode = (100000..999999).random().toString()
-
-        pairingRepo.deletePendingPairingsForPatient(user.id)
-
-        val pairing = CaregiverPatientPairingEntity(
-            pairingId = "pair_${currentTimeMillis()}",
-            caregiverId = user.id,
-            patientId = user.id,
-            phoneNumber = user.phoneNumber,
-            relation = "Patient",
-            pairingCode = newCode,
-            status = "PENDING",
-            createdAt = currentTimeMillis()
-        )
-
-        pairingRepo.insertPairing(pairing)
-        _state.update { it.copy(pairingCode = newCode, isRegenerating = false) }
+    fun onAction(action: PatientSettingsAction) {
+        when (action) {
+            is PatientSettingsAction.RegenerateCode -> onRegenerateCode()
+            is PatientSettingsAction.SelectSensitivity -> onSensitivitySelected(action.sensitivity)
+            is PatientSettingsAction.UpdateProfile -> onUpdateProfile(action.firstName, action.lastName, action.email, action.avatarRes)
+            is PatientSettingsAction.DismissError -> onErrorDismissed()
+            is PatientSettingsAction.SignOut -> onSignOut(action.onSignedOut)
+        }
     }
 }

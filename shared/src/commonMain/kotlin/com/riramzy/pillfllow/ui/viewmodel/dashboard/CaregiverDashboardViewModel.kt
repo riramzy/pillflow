@@ -3,14 +3,13 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
-import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
-import com.riramzy.pillfllow.domain.repo.AuthRepo
-import com.riramzy.pillfllow.domain.repo.MedicationRepo
-import com.riramzy.pillfllow.domain.repo.PairingRepo
-import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
+import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
+import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
-import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.utils.ComplianceStatus
@@ -27,27 +26,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.avatar1
-import pillfllow.shared.generated.resources.avatar2
-import pillfllow.shared.generated.resources.avatar3
-import pillfllow.shared.generated.resources.avatar4
-import pillfllow.shared.generated.resources.avatar5
-import pillfllow.shared.generated.resources.avatar6
-import pillfllow.shared.generated.resources.avatar7
-import pillfllow.shared.generated.resources.avatar8
 import kotlin.time.Duration.Companion.milliseconds
 
 class CaregiverDashboardViewModel(
-    private val pairingRepo: PairingRepo,
-    private val medicationRepo: MedicationRepo,
-    private val authRepo: AuthRepo,
-    private val userRepo: UserRepo,
-    private val platformNotifier: PlatformNotifier = PlatformNotifier()
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
+    private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
+    private val nudgePatientUseCase: NudgePatientUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(CaregiverDashboardState())
     val state: StateFlow<CaregiverDashboardState> = _state.asStateFlow()
@@ -61,69 +49,20 @@ class CaregiverDashboardViewModel(
 
     private fun loadDashboardData() {
         viewModelScope.launch(Dispatchers.IO) {
-            authRepo.currentUser.collectLatest { caregiver ->
+            observeCurrentUserUseCase().collectLatest { caregiver ->
                 _state.update { it.copy(caregiver = caregiver) }
-
                 caregiver?.let { user ->
-                    pairingRepo.getPairingsForCaregiver(user.id).collectLatest { pairings ->
-                        val now = currentTimeMillis()
-                        val graceWindowMillis = 30 * 60 * 1000L
-
-                        val patientModels = pairings.mapNotNull { pairing ->
-                            val patient = userRepo.getUserByIdOnce(pairing.patientId)
-
-                            patient?.let { user ->
-                                val patientDoses = medicationRepo.getPendingDosesForUser(user.id).firstOrNull() ?: emptyList()
-
-                                val missedCount = patientDoses.count { now - it.scheduledTime  > graceWindowMillis }
-                                val lateCount = patientDoses.count { now >= it.scheduledTime && (now - it.scheduledTime) <= graceWindowMillis }
-
-                                val patientStatus = when {
-                                    missedCount > 0 -> ComplianceStatus.MISSED
-                                    lateCount > 0 -> ComplianceStatus.LATE
-                                    else -> ComplianceStatus.ON_TIME
-                                }
-
-                                val patientScore = if (patientDoses.isEmpty()) {
-                                    100
-                                } else {
-                                    (100 - ((missedCount * 100) / patientDoses.size))
-                                }
-
-                                val avatarRes = when(user.avatarRes) {
-                                    "avatar1" -> Res.drawable.avatar1
-                                    "avatar2" -> Res.drawable.avatar2
-                                    "avatar3" -> Res.drawable.avatar3
-                                    "avatar4" -> Res.drawable.avatar4
-                                    "avatar5" -> Res.drawable.avatar5
-                                    "avatar6" -> Res.drawable.avatar6
-                                    "avatar7" -> Res.drawable.avatar7
-                                    else -> Res.drawable.avatar8
-                                }
-
-                                PairedPatientUiModel(
-                                    id = user.id,
-                                    name = user.firstName,
-                                    relation = pairing.relation,
-                                    phoneNumber = pairing.phoneNumber,
-                                    avatar = avatarRes,
-                                    status = patientStatus,
-                                    lateDosesCount = lateCount,
-                                    missedDosesCount = missedCount,
-                                    compliancePercentage = patientScore
-                                )
-                            }
-                        }
-
-                        if (_selectedPatientId.value == null &&
-                            patientModels.isNotEmpty() ) {
+                    getCaregiverPatientsUseCase(user.id).collectLatest { patientModels ->
+                        val validIds = patientModels.map { it.id }
+                        if (patientModels.isNotEmpty() && (_selectedPatientId.value == null || !validIds.contains(_selectedPatientId.value))) {
                             _selectedPatientId.value = patientModels.first().id
                         }
 
                         _state.update {
                             it.copy(
                                 patients = patientModels,
-                                selectedPatientId = _selectedPatientId.value ?: ""
+                                selectedPatientId = _selectedPatientId.value ?: "",
+                                isLoading = false
                             )
                         }
                     }
@@ -138,7 +77,7 @@ class CaregiverDashboardViewModel(
             _selectedPatientId
                 .filterNotNull()
                 .flatMapLatest { patientId ->
-                    medicationRepo.getPendingDosesForUser(patientId)
+                    getPendingDosesForUserUseCase(patientId)
                 }
                 .collectLatest { pendingDoses ->
                     val now = currentTimeMillis()
@@ -210,6 +149,38 @@ class CaregiverDashboardViewModel(
         }
     }
 
+    fun selectPatient(patientId: String) {
+        _selectedPatientId.value = patientId
+        _state.update { it.copy(selectedPatientId = patientId) }
+    }
+
+    fun callPatient(patientId: String) {
+        val phone = _state.value.patients.firstOrNull { it.id == patientId }?.phoneNumber
+
+        if (!phone.isNullOrBlank()) {
+            openPhoneDialer(phone)
+        }
+    }
+
+    fun nudgePatient(patientId: String) {
+        val patientName = _state.value.patients.firstOrNull { it.id == patientId }?.name ?: "Patient"
+        val previousAlert = _state.value.dailyStatusAlertText
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update {
+                it.copy(
+                    dailyStatusAlertText = "Nudge reminder sent to $patientName!",
+                    lastUpdatedText = "Updated just now"
+                )
+            }
+
+            nudgePatientUseCase(patientName)
+            delay(3000L.milliseconds)
+
+            _state.update { it.copy(dailyStatusAlertText = previousAlert) }
+        }
+    }
+
     private fun calculateWeeklyCompliance(
         pendingDoses: List<PendingDoseWithMedication>,
         now: Long
@@ -259,7 +230,7 @@ class CaregiverDashboardViewModel(
             }
 
             RecentActivityUiModel(
-                id = dose.id.toString(),
+                id = dose.id,
                 patientName = patientName,
                 actionDescription = action,
                 timestampText = "at ${formatTime(dose.scheduledTime)}",
@@ -268,40 +239,11 @@ class CaregiverDashboardViewModel(
         }
     }
 
-    fun selectPatient(patientId: String) {
-        _selectedPatientId.value = patientId
-        _state.update { it.copy(selectedPatientId = patientId) }
-    }
-
-    fun callPatient(patientId: String) {
-        val phone = _state.value.patients.firstOrNull { it.id == patientId }?.phoneNumber
-
-        if (!phone.isNullOrBlank()) {
-            openPhoneDialer(phone)
-        }
-    }
-
-    fun nudgePatient(patientId: String) {
-        val patientName = _state.value.patients.firstOrNull { it.id == patientId }?.name ?: "Patient"
-        val previousAlert = _state.value.dailyStatusAlertText
-
-        viewModelScope.launch(Dispatchers.IO) {
-            _state.update {
-                it.copy(
-                    dailyStatusAlertText = "Nudge reminder sent to $patientName!",
-                    lastUpdatedText = "Updated just now"
-                )
-            }
-
-            platformNotifier.sendInstantNudge(
-                title = "Caregiver Reminder",
-                message = "Time to take your medication!"
-            )
-
-            delay(3000L.milliseconds)
-            _state.update {
-                it.copy(dailyStatusAlertText = previousAlert)
-            }
+    fun onAction(action: CaregiverDashboardAction) {
+        when (action) {
+            is CaregiverDashboardAction.SelectPatient -> selectPatient(action.patientId)
+            is CaregiverDashboardAction.CallPatient -> callPatient(action.patientId)
+            is CaregiverDashboardAction.NudgePatient -> nudgePatient(action.patientId)
         }
     }
 }

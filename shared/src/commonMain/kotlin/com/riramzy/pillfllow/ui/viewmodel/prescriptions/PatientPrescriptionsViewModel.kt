@@ -2,10 +2,12 @@ package com.riramzy.pillfllow.ui.viewmodel.prescriptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.data.local.entity.MedicationEntity
-import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
-import com.riramzy.pillfllow.domain.repo.AuthRepo
-import com.riramzy.pillfllow.domain.repo.MedicationRepo
+import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.DeletePrescriptionUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
+import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.utils.PillColor
@@ -21,14 +23,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PatientPrescriptionsViewModel(
-    private val medicationRepo: MedicationRepo,
-    private val authRepo: AuthRepo,
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val getMedicationsForUserUseCase: GetMedicationsForUserUseCase,
+    private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
+    private val savePrescriptionUseCase: SavePrescriptionUseCase,
+    private val deletePrescriptionUseCase: DeletePrescriptionUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(PatientPrescriptionsState())
     val state: StateFlow<PatientPrescriptionsState> = _state.asStateFlow()
@@ -40,10 +44,10 @@ class PatientPrescriptionsViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observePrescriptions() {
         viewModelScope.launch(Dispatchers.IO) {
-            authRepo.currentUser.filterNotNull().flatMapLatest { user ->
+            observeCurrentUserUseCase().filterNotNull().flatMapLatest { user ->
                 combine(
-                    medicationRepo.getPendingDosesForUser(user.id),
-                    medicationRepo.getMedicationForUser(user.id)
+                    getPendingDosesForUserUseCase(user.id),
+                    getMedicationsForUserUseCase(user.id)
                 ) { pendingDoses, medications ->
                     val now = currentTimeMillis()
 
@@ -62,7 +66,7 @@ class PatientPrescriptionsViewModel(
 
                         val pillColor = PillColor.entries.firstOrNull {
                             it.name.equals(med.colorHex, ignoreCase = true) ||
-                            it.label.equals(med.colorHex, ignoreCase = true)
+                                    it.label.equals(med.colorHex, ignoreCase = true)
                         } ?: PillColor.SKY_BLUE
 
                         PrescriptionUiModel(
@@ -84,9 +88,19 @@ class PatientPrescriptionsViewModel(
                         nextDoseMedication = nextMed,
                         isLoading = false
                     )
+
+                    prescriptions to (nextTime to nextMed)
                 }
-            }.collectLatest {
-                _state.value = it
+            }.collectLatest { (prescriptions, nextDoseInfo) ->
+                _state.update { current ->
+                    current.copy(
+                        prescriptions = prescriptions,
+                        activeCount = prescriptions.size,
+                        nextDoseTime = nextDoseInfo.first,
+                        nextDoseMedication = nextDoseInfo.second,
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -100,7 +114,7 @@ class PatientPrescriptionsViewModel(
         }
     }
 
-    fun openEditSheet(medicationId: Long) {
+    fun openEditSheet(medicationId: String) {
         _state.update {
             it.copy(
                 isAddSheetOpen = true,
@@ -129,42 +143,41 @@ class PatientPrescriptionsViewModel(
         scheduledTimesMillis: List<Long> = emptyList()
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val user = authRepo.currentUser.firstOrNull() ?: return@launch
+            val user = observeCurrentUserUseCase.once() ?: return@launch
 
-            val medication = MedicationEntity(
-                id = _state.value.editingMedicationId ?: 0L,
+            savePrescriptionUseCase(
+                editingMedicationId = _state.value.editingMedicationId,
                 userId = user.id,
                 name = name,
                 dosage = dosage,
+                instructions = instructions,
                 frequency = frequency,
                 timeOfDay = timeOfDay,
                 colorHex = colorHex,
                 shape = shape,
-                instructions = instructions,
-                isSynced = false
+                scheduledTimesMillis = scheduledTimesMillis
             )
 
-            val medId = medicationRepo.insertMedication(medication)
-
-            if (scheduledTimesMillis.isNotEmpty()) {
-                val scheduledDoses = scheduledTimesMillis.map { time ->
-                    ScheduledDoseEntity(
-                        medicationId = if (medication.id > 0) medication.id else medId,
-                        scheduledTime = time,
-                        complianceStatus = "PENDING",
-                        isTaken = false,
-                        isSynced = false
-                    )
-                }
-                medicationRepo.insertScheduledDoses(scheduledDoses)
-            }
             closeAddSheet()
         }
     }
 
-    fun deletePrescription(id: Long) {
+    fun deletePrescription(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            medicationRepo.deleteMedicationById(id)
+            deletePrescriptionUseCase(id)
+        }
+    }
+
+    fun onAction(action: PatientPrescriptionsAction) {
+        when (action) {
+            is PatientPrescriptionsAction.OpenAddSheet -> openAddSheet()
+            is PatientPrescriptionsAction.OpenEditSheet -> openEditSheet(action.medicationId)
+            is PatientPrescriptionsAction.CloseAddSheet -> closeAddSheet()
+            is PatientPrescriptionsAction.SavePrescription -> savePrescription(
+                action.name, action.dosage, action.instructions, action.frequency,
+                action.timeOfDay, action.colorHex, action.shape, action.scheduledTimesMillis
+            )
+            is PatientPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
         }
     }
 }

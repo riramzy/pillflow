@@ -2,12 +2,11 @@ package com.riramzy.pillfllow.ui.viewmodel.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.domain.repo.AuthRepo
-import com.riramzy.pillfllow.domain.repo.MedicationRepo
-import com.riramzy.pillfllow.domain.repo.PairingRepo
-import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
-import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.utils.ComplianceStatus
@@ -22,21 +21,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.avatar1
-import pillfllow.shared.generated.resources.avatar2
-import pillfllow.shared.generated.resources.avatar3
-import pillfllow.shared.generated.resources.avatar4
 
 class HistoryViewModel(
-    private val medicationRepo: MedicationRepo,
-    private val authRepo: AuthRepo,
-    private val pairingRepo: PairingRepo,
-    private val userRepo: UserRepo
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
+    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(HistoryState())
     val state: StateFlow<HistoryState> = _state.asStateFlow()
@@ -50,66 +42,21 @@ class HistoryViewModel(
 
     private fun observeUserAndRole() {
         viewModelScope.launch(Dispatchers.IO) {
-            authRepo.currentUser.collectLatest { user ->
+            observeCurrentUserUseCase().collectLatest { user ->
                 if (user?.userType?.equals("CAREGIVER", ignoreCase = true) == true) {
-                    user.let { caregiver ->
-                        pairingRepo.getPairingsForCaregiver(caregiver.id).collectLatest { pairings ->
-                            val now = currentTimeMillis()
-                            val graceWindowMillis = 30 * 60 * 1000L
+                    getCaregiverPatientsUseCase(user.id).collectLatest { patientModels ->
+                        val validIds = patientModels.map { it.id }
 
-                            val patientModels = pairings.mapNotNull { pairing ->
-                                val patient = userRepo.getUserByIdOnce(pairing.patientId)
+                        if (patientModels.isNotEmpty() && (_selectedPatientId.value == null || !validIds.contains(_selectedPatientId.value))) {
+                            _selectedPatientId.value = patientModels.first().id
+                        }
 
-                                patient?.let { currentPatient ->
-                                    val patientDoses = medicationRepo.getPendingDosesForUser(currentPatient.id).firstOrNull() ?: emptyList()
-
-                                    val missedCount = patientDoses.count { now - it.scheduledTime  > graceWindowMillis }
-                                    val lateCount = patientDoses.count { now >= it.scheduledTime && (now - it.scheduledTime) <= graceWindowMillis }
-
-                                    val patientStatus = when {
-                                        missedCount > 0 -> ComplianceStatus.MISSED
-                                        lateCount > 0 -> ComplianceStatus.LATE
-                                        else -> ComplianceStatus.ON_TIME
-                                    }
-
-                                    val patientScore = if (patientDoses.isEmpty()) {
-                                        100
-                                    } else {
-                                        (100 - ((missedCount * 100) / patientDoses.size))
-                                    }
-
-                                    val avatarRes = when(currentPatient.avatarRes) {
-                                        "avatar1" -> Res.drawable.avatar1
-                                        "avatar2" -> Res.drawable.avatar2
-                                        "avatar3" -> Res.drawable.avatar3
-                                        else -> Res.drawable.avatar4
-                                    }
-
-                                    PairedPatientUiModel(
-                                        id = currentPatient.id,
-                                        name = currentPatient.firstName,
-                                        relation = pairing.relation,
-                                        phoneNumber = pairing.phoneNumber,
-                                        avatar = avatarRes,
-                                        status = patientStatus,
-                                        lateDosesCount = lateCount,
-                                        missedDosesCount = missedCount,
-                                        compliancePercentage = patientScore
-                                    )
-                                }
-                            }
-
-                            if (_selectedPatientId.value == null && patientModels.isNotEmpty()) {
-                                _selectedPatientId.value = patientModels.first().id
-                            }
-
-                            _state.update {
-                                it.copy(
-                                    isCaregiver = true,
-                                    pairedPatients = patientModels,
-                                    selectedPatientId = _selectedPatientId.value ?: ""
-                                )
-                            }
+                        _state.update {
+                            it.copy(
+                                isCaregiver = true,
+                                pairedPatients = patientModels,
+                                selectedPatientId = _selectedPatientId.value ?: ""
+                            )
                         }
                     }
                 } else if (user != null) {
@@ -124,7 +71,7 @@ class HistoryViewModel(
     private fun observeDoseHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             _selectedPatientId.filterNotNull().flatMapLatest { patientId ->
-                medicationRepo.getDoseHistoryForUser(patientId)
+                getDoseHistoryForUserUseCase(patientId)
             }.collectLatest { historyDoses ->
                 val now = currentTimeMillis()
 
@@ -178,7 +125,7 @@ class HistoryViewModel(
                     }
 
                     HistoryLogRecordUiModel(
-                        id = record.id.toString(),
+                        id = record.id,
                         patientName = "",
                         actionTitle = "${record.name} ${record.dosage}",
                         actionDescription = "Scheduled ${formatTime(record.scheduledTime)}",
@@ -205,5 +152,11 @@ class HistoryViewModel(
     fun selectPatient(patientId: String) {
         _selectedPatientId.value = patientId
         _state.update { it.copy(selectedPatientId = patientId) }
+    }
+
+    fun onAction(action: HistoryAction) {
+        when (action) {
+            is HistoryAction.SelectPatient -> selectPatient(action.patientId)
+        }
     }
 }

@@ -7,8 +7,11 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
     startKoin {
         appDeclaration()
         modules(
-            appModule,
             platformModule,
+            databaseModule,
+            firebaseModule,
+            repoModule,
+            useCaseModule,
             viewModelModule
         )
     }

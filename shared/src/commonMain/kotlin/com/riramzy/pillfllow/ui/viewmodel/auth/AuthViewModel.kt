@@ -2,11 +2,12 @@ package com.riramzy.pillfllow.ui.viewmodel.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.domain.repo.AuthRepo
+import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
+import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
+import com.riramzy.pillfllow.utils.Result
 import com.riramzy.pillfllow.utils.UserType
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val authRepo: AuthRepo
+    private val signInUseCase: SignInUseCase,
+    private val signUpUseCase: SignUpUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state.asStateFlow()
@@ -73,26 +75,31 @@ class AuthViewModel(
             return
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+            val result = signUpUseCase(
+                email = state.value.email,
+                pass = state.value.password,
+                firstName = state.value.firstName,
+                lastName = state.value.lastName,
+                role = state.value.selectedRole
+            )
 
-            try {
-                val result = authRepo.signUp(
-                    email = state.value.email,
-                    pass = state.value.password,
-                    firstName = state.value.firstName,
-                    lastName = state.value.lastName,
-                    role = state.value.selectedRole
-                )
+            when (result) {
+                is Result.Success -> {
+                    val resolvedRole = if (result.data.userType.equals("CAREGIVER", ignoreCase = true)) {
+                        UserType.CAREGIVER
+                    } else {
+                        UserType.PATIENT
+                    }
 
-                result.onSuccess { user ->
-                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = user.id) }
+                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = result.data.id, selectedRole = resolvedRole) }
                     onSuccess()
-                }.onFailure { error ->
-                    _state.update { it.copy(isLoading = false, errorMessage = error.message) }
                 }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, errorMessage = e.message) }
+                is Result.Error -> {
+                    _state.update { it.copy(isLoading = false, errorMessage = result.message) }
+                }
+                else -> Unit
             }
         }
     }
@@ -110,28 +117,48 @@ class AuthViewModel(
             return
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+            val result = signInUseCase(
+                email = state.value.email,
+                password = state.value.password
+            )
 
-            try {
-                val result = authRepo.signIn(
-                    email = state.value.email,
-                    pass = state.value.password
-                )
+            when (result) {
+                is Result.Success -> {
+                    val resolvedRole = if (result.data.userType.equals("CAREGIVER", ignoreCase = true)) {
+                        UserType.CAREGIVER
+                    } else {
+                        UserType.PATIENT
+                    }
 
-                result.onSuccess { user ->
-                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = user.id) }
+                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = result.data.id, selectedRole = resolvedRole) }
                     onSuccess()
-                }.onFailure { error ->
-                    _state.update { it.copy(isLoading = false, errorMessage = error.message) }
                 }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, errorMessage = e.message) }
+                is Result.Error -> {
+                    _state.update { it.copy(isLoading = false, errorMessage = result.message) }
+                }
+                else -> Unit
             }
         }
     }
 
     fun onErrorDismissed() {
         _state.update { it.copy(errorMessage = null) }
+    }
+
+    fun onAction(action: AuthAction) {
+        when (action) {
+            is AuthAction.SelectRole -> onRoleSelected(action.role)
+            is AuthAction.FirstNameChanged -> onFirstNameChanged(action.firstName)
+            is AuthAction.LastNameChanged -> onLastNameChanged(action.lastName)
+            is AuthAction.EmailChanged -> onEmailChanged(action.email)
+            is AuthAction.PasswordChanged -> onPasswordChanged(action.password)
+            is AuthAction.ConfirmPasswordChanged -> onConfirmPasswordChanged(action.confirmPassword)
+            is AuthAction.ToggleAuthMode -> onToggleAuthMode()
+            is AuthAction.SignUp -> signUp(action.onSuccess)
+            is AuthAction.SignIn -> signIn(action.onSuccess)
+            is AuthAction.DismissError -> onErrorDismissed()
+        }
     }
 }

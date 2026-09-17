@@ -4,13 +4,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
-import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
-import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
-import com.riramzy.pillfllow.domain.repo.AuthRepo
-import com.riramzy.pillfllow.domain.repo.MedicationRepo
+import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.utils.ComplianceStatus
@@ -29,11 +29,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PatientDashboardViewModel(
-    private val medicationRepo: MedicationRepo,
-    private val authRepo: AuthRepo,
-    private val platformNotifier: PlatformNotifier = PlatformNotifier()
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
+    private val logDoseTakenUseCase: LogDoseTakenUseCase
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
 
@@ -43,16 +42,21 @@ class PatientDashboardViewModel(
 
     private fun loadDashboardData() {
         viewModelScope.launch(Dispatchers.IO) {
-            authRepo.currentUser.collectLatest { currentUser ->
+            observeCurrentUserUseCase().collectLatest { currentUser ->
                 _state.update { it.copy(user = currentUser) }
 
                 currentUser?.let { user ->
-                    medicationRepo.getPendingDosesForUser(user.id).collectLatest { pendingDoses ->
+                    getPendingDosesForUserUseCase(user.id).collectLatest { pendingDoses ->
                         val now = currentTimeMillis()
                         val graceWindowMillis = 30 * 60 * 1000L
 
                         val mappedPills = pendingDoses.mapIndexed { index, dose ->
-                            val color = runCatching {
+                            val resolvedPillColor = PillColor.entries.firstOrNull {
+                                it.name.equals(dose.colorHex, ignoreCase = true) ||
+                                        it.label.equals(dose.colorHex, ignoreCase = true)
+                            }
+
+                            val color = resolvedPillColor?.color ?: runCatching {
                                 Color(parseColorHex(dose.colorHex))
                             }.getOrDefault(Color(0xFFE53935))
 
@@ -61,7 +65,7 @@ class PatientDashboardViewModel(
                             }.getOrDefault(PillShape.CIRCLE)
 
                             PillEntity(
-                                id = dose.id.toString(),
+                                id = dose.id,
                                 name = dose.name,
                                 color = color,
                                 shape = shape,
@@ -110,7 +114,8 @@ class PatientDashboardViewModel(
                                 complianceStatus = complianceInfo.status,
                                 complianceTitle = complianceInfo.title,
                                 complianceSubtitle = complianceInfo.subtitle,
-                                complianceBadgeText = complianceInfo.badgeText
+                                complianceBadgeText = complianceInfo.badgeText,
+                                isLoading = false
                             )
                         }
                     }
@@ -155,24 +160,15 @@ class PatientDashboardViewModel(
         }
     }
 
-    fun logDose(doseId: Long, scheduledTime: Long? = null) {
+    fun logDose(doseId: String, scheduledTime: Long? = null) {
         viewModelScope.launch(Dispatchers.IO) {
-            val targetTime = scheduledTime
-                ?: _state.value.scheduledDoses.firstOrNull { it.id == doseId }?.scheduledTime
-                ?: currentTimeMillis()
+            logDoseTakenUseCase(doseId = doseId, scheduledTime = scheduledTime)
+        }
+    }
 
-            val compliance = DoseStateMachine.evaluateCompliance(
-                scheduledTimeMillis = targetTime
-            )
-
-            medicationRepo.markScheduledDoseTaken(
-                id = doseId,
-                takenTime = currentTimeMillis(),
-                isTaken = true,
-                complianceStatus = compliance.name
-            )
-
-            platformNotifier.cancelReminder(doseId = doseId.toString())
+    fun onAction(action: PatientDashboardAction) {
+        when (action) {
+            is PatientDashboardAction.LogDose -> logDose(action.doseId, action.scheduledTime)
         }
     }
 }
