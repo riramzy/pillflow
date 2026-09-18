@@ -17,7 +17,7 @@ struct iOSApp: App {
     private let notificationDelegate = NotificationDelegate()
 
     init() {
-        InitKoinIosKt.initKoinForIos()
+        InitKoinIosKt.doInitKoinForIos()
 
         let center = UNUserNotificationCenter.current()
         center.delegate = notificationDelegate
