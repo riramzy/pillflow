@@ -44,8 +44,10 @@ jobs:
             echo "Warning: No GoogleService-Info.plist found!"
           fi
 
-      # 5. Build iOS App (Xcode will invoke Gradle automatically with all architecture vars)
+      # 5. Build iOS App
       - name: Build iOS App with Xcode
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.logging.stacktrace=all"
         run: |
           xcodebuild -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
