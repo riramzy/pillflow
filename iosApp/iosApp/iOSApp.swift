@@ -1,5 +1,6 @@
 import SwiftUI
 import Shared
+import FirebaseCore
 import UserNotifications
 
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
@@ -17,6 +18,7 @@ struct iOSApp: App {
     private let notificationDelegate = NotificationDelegate()
 
     init() {
+        FirebaseApp.configure()
         InitKoinIosKt.doInitKoinForIos()
 
         let center = UNUserNotificationCenter.current()

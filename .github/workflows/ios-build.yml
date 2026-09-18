@@ -70,6 +70,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath build/DerivedData \
             build \
+            PRODUCT_NAME=PillFlow \
+            PRODUCT_BUNDLE_IDENTIFIER=com.riramzy.pillflow.PillFlow \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
@@ -79,6 +81,9 @@ jobs:
         run: |
           mkdir -p build/Payload
           cp -r build/DerivedData/Build/Products/Release-iphoneos/*.app build/Payload/
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.riramzy.pillflow.PillFlow" build/Payload/*.app/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.riramzy.pillflow.PillFlow" build/Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName PillFlow" build/Payload/*.app/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleName string PillFlow" build/Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName PillFlow" build/Payload/*.app/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string PillFlow" build/Payload/*.app/Info.plist
           cd build
           zip -r PillFlow.ipa Payload
 

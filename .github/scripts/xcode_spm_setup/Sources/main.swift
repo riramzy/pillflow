@@ -60,6 +60,7 @@ func main() {
 
         for configuration in target.buildConfigurationList?.buildConfigurations ?? [] {
             configuration.buildSettings["PRODUCT_NAME"] = "PillFlow"
+            configuration.buildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.riramzy.pillflow.PillFlow"
 
             var otherLdFlags: [String] = []
             if let current = configuration.buildSettings["OTHER_LDFLAGS"] as? [String] {
