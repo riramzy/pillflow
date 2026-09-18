@@ -2,7 +2,7 @@ name: Build iOS App
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -68,14 +68,14 @@ jobs:
       - name: Package .ipa
         run: |
           mkdir -p build/Payload
-          cp -r build/DerivedData/Build/Products/Release-iphoneos/PillFllow.app build/Payload/
+          cp -r build/DerivedData/Build/Products/Release-iphoneos/*.app build/Payload/
           cd build
-          zip -r PillFllow.ipa Payload
+          zip -r PillFlow.ipa Payload
 
       # 8. Upload downloadable artifact
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PillFllow-iOS
-          path: build/PillFllow.ipa
+          name: PillFlow-iOS
+          path: build/PillFlow.ipa
           retention-days: 7
