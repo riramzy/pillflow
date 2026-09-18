@@ -2,7 +2,7 @@
 # Kotlin, KSP, and AGP aligned for Gradle 9.1 and Room 2.8.4
 kotlin = "2.3.10"
 agp = "9.0.1"
-compose-multiplatform = "1.11.1"
+compose-multiplatform = "1.12.0"
 ksp = "2.3.10"
 room = "2.8.4"
 sqlite = "2.5.0-alpha11"
