@@ -17,3 +17,6 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+/androidApp/google-services.json
+/shared/schemas/com.riramzy.pillfllow.data.local.database.PillFlowDatabase/1.json
+/iosApp/iosApp/GoogleService-Info.plist
