@@ -17,7 +17,7 @@ interface PairingDao {
     fun getPairingsForCaregiver(caregiverId: String): Flow<List<CaregiverPatientPairingEntity>>
 
     @Query("SELECT * FROM pairings WHERE caregiverId = :caregiverId")
-    fun getPairingsForCaregiverOnce(caregiverId: String): List<CaregiverPatientPairingEntity>
+    suspend fun getPairingsForCaregiverOnce(caregiverId: String): List<CaregiverPatientPairingEntity>
 
     @Query("SELECT * FROM pairings WHERE pairingCode = :pairingCode")
     fun getPairingsByPairingCode(pairingCode: String): Flow<CaregiverPatientPairingEntity?>
@@ -26,13 +26,13 @@ interface PairingDao {
     suspend fun getPendingPairingByCode(pairingCode: String): CaregiverPatientPairingEntity?
 
     @Query("SELECT * FROM pairings WHERE pairingCode = :pairingCode")
-    fun getPairingsByPairingCodeOnce(pairingCode: String): CaregiverPatientPairingEntity?
+    suspend fun getPairingsByPairingCodeOnce(pairingCode: String): CaregiverPatientPairingEntity?
 
     @Query("SELECT * FROM pairings WHERE patientId = :patientId")
     fun getPairingsForPatient(patientId: String): Flow<List<CaregiverPatientPairingEntity>>
 
     @Query("SELECT * FROM pairings WHERE patientId = :patientId")
-    fun getPairingsForPatientOnce(patientId: String): List<CaregiverPatientPairingEntity>
+    suspend fun getPairingsForPatientOnce(patientId: String): List<CaregiverPatientPairingEntity>
 
     @Query("UPDATE pairings SET status = :status WHERE pairingId = :pairingId")
     suspend fun updatePairingStatus(pairingId: String, status: String)
