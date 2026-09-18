@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. Select Xcode 16 (for project format 77)
+      # 1. Select Xcode 16 (for Xcode format 77 support)
       - name: Select Xcode 16
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -44,7 +44,12 @@ jobs:
             echo "Warning: No GoogleService-Info.plist found!"
           fi
 
-      # 5. Build iOS App
+      # 5. Ensure App Icon is exactly 1024x1024 to satisfy Xcode actool validation
+      - name: Resize App Icon
+        run: |
+          sips -z 1024 1024 iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/app-icon-1024.png
+
+      # 6. Build iOS App (runs Gradle KMP compiler + links native ARM64 framework)
       - name: Build iOS App with Xcode
         env:
           GRADLE_OPTS: "-Dorg.gradle.logging.stacktrace=all"
@@ -59,7 +64,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      # 6. Package into .ipa
+      # 7. Package into .ipa
       - name: Package .ipa
         run: |
           mkdir -p build/Payload
@@ -67,7 +72,7 @@ jobs:
           cd build
           zip -r PillFllow.ipa Payload
 
-      # 7. Upload downloadable artifact
+      # 8. Upload downloadable artifact
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
