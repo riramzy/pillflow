@@ -59,6 +59,8 @@ func main() {
         }
 
         for configuration in target.buildConfigurationList?.buildConfigurations ?? [] {
+            configuration.buildSettings["PRODUCT_NAME"] = "PillFlow"
+
             var otherLdFlags: [String] = []
             if let current = configuration.buildSettings["OTHER_LDFLAGS"] as? [String] {
                 otherLdFlags = current
@@ -72,7 +74,7 @@ func main() {
         }
         
         try xcodeproj.write(path: projectPath)
-        print("Firebase added to Xcode successfully!")
+        print("Firebase added to Xcode successfully with PRODUCT_NAME=PillFlow!")
     } catch {
         print("Error: \(error)")
         exit(1)
