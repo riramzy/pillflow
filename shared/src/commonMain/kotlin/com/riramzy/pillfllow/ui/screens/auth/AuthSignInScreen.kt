@@ -1,19 +1,23 @@
 package com.riramzy.pillfllow.ui.screens.auth
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -45,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.ui.components.auth.PillFlowAuthHeader
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
@@ -53,10 +58,7 @@ import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
 import com.riramzy.pillfllow.utils.UserType
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.pillflow_logo
 
 @Composable
 fun AuthSignInScreen(
@@ -106,6 +108,17 @@ fun AuthSignInScreenContent(
             .background(
                 color = MaterialTheme.colorScheme.surface
             ),
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp)
+                    .statusBarsPadding(),
+                contentAlignment = Alignment.Center
+            ) {
+                PillFlowAuthHeader()
+            }
+        },
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
@@ -117,148 +130,125 @@ fun AuthSignInScreenContent(
             }
         },
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .padding(paddingValues)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
+            contentAlignment = Alignment.Center
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(bottom = 40.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .wrapContentSize()
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.pillflow_logo),
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .size(50.dp)
-                    )
-
-                    Text(
-                        text = "PillFlow",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Text(
-                    text = "Medication adherence, reimagined",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary.copy(0.5f)
-                )
-            }
-
-            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(15.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                shape = RoundedCornerShape(25.dp)
+                    .heightIn(min = maxHeight),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
+                Card(
                     modifier = Modifier
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(30.dp)
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(15.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    shape = RoundedCornerShape(25.dp)
                 ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        modifier = Modifier
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(30.dp)
                     ) {
-                        Text(
-                            text = "Login as a ${state.selectedRole.label}",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Login as a ${state.selectedRole.label}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
 
-                        Text(
-                            text = when (state.selectedRole) {
-                                UserType.PATIENT -> "Schedule your pills and add some fun to the process"
-                                UserType.CAREGIVER -> "Support your loved ones and stay on top of their medication schedules"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                            Text(
+                                text = when (state.selectedRole) {
+                                    UserType.PATIENT -> "Schedule your pills and add some fun to the process"
+                                    UserType.CAREGIVER -> "Support your loved ones and stay on top of their medication schedules"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
 
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        PillFlowInputField(
-                            label = "Email",
-                            placeholder = "Enter your email",
-                            value = state.email,
-                            onValueChange = { onAction(AuthAction.EmailChanged(it)) },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Email,
-                                imeAction = ImeAction.Next
-                            ),
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            PillFlowInputField(
+                                label = "Email",
+                                placeholder = "Enter your email",
+                                value = state.email,
+                                onValueChange = { onAction(AuthAction.EmailChanged(it)) },
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Email,
+                                    imeAction = ImeAction.Next
+                                ),
+                            )
 
-                        PillFlowInputField(
-                            label = "Password",
-                            placeholder = "Enter your password",
-                            value = state.password,
-                            onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password,
-                                imeAction = ImeAction.Next
-                            ),
-                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = "Visibility Toggle",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clickable { passwordVisible = !passwordVisible }
-                                )
-                            }
-                        )
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        PillFlowButton(
-                            text = if (state.isLoading) "Logging In..." else "Sign In",
-                            isEnabled = !state.isLoading,
-                            onClick = { onAction(AuthAction.SignIn(onSuccess = { onAuthSuccess(state.selectedRole) })) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Text(
-                            text = "Don't have an account? Sign Up",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onAction(AuthAction.ToggleAuthMode)
-                                    onNavigateToSignUp()
+                            PillFlowInputField(
+                                label = "Password",
+                                placeholder = "Enter your password",
+                                value = state.password,
+                                onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Password,
+                                    imeAction = ImeAction.Done
+                                ),
+                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = "Visibility Toggle",
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { passwordVisible = !passwordVisible }
+                                    )
                                 }
-                        )
+                            )
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            PillFlowButton(
+                                text = if (state.isLoading) "Logging In..." else "Sign In",
+                                isEnabled = !state.isLoading,
+                                onClick = {
+                                    onAction(AuthAction.SignIn(onSuccess = {
+                                        onAuthSuccess(
+                                            state.selectedRole
+                                        )
+                                    }))
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Text(
+                                text = "Don't have an account? Sign Up",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onAction(AuthAction.ToggleAuthMode)
+                                        onNavigateToSignUp()
+                                    }
+                            )
+                        }
                     }
                 }
             }

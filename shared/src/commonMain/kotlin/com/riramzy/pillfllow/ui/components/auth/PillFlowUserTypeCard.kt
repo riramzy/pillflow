@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -76,7 +77,8 @@ fun PillFlowUserTypeCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(15.dp)
+                horizontalArrangement = Arrangement.spacedBy(15.dp),
+                modifier = Modifier.weight(1f)
             ) {
                 Box(
                     modifier = Modifier
@@ -109,7 +111,7 @@ fun PillFlowUserTypeCard(
                 ) {
                     Text(
                         text = if (type == UserType.CAREGIVER) "I'm a Caregiver" else "I'm a User",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.sp,
                     )
@@ -119,13 +121,17 @@ fun PillFlowUserTypeCard(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Normal,
                         fontSize = 12.sp,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
                     )
                 }
             }
 
             IconButton(
                 onClick = { /*TODO*/ },
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier
+                    .size(20.dp)
+                    .weight(0.1f)
             ) {
                 Icon(
                     imageVector = if (isSelected) Icons.Default.Done else vectorResource(Res.drawable.question),
