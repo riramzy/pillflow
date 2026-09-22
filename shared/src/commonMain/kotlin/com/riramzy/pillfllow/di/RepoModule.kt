@@ -26,7 +26,8 @@ val repoModule: Module = module {
         MedicationRepoImpl(
             medicationDao = get(),
             platformNotifier = get(),
-            firestore = get()
+            firestore = get(),
+            sessionManager = get()
         )
     }
 

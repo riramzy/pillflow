@@ -26,14 +26,14 @@ import org.koin.dsl.module
 val useCaseModule: Module = module {
     factory { SignInUseCase(authRepo = get(), sessionManager = get()) }
     factory { SignUpUseCase(authRepo = get(), sessionManager = get()) }
-    factory { LogoutUseCase(authRepo = get(), sessionManager = get(), database = get()) }
+    factory { LogoutUseCase(authRepo = get(), sessionManager = get(), database = get(), platformNotifier = get()) }
     factory { ObserveCurrentUserUseCase(sessionManager = get(), authRepo = get()) }
 
     factory { GetCaregiverPatientsUseCase(pairingRepo = get(), userRepo = get(), medicationRepo = get()) }
     factory { InitiatePairingUseCase(pairingRepo = get(), userRepo = get()) }
     factory { ConfirmPairingUseCase(pairingRepo = get(), userRepo = get()) }
     factory { UnlinkPatientUseCase(pairingRepo = get(), userRepo = get()) }
-    factory { NudgePatientUseCase(platformNotifier = get()) }
+    factory { NudgePatientUseCase(firestore = get()) }
 
     factory { GetPatientPairingStatusUseCase(pairingRepo = get()) }
     factory { GeneratePairingCodeUseCase(pairingRepo = get()) }

@@ -18,6 +18,7 @@ interface MedicationRepo {
     fun getPendingDosesForPatients(patientIds: List<String>): Flow<List<PendingDoseWithMedication>>
     fun getPendingDosesWithMedication(): Flow<List<PendingDoseWithMedication>>
     fun getUnsyncedScheduledDoses(): Flow<List<ScheduledDoseEntity>>
+    suspend fun getScheduledDoseById(id: String): ScheduledDoseEntity?
     suspend fun markScheduledDoseSynced(id: String)
     suspend fun markScheduledDoseTaken(id: String, takenTime: Long, isTaken: Boolean, complianceStatus: String)
     suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<String>

@@ -17,7 +17,9 @@ class LogDoseTakenUseCase(
     ): Result<Unit> = safeCall {
         val now = currentTimeMillis()
 
-        val targetTime = scheduledTime ?: now
+        val dose = medicationRepo.getScheduledDoseById(doseId)
+
+        val targetTime = scheduledTime ?: dose?.scheduledTime ?: now
 
         val compliance = DoseStateMachine.evaluateCompliance(
             scheduledTimeMillis = targetTime,

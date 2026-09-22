@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.riramzy.pillfllow.utils.medication.DoseReminderStage
 import org.koin.mp.KoinPlatformTools
 
 actual class PlatformNotifier {
@@ -17,7 +18,8 @@ actual class PlatformNotifier {
         context: Any?,
         doseId: String,
         pillName: String,
-        triggerTimeMillis: Long
+        triggerTimeMillis: Long,
+        stage: DoseReminderStage
     ) {
         val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
@@ -27,11 +29,12 @@ actual class PlatformNotifier {
             `package` = androidContext.packageName
             putExtra("DOSE_ID", doseId)
             putExtra("PILL_NAME", pillName)
+            putExtra("REMINDER_STAGE", stage.name)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
             androidContext,
-            doseId.hashCode(),
+            "$doseId:${stage.name}".hashCode(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -68,27 +71,66 @@ actual class PlatformNotifier {
         }
     }
 
-    actual fun cancelReminder(context: Any?, doseId: String) {
+    actual fun scheduleCaregiverEscalation(
+        context: Any?,
+        doseId: String,
+        pillName: String,
+        patientName: String,
+        triggerTimeMillis: Long
+    ) {
         val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
+        val intent = Intent().apply {
+            action = "com.riramzy.pillfllow.CAREGIVER_DOSE_ESCALATION"
+            `package` = androidContext.packageName
+            putExtra("DOSE_ID", doseId)
+            putExtra("PILL_NAME", pillName)
+            putExtra("PATIENT_NAME", patientName)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            androidContext,
+            "escalation_$doseId".hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        alarmManager.setAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            triggerTimeMillis,
+            pendingIntent
+        )
+    }
+
+    actual fun cancelReminder(context: Any?, doseId: String) {
+        val androidContext = resolveContext(context) ?: return
+        val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
         val intent = Intent().apply {
             action = "com.riramzy.pillfllow.DOSE_REMINDER"
             `package` = androidContext.packageName
         }
 
-        val pendingIntent = PendingIntent.getBroadcast(
-            androidContext,
-            doseId.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        DoseReminderStage.entries.forEach { s ->
+            val pendingIntent = PendingIntent.getBroadcast(
+                androidContext,
+                "$doseId:${s.name}".hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
-            pendingIntent.cancel()
+            pendingIntent?.let {
+                alarmManager.cancel(it)
+                it.cancel()
+            }
         }
+    }
+
+    actual fun cancelAllReminders(context: Any?) {
+        val androidContext = resolveContext(context) ?: return
+        val notificationManager = androidContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+        notificationManager.cancelAll()
     }
 
     actual fun sendInstantNudge(context: Any?, title: String, message: String) {

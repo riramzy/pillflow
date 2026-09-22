@@ -166,6 +166,8 @@ class CaregiverDashboardViewModel(
         val patientName = _state.value.patients.firstOrNull { it.id == patientId }?.name ?: "Patient"
         val previousAlert = _state.value.dailyStatusAlertText
 
+        val caregiver = _state.value.caregiver
+
         viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
@@ -174,9 +176,13 @@ class CaregiverDashboardViewModel(
                 )
             }
 
-            nudgePatientUseCase(patientName)
-            delay(3000L.milliseconds)
+            nudgePatientUseCase(
+                patientId = patientId,
+                caregiverId = caregiver?.id ?: "",
+                caregiverName = caregiver?.firstName ?: "Your Caregiver"
+            )
 
+            delay(3000L.milliseconds)
             _state.update { it.copy(dailyStatusAlertText = previousAlert) }
         }
     }

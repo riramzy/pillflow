@@ -11,37 +11,35 @@ import androidx.core.app.NotificationCompat
 import com.riramzy.pillfllow.MainActivity
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
 import com.riramzy.pillfllow.domain.session.SessionManager
-import com.riramzy.pillfllow.utils.medication.DoseReminderStage
+import kotlinx.coroutines.runBlocking
 import org.koin.java.KoinJavaComponent.inject
 
-class DoseReminderReceiver: BroadcastReceiver() {
+class CaregiverEscalationReceiver: BroadcastReceiver() {
     private val sessionManager: SessionManager by inject(SessionManager::class.java)
     private val medicationDao: MedicationDao by inject(MedicationDao::class.java)
 
     override fun onReceive(context: Context, intent: Intent) {
-        sessionManager.currentUser.value ?: return
+        val activeUser = sessionManager.currentUser.value ?: return
+        if (activeUser.userType.lowercase() != "caregiver") return
 
-        if (intent.action == "com.riramzy.pillfllow.DOSE_REMINDER") {
-            val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
+        if (intent.action == "com.riramzy.pillfllow.CAREGIVER_DOSE_ESCALATION") {
             val doseId = intent.getStringExtra("DOSE_ID") ?: ""
-            val stageName = intent.getStringExtra("REMINDER_STAGE") ?: DoseReminderStage.ADVANCE_30MIN.name
+            val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
+            val patientName = intent.getStringExtra("PATIENT_NAME") ?: "Your patient"
 
-            val isTaken = kotlinx.coroutines.runBlocking {
-                medicationDao.getScheduledDoseById(doseId)?.isTaken == true
-            }
-
+            val isTaken = runBlocking { medicationDao.getScheduledDoseById(doseId)?.isTaken == true }
             if (isTaken) return
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channelId = "pillflow_dose_channel"
+            val channelId = "pillflow_escalation_channel"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
                     channelId,
-                    "Medication Reminders",
+                    "Caregiver Alerts",
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Timely medication dose reminders"
+                    description = "Urgent alerts when a patient misses a medication dose"
                     enableVibration(true)
                 }
                 notificationManager.createNotificationChannel(channel)
@@ -58,25 +56,16 @@ class DoseReminderReceiver: BroadcastReceiver() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val (title, message) = when (stageName) {
-                DoseReminderStage.DUE_NOW.name ->
-                    "Time for your medication!" to "Your $pillName is ready in the dish to dispense."
-                DoseReminderStage.PRE_EXPIRY_15MIN.name ->
-                    "Urgent: Grace Window Closing!" to "Please take your $pillName. Grace period ends in 15 minutes."
-                else ->
-                    "Upcoming Medication" to "Your $pillName is scheduled in 30 minutes."
-            }
-
             val notification = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                .setContentTitle(title)
-                .setContentText(message)
+                .setContentTitle("Urgent: Missed Dose Alert")
+                .setContentText("$patientName has missed their scheduled dose of $pillName!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
                 .build()
 
-            notificationManager.notify("$doseId:$stageName".hashCode(), notification)
+            notificationManager.notify(doseId.hashCode(), notification)
         }
     }
 }

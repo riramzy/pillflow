@@ -4,6 +4,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
+import com.riramzy.pillfllow.data.remote.dto.NudgeDto
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
+import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
@@ -21,20 +24,29 @@ import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.medication.parseColorHex
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
+import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class PatientDashboardViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val logDoseTakenUseCase: LogDoseTakenUseCase,
-    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase
+    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
+    private val platformNotifier: PlatformNotifier = PlatformNotifier(),
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
@@ -58,13 +70,34 @@ class PatientDashboardViewModel(
                 _state.update { it.copy(user = currentUser) }
 
                 currentUser?.let { user ->
-                    getPendingDosesForUserUseCase(user.id).collectLatest { pendingDoses ->
-                        val now = currentTimeMillis()
-                        val graceWindowMillis = 30 * 60 * 1000L
+                    viewModelScope.launch(Dispatchers.IO) {
+                        firestore.collection("nudges")
+                            .where { "patientId" equalTo user.id }
+                            .where { "isHandled" equalTo false }
+                            .snapshots
+                            .collect { snapshot ->
+                                snapshot.documents.forEach { doc ->
+                                    val nudge = doc.data<NudgeDto>()
+                                    platformNotifier.sendInstantNudge(
+                                        title = "Caregiver Reminder",
+                                        message = "${nudge.caregiverName} wants to remind you to take your medication!"
+                                    )
+                                    firestore.collection("nudges").document(nudge.id).delete()
+                                }
+                            }
+                    }
+
+                    combine(
+                        getPendingDosesForUserUseCase(user.id),
+                        tickerFlow()
+                    ) { pendingDoses, now ->
                         val stagingWindowMillis = 30 * 60 * 1000L
+                        val graceWindowMillis = DoseStateMachine.GRACE_WINDOW_MILLIS
 
                         val activeDishDoses = pendingDoses.filter { dose ->
-                            now >= (dose.scheduledTime - stagingWindowMillis)
+                            val windowStart = dose.scheduledTime - stagingWindowMillis
+                            val windowEnd = dose.scheduledTime + graceWindowMillis
+                            now in windowStart..windowEnd
                         }
 
                         val mappedPills = activeDishDoses.mapIndexed { index, dose ->
@@ -138,7 +171,7 @@ class PatientDashboardViewModel(
                                 isLoading = false
                             )
                         }
-                    }
+                    }.collect()
                 }
             }
         }
@@ -192,14 +225,24 @@ class PatientDashboardViewModel(
     }
 
     fun logDose(doseId: String, scheduledTime: Long? = null) {
+        val resolvedTime = scheduledTime
+            ?: _state.value.scheduledDoses.firstOrNull { it.id == doseId }?.scheduledTime
+
         viewModelScope.launch(Dispatchers.IO) {
-            logDoseTakenUseCase(doseId = doseId, scheduledTime = scheduledTime)
+            logDoseTakenUseCase(doseId = doseId, scheduledTime = resolvedTime)
         }
     }
 
     fun onAction(action: PatientDashboardAction) {
         when (action) {
             is PatientDashboardAction.LogDose -> logDose(action.doseId, action.scheduledTime)
+        }
+    }
+
+    private fun tickerFlow(periodMillis: Long = 30_000L): Flow<Long> = flow {
+        while (true) {
+            emit(currentTimeMillis())
+            delay(periodMillis.milliseconds)
         }
     }
 }

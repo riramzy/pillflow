@@ -142,7 +142,11 @@ fun PatientDashboardScreenContent(
                     tiltX = tiltX,
                     tiltY = tiltY,
                     onLogMedication = { pillId ->
-                        onAction(PatientDashboardAction.LogDose(pillId))
+                        val scheduledTime = state.scheduledDoses.firstOrNull { dose ->
+                            dose.id == pillId
+                        }?.scheduledTime
+
+                        onAction(PatientDashboardAction.LogDose(doseId = pillId, scheduledTime = scheduledTime))
                     },
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )

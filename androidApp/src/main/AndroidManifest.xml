@@ -31,6 +31,14 @@
                 <action android:name="com.riramzy.pillfllow.DOSE_REMINDER" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".receiver.CaregiverEscalationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.riramzy.pillfllow.CAREGIVER_DOSE_ESCALATION" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

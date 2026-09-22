@@ -12,8 +12,11 @@ import com.riramzy.pillfllow.data.remote.dto.toDto
 import com.riramzy.pillfllow.data.remote.dto.toEntity
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.utils.currentTimeMillis
+import com.riramzy.pillfllow.utils.medication.DoseReminderStage
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -24,8 +27,9 @@ import kotlinx.coroutines.launch
 class MedicationRepoImpl(
     private val medicationDao: MedicationDao,
     private val platformNotifier: PlatformNotifier = PlatformNotifier(),
-    private val firestore: FirebaseFirestore
-) : MedicationRepo {
+    private val firestore: FirebaseFirestore,
+    private val sessionManager: SessionManager
+): MedicationRepo {
     override fun getAllMedications(): Flow<List<MedicationEntity>> = medicationDao.getAllMedications()
 
     override suspend fun insertMedication(medication: MedicationEntity): String {
@@ -71,22 +75,8 @@ class MedicationRepoImpl(
     }
 
     override fun getPendingDosesForUser(userId: String): Flow<List<PendingDoseWithMedication>> = channelFlow {
-        launch(Dispatchers.IO) {
-            runCatching {
-                firestore
-                    .collection("scheduled_doses")
-                    .where { "userId" equalTo userId }
-                    .snapshots
-                    .collect { querySnapshot ->
-                        val doses = querySnapshot.documents.map { doc ->
-                            doc.data<ScheduledDoseDto>().toEntity(isSynced = true)
-                        }
-                        if (doses.isNotEmpty()) {
-                            medicationDao.insertScheduledDoses(doses)
-                        }
-                    }
-            }
-        }
+        syncMedicationsForUser(userId)
+        syncScheduledDosesForUser(userId)
         medicationDao.getPendingDosesForUser(userId).distinctUntilChanged().collect { send(it) }
     }
 
@@ -97,25 +87,27 @@ class MedicationRepoImpl(
         }
 
         patientIds.forEach { patientId ->
-            launch(Dispatchers.IO) {
-                runCatching {
-                    firestore
-                        .collection("scheduled_doses")
-                        .where { "userId" equalTo patientId }
-                        .snapshots
-                        .collect { querySnapshot ->
-                            val doses = querySnapshot.documents.map { doc ->
-                                doc.data<ScheduledDoseDto>().toEntity(isSynced = true)
-                            }
-                            if (doses.isNotEmpty()) {
-                                medicationDao.insertScheduledDoses(doses)
-                            }
-                        }
-                }
-            }
+            syncMedicationsForUser(patientId)
+            syncScheduledDosesForUser(patientId)
         }
 
-        medicationDao.getPendingDosesForPatients(patientIds).collect { send(it) }
+        medicationDao.getPendingDosesForPatients(patientIds).distinctUntilChanged().collect { doses ->
+            val now = currentTimeMillis()
+
+            doses.forEach { dose ->
+                val escalationTime = dose.scheduledTime + 30 * 60 * 1000L + 60_000L
+                if (escalationTime > now) {
+                    platformNotifier.scheduleCaregiverEscalation(
+                        doseId = dose.id,
+                        pillName = dose.name,
+                        patientName = "Your patient",
+                        triggerTimeMillis = escalationTime
+                    )
+                }
+            }
+
+            send(doses)
+        }
     }
 
     override suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<String> {
@@ -126,14 +118,37 @@ class MedicationRepoImpl(
             val med = medicationDao.getAllMedicationsOnce().firstOrNull { it.id == dose.medicationId }
             val medName = med?.name ?: "Medication"
 
-            if (!dose.isTaken && dose.scheduledTime > now) {
-                val reminderTime = (dose.scheduledTime - 30 * 60 * 1000L).coerceAtLeast(now + 1000L)
+            val currentUserId = sessionManager.currentUser.value?.id
 
-                platformNotifier.scheduleDoseReminder(
-                    doseId = dose.id,
-                    pillName = medName,
-                    triggerTimeMillis = reminderTime
-                )
+            if (med?.userId == currentUserId && !dose.isTaken) {
+                if (dose.scheduledTime > now) {
+                    val tMinus30 = (dose.scheduledTime - 30 * 60 * 1000L).coerceAtLeast(now + 1000L)
+
+                    platformNotifier.scheduleDoseReminder(
+                        doseId = dose.id,
+                        pillName = medName,
+                        triggerTimeMillis = tMinus30,
+                        stage = DoseReminderStage.ADVANCE_30MIN
+                    )
+
+                    platformNotifier.scheduleDoseReminder(
+                        doseId = dose.id,
+                        pillName = medName,
+                        triggerTimeMillis = dose.scheduledTime,
+                        stage = DoseReminderStage.DUE_NOW
+                    )
+                }
+
+                val tPlus15 = dose.scheduledTime + 15 * 60 * 1000L
+
+                if (tPlus15 > now) {
+                    platformNotifier.scheduleDoseReminder(
+                        doseId = dose.id,
+                        pillName = medName,
+                        triggerTimeMillis = tPlus15,
+                        stage = DoseReminderStage.PRE_EXPIRY_15MIN
+                    )
+                }
             }
 
             runCatching {
@@ -144,10 +159,12 @@ class MedicationRepoImpl(
                     dosage = med?.dosage ?: "",
                     updatedAt = now
                 )
+
                 firestore
                     .collection("scheduled_doses")
                     .document(dose.id)
                     .set(dto)
+
                 medicationDao.markScheduledDoseSynced(dose.id)
             }
         }
@@ -228,14 +245,23 @@ class MedicationRepoImpl(
     override fun getPendingDosesWithMedication(): Flow<List<PendingDoseWithMedication>> =
         medicationDao.getPendingDosesWithMedication()
 
+    override suspend fun getScheduledDoseById(id: String): ScheduledDoseEntity? =
+        medicationDao.getScheduledDoseById(id)
+
     override fun getUnsyncedScheduledDoses(): Flow<List<ScheduledDoseEntity>> =
         medicationDao.getUnsyncedScheduledDoses()
 
     override suspend fun markScheduledDoseSynced(id: String) =
         medicationDao.markScheduledDoseSynced(id)
 
-    override fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>> =
-        medicationDao.getDoseHistoryForUser(userId).distinctUntilChanged()
+    override fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>> = channelFlow {
+        syncMedicationsForUser(userId)
+        syncScheduledDosesForUser(userId)
+
+        medicationDao.getDoseHistoryForUser(userId)
+            .distinctUntilChanged()
+            .collect { send(it) }
+    }
 
     override suspend fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity> =
         medicationDao.getDoseHistoryForUserOnce(userId)
@@ -249,6 +275,90 @@ class MedicationRepoImpl(
 
             runCatching {
                 firestore.collection("scheduled_doses").document(doseId).delete()
+            }
+        }
+    }
+
+    private fun CoroutineScope.syncMedicationsForUser(userId: String) {
+        launch(Dispatchers.IO) {
+            runCatching {
+                firestore
+                    .collection("medications")
+                    .where { "userId" equalTo userId }
+                    .snapshots
+                    .collect { querySnapshot ->
+                        val remote = querySnapshot.documents.map {
+                            it.data<MedicationDto>().toEntity(isSynced = true)
+                        }
+
+                        val remoteIds = remote.map { it.id }.toSet()
+
+                        val local = medicationDao.getAllMedicationsOnce().filter { it.userId == userId }
+
+                        local.filter { it.id !in remoteIds && it.isSynced }.forEach {
+                            medicationDao.deleteScheduledDosesByMedicationId(it.id)
+                            medicationDao.deleteMedicationById(it.id)
+                        }
+
+                        if (remote.isNotEmpty()) medicationDao.insertMedications(remote)
+                    }
+            }
+        }
+    }
+
+    private fun CoroutineScope.syncScheduledDosesForUser(userId: String) {
+        launch(Dispatchers.IO) {
+            runCatching {
+                firestore
+                    .collection("scheduled_doses")
+                    .where { "userId" equalTo userId }
+                    .snapshots
+                    .collect { querySnapshot ->
+                        val doses = querySnapshot.documents.map {
+                            it.data<ScheduledDoseDto>().toEntity(isSynced = true)
+                        }
+
+                        if (doses.isNotEmpty()) {
+                            medicationDao.insertScheduledDoses(doses)
+
+                            val currentUserId = sessionManager.currentUser.value?.id
+
+                            if (userId == currentUserId) {
+                                val now = currentTimeMillis()
+
+                                doses.filter { !it.isTaken }.forEach { dose ->
+                                    val med = medicationDao.getAllMedicationsOnce().firstOrNull { it.id == dose.medicationId }
+                                    val medName = med?.name ?: "Medication"
+
+                                    if (dose.scheduledTime > now) {
+                                        val tMinus30 = (dose.scheduledTime - 30 * 60 * 1000L).coerceAtLeast(now + 1000L)
+                                        platformNotifier.scheduleDoseReminder(
+                                            doseId = dose.id,
+                                            pillName = medName,
+                                            triggerTimeMillis = tMinus30,
+                                            stage = DoseReminderStage.ADVANCE_30MIN
+                                        )
+                                        platformNotifier.scheduleDoseReminder(
+                                            doseId = dose.id,
+                                            pillName = medName,
+                                            triggerTimeMillis = dose.scheduledTime,
+                                            stage = DoseReminderStage.DUE_NOW
+                                        )
+                                    }
+
+                                    val tPlus15 = dose.scheduledTime + 15 * 60 * 1000L
+                                    if (tPlus15 > now) {
+                                        platformNotifier.scheduleDoseReminder(
+                                            doseId = dose.id,
+                                            pillName = medName,
+                                            triggerTimeMillis = tPlus15,
+                                            stage = DoseReminderStage.PRE_EXPIRY_15MIN
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.riramzy.pillfllow.domain.hardware
 
+import com.riramzy.pillfllow.utils.medication.DoseReminderStage
 import platform.Foundation.NSCalendar
 import platform.Foundation.NSCalendarUnitDay
 import platform.Foundation.NSCalendarUnitHour
@@ -20,7 +21,8 @@ actual class PlatformNotifier {
         context: Any?,
         doseId: String,
         pillName: String,
-        triggerTimeMillis: Long
+        triggerTimeMillis: Long,
+        stage: DoseReminderStage
     ) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
 
@@ -43,7 +45,7 @@ actual class PlatformNotifier {
             false
         )
 
-        val request = UNNotificationRequest.requestWithIdentifier(doseId, content, trigger)
+        val request = UNNotificationRequest.requestWithIdentifier("$doseId:${stage.name}", content, trigger)
 
         center.addNotificationRequest(request) { error ->
             if (error != null) {
@@ -54,9 +56,40 @@ actual class PlatformNotifier {
         }
     }
 
+    actual fun scheduleCaregiverEscalation(
+        context: Any?,
+        doseId: String,
+        pillName: String,
+        patientName: String,
+        triggerTimeMillis: Long
+    ) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        val content = UNMutableNotificationContent().apply {
+            setTitle("Urgent: Missed Dose Alert")
+            setBody("$patientName has missed their scheduled dose of $pillName!")
+            setSound(UNNotificationSound.defaultSound())
+        }
+
+        val date = NSDate.dateWithTimeIntervalSince1970(triggerTimeMillis / 1000.0)
+
+        val components = NSCalendar.currentCalendar().components(
+            NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or NSCalendarUnitHour or NSCalendarUnitMinute,
+            fromDate = date
+        )
+
+        val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(components, false)
+        val request = UNNotificationRequest.requestWithIdentifier("escalation_$doseId", content, trigger)
+
+        center.addNotificationRequest(request) { _ -> }
+    }
+
     actual fun cancelReminder(context: Any?, doseId: String) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
-        center.removePendingNotificationRequestsWithIdentifiers(listOf(doseId))
+        center.removePendingNotificationRequestsWithIdentifiers(DoseReminderStage.entries.map { "$doseId:${it.name}" })
+    }
+
+    actual fun cancelAllReminders(context: Any?)  {
+        UNUserNotificationCenter.currentNotificationCenter().removeAllPendingNotificationRequests()
     }
 
     actual fun sendInstantNudge(context: Any?, title: String, message: String) {
