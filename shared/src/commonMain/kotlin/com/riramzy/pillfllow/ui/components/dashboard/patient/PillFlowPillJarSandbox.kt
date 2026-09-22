@@ -42,7 +42,7 @@ import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.pill.PillShape
 import kotlinx.coroutines.isActive
 
 @Composable

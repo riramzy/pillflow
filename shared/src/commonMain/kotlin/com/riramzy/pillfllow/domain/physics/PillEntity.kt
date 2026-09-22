@@ -1,7 +1,7 @@
 package com.riramzy.pillfllow.domain.physics
 
 import androidx.compose.ui.graphics.Color
-import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.pill.PillShape
 
 data class PillEntity(
     val id: String,

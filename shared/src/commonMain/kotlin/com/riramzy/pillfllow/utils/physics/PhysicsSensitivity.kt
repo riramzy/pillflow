@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.physics
 
 enum class PhysicsSensitivity(val label: String, val multiplier: Float) {
     LOW("Low", 0.6f),

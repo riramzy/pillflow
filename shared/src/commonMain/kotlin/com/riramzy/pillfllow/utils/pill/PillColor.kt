@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.pill
 
 import androidx.compose.ui.graphics.Color
 import com.riramzy.pillfllow.ui.theme.citrusGold

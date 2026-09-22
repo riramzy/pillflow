@@ -35,8 +35,8 @@ import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.CaregiverDashboardViewModel
-import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1

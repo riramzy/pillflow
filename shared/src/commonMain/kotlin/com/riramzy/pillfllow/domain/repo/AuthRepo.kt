@@ -17,7 +17,9 @@ interface AuthRepo {
         pass: String,
         firstName: String,
         lastName: String,
-        role: UserType
+        role: UserType,
+        phoneNumber: String,
+        avatarRes: String
     ): Result<UserEntity>
 
     suspend fun signIn(

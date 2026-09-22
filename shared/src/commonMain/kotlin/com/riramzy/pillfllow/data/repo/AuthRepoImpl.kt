@@ -49,7 +49,9 @@ class AuthRepoImpl(
         pass: String,
         firstName: String,
         lastName: String,
-        role: UserType
+        role: UserType,
+        phoneNumber: String,
+        avatarRes: String
     ): Result<UserEntity> = safeCall {
         withContext(Dispatchers.IO) {
             val now = currentTimeMillis()
@@ -69,9 +71,10 @@ class AuthRepoImpl(
                 firstName = firstName,
                 lastName = lastName,
                 email = email,
+                phoneNumber = phoneNumber,
                 userType = role.toString(),
                 createdAt = currentTimeMillis(),
-                avatarRes = "avatar1"
+                avatarRes = avatarRes
             )
 
             val userDto = userEntity.toDto(updatedAt = now)

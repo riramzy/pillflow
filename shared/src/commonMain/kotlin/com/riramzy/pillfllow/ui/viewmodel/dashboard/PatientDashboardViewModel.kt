@@ -14,13 +14,13 @@ import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
-import com.riramzy.pillfllow.utils.ComplianceStatus
-import com.riramzy.pillfllow.utils.PillColor
-import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.currentTimeMillis
 import com.riramzy.pillfllow.utils.formatTime
 import com.riramzy.pillfllow.utils.getDayOfMonth
-import com.riramzy.pillfllow.utils.parseColorHex
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.medication.parseColorHex
+import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow

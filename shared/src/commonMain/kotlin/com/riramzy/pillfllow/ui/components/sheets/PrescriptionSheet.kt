@@ -33,9 +33,9 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowPillShape
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSelector
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.PillColor
-import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.getTodayTimeInMillis
+import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

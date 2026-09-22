@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPillColor
 import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.ComplianceStatus
-import com.riramzy.pillfllow.utils.PillColor
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.pill.PillColor
 
 @Composable
 fun PillFlowScheduledDoseCard(

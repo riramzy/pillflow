@@ -25,9 +25,9 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowPillColor
 import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.ComplianceStatus
-import com.riramzy.pillfllow.utils.IndicatorColor
 import com.riramzy.pillfllow.utils.defaultSampleDays
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.medication.IndicatorColor
 
 @Composable
 fun PillFlowPatientWeeklyOverviewCard(

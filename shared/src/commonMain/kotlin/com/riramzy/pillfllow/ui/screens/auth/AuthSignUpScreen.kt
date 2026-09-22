@@ -4,16 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -50,8 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.auth.PillFlowAuthHeader
+import com.riramzy.pillfllow.ui.components.custom.PillFlowAvatarSelector
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
+import com.riramzy.pillfllow.ui.components.custom.PillFlowPhoneInputField
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
@@ -131,164 +131,156 @@ fun AuthSignUpScreenContent(
             }
         },
     ) { paddingValues ->
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
                 .imePadding()
-                .verticalScroll(rememberScrollState()),
+                .padding(15.dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = maxHeight),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxHeight(),
+                shape = RoundedCornerShape(25.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             ) {
-                Card(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(15.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    shape = RoundedCornerShape(25.dp)
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(30.dp)
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Sign Up as a ${state.selectedRole.label}",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                        Text(
+                            text = "Sign Up as a ${state.selectedRole.label}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
 
-                            Text(
-                                text = when (state.selectedRole) {
-                                    UserType.PATIENT -> "Schedule your pills and add some fun to the process"
-                                    UserType.CAREGIVER -> "Support your loved ones and stay on top of their medication schedules"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        Text(
+                            text = when (state.selectedRole) {
+                                UserType.PATIENT -> "Schedule your pills and add some fun to the process"
+                                UserType.CAREGIVER -> "Support your loved ones and stay on top of their medication schedules"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
 
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            PillFlowInputField(
-                                label = "First Name",
-                                placeholder = "Enter your first name",
-                                value = state.firstName,
-                                onValueChange = { onAction(AuthAction.FirstNameChanged(it)) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Text,
-                                    imeAction = ImeAction.Next
-                                ),
-                            )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        PillFlowAvatarSelector(
+                            selectedAvatar = state.selectedAvatar,
+                            onAvatarSelected = { onAction(AuthAction.AvatarSelected(it)) },
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
 
-                            PillFlowInputField(
-                                label = "Last Name",
-                                placeholder = "Enter your last name",
-                                value = state.lastName,
-                                onValueChange = { onAction(AuthAction.LastNameChanged(it)) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Text,
-                                    imeAction = ImeAction.Next
-                                ),
-                            )
+                        PillFlowInputField(
+                            label = "First Name",
+                            placeholder = "Enter your first name",
+                            value = state.firstName,
+                            onValueChange = { onAction(AuthAction.FirstNameChanged(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next)
+                        )
 
-                            PillFlowInputField(
-                                label = "Email",
-                                placeholder = "Enter your email",
-                                value = state.email,
-                                onValueChange = { onAction(AuthAction.EmailChanged(it)) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Email,
-                                    imeAction = ImeAction.Next
-                                ),
-                            )
+                        PillFlowInputField(
+                            label = "Last Name",
+                            placeholder = "Enter your last name",
+                            value = state.lastName,
+                            onValueChange = { onAction(AuthAction.LastNameChanged(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next)
+                        )
 
-                            PillFlowInputField(
-                                label = "Password",
-                                placeholder = "Enter your password",
-                                value = state.password,
-                                onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Password,
-                                    imeAction = ImeAction.Next
-                                ),
-                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                        contentDescription = "Visibility Toggle",
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .clickable { passwordVisible = !passwordVisible }
-                                    )
+                        PillFlowPhoneInputField(
+                            selectedCountry = state.selectedCountry,
+                            onCountrySelected = { onAction(AuthAction.CountrySelected(it)) },
+                            phoneNumber = state.phoneNumber,
+                            onPhoneNumberChange = { onAction(AuthAction.PhoneNumberChanged(it)) }
+                        )
+
+                        PillFlowInputField(
+                            label = "Email",
+                            placeholder = "Enter your email",
+                            value = state.email,
+                            onValueChange = { onAction(AuthAction.EmailChanged(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
+                        )
+
+                        PillFlowInputField(
+                            label = "Password",
+                            placeholder = "Enter your password",
+                            value = state.password,
+                            onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Visibility Toggle",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable { passwordVisible = !passwordVisible }
+                                )
+                            }
+                        )
+
+                        PillFlowInputField(
+                            label = "Confirm Password",
+                            placeholder = "Confirm your password",
+                            value = state.confirmPassword,
+                            onValueChange = { onAction(AuthAction.ConfirmPasswordChanged(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Visibility Toggle",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable { confirmPasswordVisible = !confirmPasswordVisible }
+                                )
+                            }
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.padding(top = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        PillFlowButton(
+                            text = if (state.isLoading) "Creating Account..." else "Sign Up",
+                            isEnabled = !state.isLoading,
+                            onClick = { onAction(AuthAction.SignUp(onSuccess = { onAuthSuccess(state.selectedRole) })) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Already have an account? Sign In",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onAction(AuthAction.ToggleAuthMode)
+                                    onNavigateToSignIn()
                                 }
-                            )
-
-                            PillFlowInputField(
-                                label = "Confirm Password",
-                                placeholder = "Confirm your password",
-                                value = state.confirmPassword,
-                                onValueChange = { onAction(AuthAction.ConfirmPasswordChanged(it)) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Password,
-                                    imeAction = ImeAction.Done
-                                ),
-                                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                        contentDescription = "Visibility Toggle",
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .clickable { confirmPasswordVisible = !confirmPasswordVisible }
-                                    )
-                                }
-                            )
-                        }
-
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            PillFlowButton(
-                                text = if (state.isLoading) "Creating Account..." else "Sign Up",
-                                isEnabled = !state.isLoading,
-                                onClick = {
-                                    onAction(AuthAction.SignUp(onSuccess = { onAuthSuccess(state.selectedRole) }))
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            Text(
-                                text = "Already have an account? Sign In",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        onAction(AuthAction.ToggleAuthMode)
-                                        onNavigateToSignIn()
-                                    }
-                            )
-                        }
+                        )
                     }
                 }
             }

@@ -1,7 +1,7 @@
 package com.riramzy.pillfllow.ui.state.prescriptions
 
-import com.riramzy.pillfllow.utils.PillColor
-import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillShape
 
 data class PatientPrescriptionsState(
     val prescriptions: List<PrescriptionUiModel> = emptyList(),

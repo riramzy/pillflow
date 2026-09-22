@@ -39,9 +39,10 @@ import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
-import com.riramzy.pillfllow.utils.PillColor
-import com.riramzy.pillfllow.utils.PillShape
 import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillShape
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.add
@@ -228,7 +229,7 @@ fun PatientDashboardScreenPreview() {
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
                         color = PillColor.CORAL_RED,
-                        status = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
+                        status = ComplianceStatus.LATE,
                         badgeText = "2 Doses Left",
                         scheduledTime = 0L
                     ),
@@ -238,7 +239,7 @@ fun PatientDashboardScreenPreview() {
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
                         color = PillColor.SKY_BLUE,
-                        status = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
+                        status = ComplianceStatus.LATE,
                         badgeText = "2 Doses Left",
                         scheduledTime = 0L
                     )
@@ -261,7 +262,7 @@ fun PatientDashboardScreenPreview() {
                         position = Vector2D(x = 1f, y = 1f)
                     )
                 ),
-                complianceStatus = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
+                complianceStatus = ComplianceStatus.LATE,
                 complianceTitle = "Next: Aspirin 500mg",
                 complianceSubtitle = "Scheduled for 8:00 PM (In 2 hours)",
                 complianceBadgeText = "2 Doses Left",
@@ -288,7 +289,7 @@ fun PatientDashboardScreenPreviewDark() {
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
                         color = PillColor.CORAL_RED,
-                        status = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
+                        status = ComplianceStatus.LATE,
                         badgeText = "2 Doses Left",
                         scheduledTime = 0L
                     ),
@@ -298,7 +299,7 @@ fun PatientDashboardScreenPreviewDark() {
                         dosage = "500mg",
                         timeFormatted = "8:00 PM",
                         color = PillColor.SKY_BLUE,
-                        status = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
+                        status = ComplianceStatus.LATE,
                         badgeText = "2 Doses Left",
                         scheduledTime = 0L
                     )
@@ -321,7 +322,7 @@ fun PatientDashboardScreenPreviewDark() {
                         position = Vector2D(x = 1.2f, y = 2f)
                     )
                 ),
-                complianceStatus = com.riramzy.pillfllow.utils.ComplianceStatus.LATE,
+                complianceStatus = ComplianceStatus.LATE,
                 complianceTitle = "Next: Aspirin 500mg",
                 complianceSubtitle = "Scheduled for 8:00 PM (In 2 hours)",
                 complianceBadgeText = "2 Doses Left",

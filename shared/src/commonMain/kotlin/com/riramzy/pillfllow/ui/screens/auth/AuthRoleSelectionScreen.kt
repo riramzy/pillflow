@@ -1,17 +1,13 @@
 package com.riramzy.pillfllow.ui.screens.auth
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,16 +23,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.ui.components.auth.PillFlowAuthHeader
 import com.riramzy.pillfllow.ui.components.auth.PillFlowUserTypeCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
 import com.riramzy.pillfllow.utils.UserType
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.pillflow_logo
 
 @Composable
 fun AuthRoleSelectionScreen(
@@ -67,44 +61,11 @@ fun AuthRoleSelectionScreenContent(
             ),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+        PillFlowAuthHeader(
             modifier = Modifier
-                .wrapContentSize()
                 .align(Alignment.TopCenter)
-                .padding(top = 120.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier
-                    .wrapContentSize()
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.pillflow_logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier
-                        .size(50.dp)
-                )
-
-                Text(
-                    text = "PillFlow",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Text(
-                text = "Medication adherence, reimagined",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary.copy(0.5f)
-            )
-        }
+                .padding(top = 40.dp)
+        )
 
         Card(
             modifier = Modifier

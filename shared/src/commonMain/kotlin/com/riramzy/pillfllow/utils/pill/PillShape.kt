@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.pill
 
 enum class PillShape(val label: String) {
     CIRCLE("Circle"),

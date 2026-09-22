@@ -6,6 +6,7 @@ import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
 import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
+import com.riramzy.pillfllow.utils.Country
 import com.riramzy.pillfllow.utils.Result
 import com.riramzy.pillfllow.utils.UserType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,18 @@ class AuthViewModel(
         _state.update { it.copy(confirmPassword = confirmPassword) }
     }
 
+    fun onAvatarSelected(avatar: String) {
+        _state.update { it.copy(selectedAvatar = avatar) }
+    }
+
+    fun onPhoneNumberChanged(phoneNumber: String) {
+        _state.update { it.copy(phoneNumber = phoneNumber) }
+    }
+
+    fun onCountrySelected(country: Country) {
+        _state.update { it.copy(selectedCountry = country) }
+    }
+
     fun onToggleAuthMode() {
         _state.update { it.copy(isSignUp = !it.isSignUp) }
     }
@@ -75,14 +88,29 @@ class AuthViewModel(
             return
         }
 
+        if (currentState.phoneNumber.isBlank()) {
+            _state.update { it.copy(errorMessage = "Please enter your phone number") }
+            return
+        }
+
+        if (currentState.phoneNumber.length < currentState.selectedCountry.minLength) {
+            _state.update { it.copy(errorMessage = "Please enter a valid phone number for ${currentState.selectedCountry.name}") }
+            return
+        }
+
+        val fullE164Phone = "${currentState.selectedCountry.dialCode}${currentState.phoneNumber}"
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+
             val result = signUpUseCase(
                 email = state.value.email,
                 pass = state.value.password,
                 firstName = state.value.firstName,
                 lastName = state.value.lastName,
-                role = state.value.selectedRole
+                role = state.value.selectedRole,
+                phoneNumber = fullE164Phone,
+                avatarRes = state.value.selectedAvatar
             )
 
             when (result) {
@@ -155,6 +183,9 @@ class AuthViewModel(
             is AuthAction.EmailChanged -> onEmailChanged(action.email)
             is AuthAction.PasswordChanged -> onPasswordChanged(action.password)
             is AuthAction.ConfirmPasswordChanged -> onConfirmPasswordChanged(action.confirmPassword)
+            is AuthAction.AvatarSelected -> onAvatarSelected(action.avatar)
+            is AuthAction.PhoneNumberChanged -> onPhoneNumberChanged(action.phoneNumber)
+            is AuthAction.CountrySelected -> onCountrySelected(action.country)
             is AuthAction.ToggleAuthMode -> onToggleAuthMode()
             is AuthAction.SignUp -> signUp(action.onSuccess)
             is AuthAction.SignIn -> signIn(action.onSuccess)

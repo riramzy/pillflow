@@ -2,7 +2,7 @@ package com.riramzy.pillfllow.ui.state.history
 
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
-import com.riramzy.pillfllow.utils.ComplianceStatus
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 
 data class HistoryState(
     val isCaregiver: Boolean = false,

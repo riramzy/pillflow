@@ -32,7 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.PillShape
+import com.riramzy.pillfllow.utils.pill.PillShape
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.arrow_down

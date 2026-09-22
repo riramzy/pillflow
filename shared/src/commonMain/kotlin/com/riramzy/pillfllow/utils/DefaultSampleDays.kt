@@ -1,6 +1,7 @@
 package com.riramzy.pillfllow.utils
 
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 
 val defaultSampleDays = listOf(
     ComplianceDayUiModel("Mon", ComplianceStatus.ON_TIME),

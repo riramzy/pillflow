@@ -2,9 +2,9 @@ package com.riramzy.pillfllow.ui.state.dashboard
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.physics.PillEntity
-import com.riramzy.pillfllow.utils.ComplianceStatus
-import com.riramzy.pillfllow.utils.PhysicsSensitivity
-import com.riramzy.pillfllow.utils.PillColor
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
+import com.riramzy.pillfllow.utils.pill.PillColor
 
 data class PatientDashboardState(
     val user: UserEntity? = null,

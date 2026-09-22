@@ -45,9 +45,9 @@ import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.PatientSettingsViewModel
-import com.riramzy.pillfllow.utils.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.Screen
 import com.riramzy.pillfllow.utils.copyToClipboard
+import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 

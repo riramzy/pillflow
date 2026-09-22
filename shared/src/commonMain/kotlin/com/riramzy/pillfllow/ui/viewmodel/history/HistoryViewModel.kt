@@ -9,10 +9,10 @@ import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
-import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.currentTimeMillis
 import com.riramzy.pillfllow.utils.formatTime
 import com.riramzy.pillfllow.utils.getDayOfMonth
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO

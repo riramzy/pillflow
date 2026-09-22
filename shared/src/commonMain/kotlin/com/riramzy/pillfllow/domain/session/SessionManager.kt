@@ -2,7 +2,7 @@ package com.riramzy.pillfllow.domain.session
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.storage.AppPreferences
-import com.riramzy.pillfllow.utils.PhysicsSensitivity
+import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

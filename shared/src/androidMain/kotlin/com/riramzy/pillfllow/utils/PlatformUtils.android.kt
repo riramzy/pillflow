@@ -26,3 +26,6 @@ actual fun copyToClipboard(text: String) {
     val clip = ClipData.newPlainText("Pairing Code", text)
     clipboard.setPrimaryClip(clip)
 }
+
+actual fun getDeviceCountryCode(): String =
+    java.util.Locale.getDefault().country.ifBlank { "US" }

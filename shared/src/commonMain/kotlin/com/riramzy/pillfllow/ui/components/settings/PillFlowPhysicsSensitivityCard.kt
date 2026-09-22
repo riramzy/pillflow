@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.PhysicsSensitivity
+import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 
 @Composable
 fun PillFlowPhysicsSensitivityCard(

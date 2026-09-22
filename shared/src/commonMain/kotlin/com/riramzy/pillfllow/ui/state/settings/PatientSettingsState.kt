@@ -1,7 +1,7 @@
 package com.riramzy.pillfllow.ui.state.settings
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
-import com.riramzy.pillfllow.utils.PhysicsSensitivity
+import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import org.jetbrains.compose.resources.DrawableResource
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1

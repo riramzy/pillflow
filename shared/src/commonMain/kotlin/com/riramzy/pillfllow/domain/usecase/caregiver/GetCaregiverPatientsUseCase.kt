@@ -4,8 +4,8 @@ import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
-import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.currentTimeMillis
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map

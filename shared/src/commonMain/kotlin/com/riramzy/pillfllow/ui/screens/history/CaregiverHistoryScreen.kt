@@ -35,8 +35,8 @@ import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.history.HistoryViewModel
-import com.riramzy.pillfllow.utils.ComplianceStatus
 import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.add

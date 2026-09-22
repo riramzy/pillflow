@@ -1,8 +1,8 @@
 package com.riramzy.pillfllow.domain.physics
 
-import com.riramzy.pillfllow.utils.checkChuteExit
-import com.riramzy.pillfllow.utils.resolveBoundaryCollision
-import com.riramzy.pillfllow.utils.resolveInterPillCollision
+import com.riramzy.pillfllow.utils.physics.checkChuteExit
+import com.riramzy.pillfllow.utils.physics.resolveBoundaryCollision
+import com.riramzy.pillfllow.utils.physics.resolveInterPillCollision
 
 class PhysicsEngine(
     private val jarRadius: Float,

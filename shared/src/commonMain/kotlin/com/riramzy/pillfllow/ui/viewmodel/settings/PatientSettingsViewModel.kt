@@ -11,7 +11,7 @@ import com.riramzy.pillfllow.domain.usecase.patient.SetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
-import com.riramzy.pillfllow.utils.PhysicsSensitivity
+import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
