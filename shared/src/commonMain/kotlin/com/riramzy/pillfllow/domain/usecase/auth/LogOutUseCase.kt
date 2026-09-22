@@ -18,13 +18,15 @@ class LogoutUseCase(
 ) {
     suspend operator fun invoke(): Result<Unit> {
         return safeCall {
-            authRepo.signOut()
-            sessionManager.clearUser()
             platformNotifier.cancelAllReminders()
+
+            sessionManager.clearUser()
 
             withContext(Dispatchers.IO) {
                 database.clearDatabase()
             }
+
+            authRepo.signOut()
         }
     }
 }

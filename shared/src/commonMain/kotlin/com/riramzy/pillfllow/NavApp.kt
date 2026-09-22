@@ -130,7 +130,7 @@ fun NavApp(
             val onLogoutSuccess = {
                 sessionManager.clearUser()
                 navController.navigate(Screen.RoleSelection.route) {
-                    popUpTo(Screen.RoleSelection.route) { inclusive = true }
+                    popUpTo(0) { inclusive = true }
                     launchSingleTop = true
                 }
             }

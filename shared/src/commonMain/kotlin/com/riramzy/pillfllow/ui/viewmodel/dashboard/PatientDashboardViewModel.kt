@@ -26,6 +26,7 @@ import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +36,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -53,6 +56,7 @@ class PatientDashboardViewModel(
 
     init {
         loadDashboardData()
+        observeNudges()
         observePhysicsSensitivity()
     }
 
@@ -70,23 +74,6 @@ class PatientDashboardViewModel(
                 _state.update { it.copy(user = currentUser) }
 
                 currentUser?.let { user ->
-                    viewModelScope.launch(Dispatchers.IO) {
-                        firestore.collection("nudges")
-                            .where { "patientId" equalTo user.id }
-                            .where { "isHandled" equalTo false }
-                            .snapshots
-                            .collect { snapshot ->
-                                snapshot.documents.forEach { doc ->
-                                    val nudge = doc.data<NudgeDto>()
-                                    platformNotifier.sendInstantNudge(
-                                        title = "Caregiver Reminder",
-                                        message = "${nudge.caregiverName} wants to remind you to take your medication!"
-                                    )
-                                    firestore.collection("nudges").document(nudge.id).delete()
-                                }
-                            }
-                    }
-
                     combine(
                         getPendingDosesForUserUseCase(user.id),
                         tickerFlow()
@@ -243,6 +230,33 @@ class PatientDashboardViewModel(
         while (true) {
             emit(currentTimeMillis())
             delay(periodMillis.milliseconds)
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeNudges() {
+        viewModelScope.launch(Dispatchers.IO) {
+            observeCurrentUserUseCase()
+                .flatMapLatest { user ->
+                    if (user == null) {
+                        emptyFlow()
+                    } else {
+                        firestore.collection("nudges")
+                            .where { "patientId" equalTo user.id }
+                            .where { "isHandled" equalTo false }
+                            .snapshots
+                    }
+                }
+                .collect { snapshot ->
+                    snapshot.documents.forEach { doc ->
+                        val nudge = doc.data<NudgeDto>()
+                        platformNotifier.sendInstantNudge(
+                            title = "Caregiver Reminder",
+                            message = "${nudge.caregiverName} wants to remind you to take your medication!"
+                        )
+                        firestore.collection("nudges").document(nudge.id).delete()
+                    }
+                }
         }
     }
 }
