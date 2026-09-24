@@ -29,6 +29,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientDailyStatusCard
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientWeeklyOverviewCard
+import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
@@ -42,6 +43,7 @@ import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
 import pillfllow.shared.generated.resources.avatar2
 import pillfllow.shared.generated.resources.avatar3
+import pillfllow.shared.generated.resources.compliance_ontime
 import pillfllow.shared.generated.resources.history
 import pillfllow.shared.generated.resources.settings
 import pillfllow.shared.generated.resources.user_patient
@@ -172,6 +174,43 @@ fun CaregiverDashboardScreenContent(
                             .padding(horizontal = 15.dp)
                     ) {
                         Text(
+                            text = "Today's Schedule",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        if (state.selectedPatientDoses.isEmpty()) {
+                            PillFlowEmptyStateCard(
+                                title = "All Caught Up!",
+                                description = "No upcoming or missed doses scheduled for today.",
+                                icon = Res.drawable.compliance_ontime
+                            )
+                        } else {
+                            state.selectedPatientDoses.forEach { dose ->
+                                PillFlowScheduledDoseCard(
+                                    name = dose.name,
+                                    dose = dose.dosage,
+                                    time = dose.timeFormatted,
+                                    color = dose.color,
+                                    status = dose.status,
+                                    badgeText = dose.badgeText
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(15.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
                             text = "Weekly Overview",
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 20.sp,
@@ -285,7 +324,7 @@ fun CaregiverDashboardScreenPreview() {
                 dailyStatusAlertText = "All medications on track!",
                 lastUpdatedText = "Updated just now",
                 weeklyRatePercentage = 95,
-                isLoading = true,
+                isLoading = false,
                 errorMessage = null
             )
         )
@@ -352,7 +391,7 @@ fun CaregiverDashboardScreenPreviewDark() {
                 dailyStatusAlertText = "All medications on track!",
                 lastUpdatedText = "Updated just now",
                 weeklyRatePercentage = 95,
-                isLoading = true,
+                isLoading = false,
                 errorMessage = null
             )
         )
