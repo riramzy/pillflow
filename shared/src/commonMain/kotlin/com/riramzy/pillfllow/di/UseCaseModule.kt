@@ -37,7 +37,7 @@ val useCaseModule: Module = module {
 
     factory { GetPatientPairingStatusUseCase(pairingRepo = get()) }
     factory { GeneratePairingCodeUseCase(pairingRepo = get()) }
-    factory { UpdateUserProfileUseCase(userRepo = get()) }
+    factory { UpdateUserProfileUseCase(userRepo = get(), sessionManager = get()) }
     factory { GetPhysicsSensitivityUseCase(sessionManager = get()) }
     factory { SetPhysicsSensitivityUseCase(sessionManager = get()) }
 

@@ -2,11 +2,13 @@ package com.riramzy.pillfllow.domain.usecase.patient
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.utils.Result
 import com.riramzy.pillfllow.utils.safeCall
 
 class UpdateUserProfileUseCase(
-    private val userRepo: UserRepo
+    private val userRepo: UserRepo,
+    private val sessionManager: SessionManager
 ) {
     suspend operator fun invoke(
         currentUser: UserEntity,
@@ -23,5 +25,6 @@ class UpdateUserProfileUseCase(
         )
 
         userRepo.updateUser(updated)
+        sessionManager.setUser(updated)
     }
 }

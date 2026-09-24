@@ -49,7 +49,8 @@ interface MedicationDao {
             medications.dosage AS dosage, 
             medications.colorHex AS colorHex, 
             medications.shape AS shape,
-            scheduled_doses.scheduledTime AS scheduledTime
+            scheduled_doses.scheduledTime AS scheduledTime,
+            medications.userId AS userId
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
         WHERE scheduled_doses.isTaken = 0 AND medications.userId = :userId
@@ -80,7 +81,8 @@ interface MedicationDao {
             medications.dosage AS dosage, 
             medications.colorHex AS colorHex, 
             medications.shape AS shape,
-            scheduled_doses.scheduledTime AS scheduledTime
+            scheduled_doses.scheduledTime AS scheduledTime,
+            medications.userId AS userId
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
         WHERE scheduled_doses.isTaken = 0
