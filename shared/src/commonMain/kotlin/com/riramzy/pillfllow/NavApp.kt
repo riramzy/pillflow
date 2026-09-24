@@ -57,10 +57,16 @@ fun NavApp(
         composable(Screen.SignIn.route) {
             AuthSignInScreen(
                 selectedRole = selectedRole,
-                onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                onNavigateToSignUp = {
+                    navController.navigate(Screen.SignUp.route) {
+                        popUpTo(Screen.SignIn.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
                 onAuthSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.RoleSelection.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -69,10 +75,16 @@ fun NavApp(
         composable(Screen.SignUp.route) {
             AuthSignUpScreen(
                 selectedRole = selectedRole,
-                onNavigateToSignIn = { navController.navigate(Screen.SignIn.route) },
+                onNavigateToSignIn = {
+                    navController.navigate(Screen.SignIn.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
                 onAuthSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.RoleSelection.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )

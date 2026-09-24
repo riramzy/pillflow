@@ -64,53 +64,56 @@ class AuthViewModel(
 
     fun signUp(onSuccess: () -> Unit = {}) {
         val currentState = state.value
+        val cleanFirstName = currentState.firstName.trim()
+        val cleanLastName = currentState.lastName.trim()
+        val cleanEmail = currentState.email.trim()
+        val cleanPassword = currentState.password.trim()
+        val cleanConfirmPassword = currentState.confirmPassword.trim()
+        val cleanPhone = currentState.phoneNumber.trim()
 
-        if (currentState.firstName.isBlank() ||
-            currentState.lastName.isBlank() ||
-            currentState.email.isBlank() ||
-            currentState.password.isBlank()) {
+        if (cleanFirstName.isBlank() || cleanLastName.isBlank() || cleanEmail.isBlank() || cleanPassword.isBlank()) {
             _state.update { it.copy(errorMessage = "Please fill in all fields") }
             return
         }
 
-        if (!currentState.email.contains("@") || !currentState.email.contains(".")) {
+        if (!cleanEmail.contains("@") || !cleanEmail.contains(".")) {
             _state.update { it.copy(errorMessage = "Please enter a valid email address") }
             return
         }
 
-        if (currentState.password.length < 6) {
+        if (cleanPassword.length < 6) {
             _state.update { it.copy(errorMessage = "Password must be at least 6 characters") }
             return
         }
 
-        if (currentState.password != currentState.confirmPassword) {
+        if (cleanPassword != cleanConfirmPassword) {
             _state.update { it.copy(errorMessage = "Passwords do not match") }
             return
         }
 
-        if (currentState.phoneNumber.isBlank()) {
+        if (cleanPhone.isBlank()) {
             _state.update { it.copy(errorMessage = "Please enter your phone number") }
             return
         }
 
-        if (currentState.phoneNumber.length < currentState.selectedCountry.minLength) {
+        if (cleanPhone.length < currentState.selectedCountry.minLength) {
             _state.update { it.copy(errorMessage = "Please enter a valid phone number for ${currentState.selectedCountry.name}") }
             return
         }
 
-        val fullE164Phone = "${currentState.selectedCountry.dialCode}${currentState.phoneNumber}"
+        val fullE164Phone = "${currentState.selectedCountry.dialCode}$cleanPhone"
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val result = signUpUseCase(
-                email = state.value.email,
-                pass = state.value.password,
-                firstName = state.value.firstName,
-                lastName = state.value.lastName,
-                role = state.value.selectedRole,
+                email = cleanEmail,
+                pass = cleanPassword,
+                firstName = cleanFirstName,
+                lastName = cleanLastName,
+                role = currentState.selectedRole,
                 phoneNumber = fullE164Phone,
-                avatarRes = state.value.selectedAvatar
+                avatarRes = currentState.selectedAvatar
             )
 
             when (result) {
@@ -124,9 +127,16 @@ class AuthViewModel(
                     _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = result.data.id, selectedRole = resolvedRole) }
                     onSuccess()
                 }
+
                 is Result.Error -> {
-                    _state.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = result.message ?: "An unexpected error occurred. Please try again."
+                        )
+                    }
                 }
+
                 else -> Unit
             }
         }
@@ -134,22 +144,25 @@ class AuthViewModel(
 
     fun signIn(onSuccess: () -> Unit = {}) {
         val currentState = state.value
+        val cleanEmail = currentState.email.trim()
+        val cleanPassword = currentState.password.trim()
 
-        if (currentState.email.isBlank() || currentState.password.isBlank()) {
+        if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
             _state.update { it.copy(errorMessage = "Please enter your email and password") }
             return
         }
 
-        if (!currentState.email.contains("@") || !currentState.email.contains(".")) {
+        if (!cleanEmail.contains("@") || !cleanEmail.contains(".")) {
             _state.update { it.copy(errorMessage = "Please enter a valid email address") }
             return
         }
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+
             val result = signInUseCase(
-                email = state.value.email,
-                password = state.value.password
+                email = cleanEmail,
+                password = cleanPassword
             )
 
             when (result) {
@@ -163,9 +176,16 @@ class AuthViewModel(
                     _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = result.data.id, selectedRole = resolvedRole) }
                     onSuccess()
                 }
+
                 is Result.Error -> {
-                    _state.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = result.message ?: "An unexpected error occurred. Please try again."
+                        )
+                    }
                 }
+
                 else -> Unit
             }
         }
