@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.Country
-import com.riramzy.pillfllow.utils.allCountries
+import com.riramzy.pillfllow.utils.platform.Country
+import com.riramzy.pillfllow.utils.platform.allCountries
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

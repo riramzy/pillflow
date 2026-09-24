@@ -6,7 +6,7 @@ import com.riramzy.pillfllow.data.remote.dto.UserDto
 import com.riramzy.pillfllow.data.remote.dto.toDto
 import com.riramzy.pillfllow.data.remote.dto.toEntity
 import com.riramzy.pillfllow.domain.repo.UserRepo
-import com.riramzy.pillfllow.utils.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.app
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")

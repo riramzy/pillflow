@@ -10,10 +10,10 @@ import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
-import com.riramzy.pillfllow.utils.currentTimeMillis
-import com.riramzy.pillfllow.utils.formatTime
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO

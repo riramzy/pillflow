@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier

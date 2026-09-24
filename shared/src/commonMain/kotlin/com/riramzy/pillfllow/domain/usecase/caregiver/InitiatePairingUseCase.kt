@@ -4,8 +4,8 @@ import com.riramzy.pillfllow.data.local.entity.CaregiverPatientPairingEntity
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.safeCall
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.safeCall
 
 class InitiatePairingUseCase(
     private val pairingRepo: PairingRepo,

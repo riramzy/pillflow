@@ -13,11 +13,11 @@ import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
-import com.riramzy.pillfllow.utils.currentTimeMillis
-import com.riramzy.pillfllow.utils.formatTime
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
-import com.riramzy.pillfllow.utils.openPhoneDialer
 import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatTime
+import com.riramzy.pillfllow.utils.platform.openPhoneDialer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO

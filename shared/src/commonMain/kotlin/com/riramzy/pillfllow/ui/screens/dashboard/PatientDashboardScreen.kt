@@ -39,7 +39,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
-import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape

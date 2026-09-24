@@ -6,9 +6,9 @@ import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
 import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
-import com.riramzy.pillfllow.utils.Country
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.UserType
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.UserType
+import com.riramzy.pillfllow.utils.platform.Country
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

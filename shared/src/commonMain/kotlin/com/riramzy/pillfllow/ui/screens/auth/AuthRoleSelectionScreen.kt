@@ -30,7 +30,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
-import com.riramzy.pillfllow.utils.UserType
+import com.riramzy.pillfllow.utils.app.UserType
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

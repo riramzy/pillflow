@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.app.Screen
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource

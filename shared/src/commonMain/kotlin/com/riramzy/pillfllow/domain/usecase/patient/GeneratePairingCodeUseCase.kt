@@ -3,9 +3,9 @@ package com.riramzy.pillfllow.domain.usecase.patient
 import com.riramzy.pillfllow.data.local.entity.CaregiverPatientPairingEntity
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.repo.PairingRepo
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.currentTimeMillis
-import com.riramzy.pillfllow.utils.safeCall
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.safeCall
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random

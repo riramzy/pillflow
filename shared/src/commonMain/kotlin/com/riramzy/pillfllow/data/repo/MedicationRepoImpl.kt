@@ -16,8 +16,8 @@ import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.session.SessionManager
-import com.riramzy.pillfllow.utils.currentTimeMillis
 import com.riramzy.pillfllow.utils.medication.DoseReminderStage
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

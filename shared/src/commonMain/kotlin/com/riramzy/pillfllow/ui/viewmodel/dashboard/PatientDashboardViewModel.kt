@@ -17,13 +17,13 @@ import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
-import com.riramzy.pillfllow.utils.currentTimeMillis
-import com.riramzy.pillfllow.utils.formatTime
-import com.riramzy.pillfllow.utils.getDayOfMonth
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.medication.parseColorHex
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatTime
+import com.riramzy.pillfllow.utils.platform.getDayOfMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

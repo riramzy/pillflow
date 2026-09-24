@@ -1,9 +1,9 @@
 package com.riramzy.pillfllow.ui.state.auth
 
-import com.riramzy.pillfllow.utils.Country
-import com.riramzy.pillfllow.utils.UserType
-import com.riramzy.pillfllow.utils.allCountries
-import com.riramzy.pillfllow.utils.getDeviceCountryCode
+import com.riramzy.pillfllow.utils.app.UserType
+import com.riramzy.pillfllow.utils.platform.Country
+import com.riramzy.pillfllow.utils.platform.allCountries
+import com.riramzy.pillfllow.utils.platform.getDeviceCountryCode
 
 data class AuthState(
     val selectedRole: UserType = UserType.PATIENT,

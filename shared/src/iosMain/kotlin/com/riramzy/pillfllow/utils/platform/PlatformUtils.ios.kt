@@ -1,5 +1,6 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
+import platform.Foundation.NSLocale
 import platform.Foundation.NSURL
 import platform.Foundation.countryCode
 import platform.Foundation.currentLocale
@@ -33,4 +34,4 @@ actual fun copyToClipboard(text: String) {
 }
 
 actual fun getDeviceCountryCode(): String =
-    platform.Foundation.NSLocale.currentLocale.countryCode ?: "US"
+    NSLocale.currentLocale.countryCode ?: "US"

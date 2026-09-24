@@ -1,7 +1,7 @@
 package com.riramzy.pillfllow.domain.compliance
 
-import com.riramzy.pillfllow.utils.currentTimeMillis
 import com.riramzy.pillfllow.utils.medication.DoseComplianceStatus
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 
 object DoseStateMachine {
     const val ON_TIME_WINDOW_MILLIS = 30 * 60 * 1000L

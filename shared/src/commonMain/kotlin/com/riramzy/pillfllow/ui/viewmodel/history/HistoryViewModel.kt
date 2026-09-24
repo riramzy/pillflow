@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
@@ -9,10 +10,11 @@ import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
-import com.riramzy.pillfllow.utils.currentTimeMillis
-import com.riramzy.pillfllow.utils.formatTime
-import com.riramzy.pillfllow.utils.getDayOfMonth
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatTime
+import com.riramzy.pillfllow.utils.platform.getDayOfMonth
+import com.riramzy.pillfllow.utils.platform.isSameMonthAndYear
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
@@ -75,15 +77,18 @@ class HistoryViewModel(
             }.collectLatest { historyDoses ->
                 val now = currentTimeMillis()
 
+                val sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000L)
+                val rollingDoses = historyDoses.filter { it.scheduledTime >= sevenDaysAgo }
+
                 var onTime = 0
                 var late = 0
                 var missed = 0
 
-                historyDoses.forEach { record ->
+                rollingDoses.forEach { record ->
                     when {
                         record.isTaken && record.complianceStatus == "ON_TIME" -> onTime++
                         record.isTaken && record.complianceStatus == "LATE" -> late++
-                        !record.isTaken && now > record.scheduledTime + (30 * 60 * 1000L) -> missed++
+                        !record.isTaken && now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS) -> missed++
                         record.complianceStatus == "MISSED" -> missed++
                     }
                 }
@@ -91,43 +96,39 @@ class HistoryViewModel(
                 val total = onTime + late + missed
                 val score = if (total > 0) ((onTime * 100) / total) else 100
 
-                val graceWindowMillis = 30 * 60 * 1000L
+                val currentMonthDoses = historyDoses.filter { isSameMonthAndYear(it.scheduledTime, now) }
 
                 val heatmapDays = (1..31).map { day ->
-                    val dayDoses = historyDoses.filter { getDayOfMonth(it.scheduledTime) == day }
-
+                    val dayDoses = currentMonthDoses.filter { getDayOfMonth(it.scheduledTime) == day }
                     val dayStatus = when {
                         dayDoses.isEmpty() -> ComplianceStatus.DEFAULT
                         dayDoses.any {
-                            !it.isTaken && now > (it.scheduledTime + graceWindowMillis) ||
+                            (!it.isTaken && now > (it.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)) ||
                                     it.complianceStatus == "MISSED"
                         } -> ComplianceStatus.MISSED
                         dayDoses.any { it.complianceStatus == "LATE" } -> ComplianceStatus.LATE
                         dayDoses.all { it.isTaken && it.complianceStatus == "ON_TIME" } -> ComplianceStatus.ON_TIME
                         else -> ComplianceStatus.DEFAULT
                     }
-
                     MonthDaysCompliance(dayNumber = day.toString(), status = dayStatus)
                 }
 
                 val pastOrTakenDoses = historyDoses.filter { record ->
-                    record.isTaken || (now - record.scheduledTime) > graceWindowMillis
+                    record.isTaken || (now - record.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS
                 }
 
                 val logRecords = pastOrTakenDoses.map { record ->
                     val recordStatus = when {
                         record.isTaken && record.complianceStatus == "ON_TIME" -> ComplianceStatus.ON_TIME
                         record.isTaken && record.complianceStatus == "LATE" -> ComplianceStatus.LATE
-                        !record.isTaken && (now - record.scheduledTime) > graceWindowMillis -> ComplianceStatus.MISSED
+                        !record.isTaken && (now - record.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceStatus.MISSED
                         else -> ComplianceStatus.DEFAULT
                     }
-
                     val recordTimestampText = if (record.isTaken && record.takenTime != null) {
                         "Logged ${formatTime(record.takenTime)}"
                     } else {
                         "Dose Missed"
                     }
-
                     HistoryLogRecordUiModel(
                         id = record.id,
                         patientName = "",

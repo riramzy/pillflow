@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -31,4 +31,12 @@ actual fun getTodayTimeInMillis(hour: Int, minute: Int): Long {
     }
 
     return cal.timeInMillis
+}
+
+actual fun isSameMonthAndYear(millis1: Long, millis2: Long): Boolean {
+    val cal1 = Calendar.getInstance().apply { timeInMillis = millis1 }
+    val cal2 = Calendar.getInstance().apply { timeInMillis = millis2 }
+
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+            cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH)
 }

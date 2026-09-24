@@ -47,8 +47,8 @@ import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.CaregiverSettingsViewModel
-import com.riramzy.pillfllow.utils.Screen
-import com.riramzy.pillfllow.utils.openPhoneDialer
+import com.riramzy.pillfllow.utils.app.Screen
+import com.riramzy.pillfllow.utils.platform.openPhoneDialer
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1

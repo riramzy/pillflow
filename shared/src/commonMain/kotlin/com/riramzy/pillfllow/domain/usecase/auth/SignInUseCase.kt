@@ -3,7 +3,7 @@ package com.riramzy.pillfllow.domain.usecase.auth
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.session.SessionManager
-import com.riramzy.pillfllow.utils.Result
+import com.riramzy.pillfllow.utils.app.Result
 
 class SignInUseCase(
     private val authRepo: AuthRepo,

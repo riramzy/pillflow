@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

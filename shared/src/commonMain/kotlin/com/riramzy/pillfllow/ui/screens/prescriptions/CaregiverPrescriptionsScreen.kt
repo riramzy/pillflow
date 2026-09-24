@@ -41,7 +41,7 @@ import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.prescriptions.CaregiverPrescriptionsViewModel
-import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape

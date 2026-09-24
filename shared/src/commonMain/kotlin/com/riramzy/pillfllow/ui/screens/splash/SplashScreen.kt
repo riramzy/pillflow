@@ -12,7 +12,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.state.splash.SplashNavEvent
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.splash.SplashViewModel
-import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.app.Screen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

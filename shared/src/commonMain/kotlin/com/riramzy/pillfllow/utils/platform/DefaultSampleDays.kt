@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus

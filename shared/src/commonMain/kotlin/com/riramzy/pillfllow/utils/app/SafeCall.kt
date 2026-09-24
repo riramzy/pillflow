@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.app
 
 import kotlinx.coroutines.CancellationException
 

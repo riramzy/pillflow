@@ -40,7 +40,7 @@ import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PatientPrescriptionsViewModel
-import com.riramzy.pillfllow.utils.Screen
+import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
 import org.koin.compose.viewmodel.koinViewModel

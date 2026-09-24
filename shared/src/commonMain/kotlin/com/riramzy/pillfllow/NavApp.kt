@@ -23,8 +23,8 @@ import com.riramzy.pillfllow.ui.screens.prescriptions.PatientPrescriptionsScreen
 import com.riramzy.pillfllow.ui.screens.settings.CaregiverSettingsScreen
 import com.riramzy.pillfllow.ui.screens.settings.PatientSettingsScreen
 import com.riramzy.pillfllow.ui.screens.splash.SplashScreen
-import com.riramzy.pillfllow.utils.Screen
-import com.riramzy.pillfllow.utils.UserType
+import com.riramzy.pillfllow.utils.app.Screen
+import com.riramzy.pillfllow.utils.app.UserType
 import org.koin.compose.koinInject
 
 @Composable

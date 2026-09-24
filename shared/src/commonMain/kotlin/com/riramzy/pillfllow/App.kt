@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.clearFocusOnTap
+import com.riramzy.pillfllow.utils.platform.clearFocusOnTap
 
 @Composable
 fun App() {

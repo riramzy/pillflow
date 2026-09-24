@@ -1,9 +1,9 @@
 package com.riramzy.pillfllow.domain.usecase.caregiver
 
 import com.riramzy.pillfllow.data.remote.dto.NudgeDto
-import com.riramzy.pillfllow.utils.currentTimeMillis
-import com.riramzy.pillfllow.utils.randomUUID
-import com.riramzy.pillfllow.utils.safeCall
+import com.riramzy.pillfllow.utils.app.safeCall
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.randomUUID
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 
 class NudgePatientUseCase(

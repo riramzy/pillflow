@@ -1,8 +1,8 @@
 package com.riramzy.pillfllow.ui.state.dashboard
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
-import com.riramzy.pillfllow.utils.defaultSampleDays
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.platform.defaultSampleDays
 import org.jetbrains.compose.resources.DrawableResource
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1

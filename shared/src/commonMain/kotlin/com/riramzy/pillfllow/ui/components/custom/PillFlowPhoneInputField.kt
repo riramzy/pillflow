@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.components.sheets.CountryPickerSheet
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.Country
+import com.riramzy.pillfllow.utils.platform.Country
 
 @Composable
 fun PillFlowPhoneInputField(

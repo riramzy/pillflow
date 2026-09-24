@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import org.koin.mp.KoinPlatformTools
+import java.util.Locale
 
 actual fun openPhoneDialer(phoneNumber: String) {
     val context = KoinPlatformTools.defaultContext().get().get<Context>()
@@ -28,4 +29,4 @@ actual fun copyToClipboard(text: String) {
 }
 
 actual fun getDeviceCountryCode(): String =
-    java.util.Locale.getDefault().country.ifBlank { "US" }
+    Locale.getDefault().country.ifBlank { "US" }

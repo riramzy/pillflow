@@ -1,8 +1,8 @@
 package com.riramzy.pillfllow.domain.repo
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.UserType
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.UserType
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepo {

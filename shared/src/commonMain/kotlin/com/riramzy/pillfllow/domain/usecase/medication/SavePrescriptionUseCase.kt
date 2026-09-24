@@ -3,9 +3,9 @@ package com.riramzy.pillfllow.domain.usecase.medication
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.randomUUID
-import com.riramzy.pillfllow.utils.safeCall
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.safeCall
+import com.riramzy.pillfllow.utils.platform.randomUUID
 
 class SavePrescriptionUseCase(
     private val medicationRepo: MedicationRepo

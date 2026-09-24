@@ -3,8 +3,8 @@ package com.riramzy.pillfllow.domain.usecase.patient
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.repo.UserRepo
 import com.riramzy.pillfllow.domain.session.SessionManager
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.safeCall
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.safeCall
 
 class UpdateUserProfileUseCase(
     private val userRepo: UserRepo,

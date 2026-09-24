@@ -2,8 +2,8 @@ package com.riramzy.pillfllow.domain.usecase.caregiver
 
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
-import com.riramzy.pillfllow.utils.Result
-import com.riramzy.pillfllow.utils.safeCall
+import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.safeCall
 
 class UnlinkPatientUseCase(
     private val pairingRepo: PairingRepo,

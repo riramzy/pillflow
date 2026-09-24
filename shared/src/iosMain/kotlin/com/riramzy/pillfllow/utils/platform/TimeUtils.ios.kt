@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils
+package com.riramzy.pillfllow.utils.platform
 
 import platform.Foundation.NSCalendar
 import platform.Foundation.NSCalendarUnitDay
@@ -45,4 +45,14 @@ actual fun getTodayTimeInMillis(hour: Int, minute: Int): Long {
     }
 
     return (date.timeIntervalSince1970 * 1000).toLong()
+}
+
+actual fun isSameMonthAndYear(millis1: Long, millis2: Long): Boolean {
+    val cal = NSCalendar.currentCalendar
+    val date1 = NSDate.dateWithTimeIntervalSince1970(millis1 / 1000.0)
+    val date2 = NSDate.dateWithTimeIntervalSince1970(millis2 / 1000.0)
+    val comp1 = cal.components(NSCalendarUnitYear or NSCalendarUnitMonth, fromDate = date1)
+    val comp2 = cal.components(NSCalendarUnitYear or NSCalendarUnitMonth, fromDate = date2)
+
+    return comp1.year == comp2.year && comp1.month == comp2.month
 }
