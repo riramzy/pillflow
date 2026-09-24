@@ -78,12 +78,9 @@ class PatientDashboardViewModel(
                         getPendingDosesForUserUseCase(user.id),
                         tickerFlow()
                     ) { pendingDoses, now ->
-                        val stagingWindowMillis = 30 * 60 * 1000L
-                        val graceWindowMillis = DoseStateMachine.GRACE_WINDOW_MILLIS
-
                         val activeDishDoses = pendingDoses.filter { dose ->
-                            val windowStart = dose.scheduledTime - stagingWindowMillis
-                            val windowEnd = dose.scheduledTime + graceWindowMillis
+                            val windowStart = dose.scheduledTime - DoseStateMachine.ON_TIME_WINDOW_MILLIS
+                            val windowEnd = dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS
                             now in windowStart..windowEnd
                         }
 
@@ -115,28 +112,32 @@ class PatientDashboardViewModel(
                         }
 
                         val mappedUiDoses = pendingDoses.map { dose ->
-                            val isOverdue = (now - dose.scheduledTime) > graceWindowMillis
-                            val isDueNow = now >= dose.scheduledTime && !isOverdue
+                            val formattedTime = formatTime(dose.scheduledTime)
+                            val elapsed = now - dose.scheduledTime
+
+                            val isOverdue = elapsed > DoseStateMachine.LATE_WINDOW_MILLIS
+                            val isLate = elapsed in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+                            val isDueNow = now >= dose.scheduledTime && elapsed <= DoseStateMachine.ON_TIME_WINDOW_MILLIS
+                            val isTomorrow = getDayOfMonth(dose.scheduledTime) != getDayOfMonth(now)
 
                             val pillColor = PillColor.entries.firstOrNull {
                                 it.name.equals(dose.colorHex, ignoreCase = true) ||
                                         it.label.equals(dose.colorHex, ignoreCase = true)
                             } ?: PillColor.CORAL_RED
 
-                            val isTomorrow = getDayOfMonth(dose.scheduledTime) != getDayOfMonth(now)
-
                             val (cardStatus, badgeText) = when {
-                                isOverdue -> ComplianceStatus.MISSED to "Grace Expired"
-                                isDueNow -> ComplianceStatus.LATE to "Due Now"
-                                isTomorrow -> ComplianceStatus.DEFAULT to "Tomorrow"
-                                else -> ComplianceStatus.DEFAULT to "Upcoming"
+                                isOverdue -> ComplianceStatus.MISSED to "Missed: Was Due $formattedTime"
+                                isLate -> ComplianceStatus.LATE to "Late: Was Due $formattedTime"
+                                isDueNow -> ComplianceStatus.ON_TIME to "Due Now: $formattedTime"
+                                isTomorrow -> ComplianceStatus.DEFAULT to "Tomorrow: $formattedTime"
+                                else -> ComplianceStatus.DEFAULT to "Upcoming: $formattedTime"
                             }
 
                             ScheduledDoseUiModel(
                                 id = dose.id,
                                 name = dose.name,
                                 dosage = dose.dosage,
-                                timeFormatted = formatTime(dose.scheduledTime),
+                                timeFormatted = formattedTime,
                                 color = pillColor,
                                 status = cardStatus,
                                 badgeText = badgeText,
@@ -167,7 +168,6 @@ class PatientDashboardViewModel(
     private fun computeComplianceInfo(pendingDoses: List<PendingDoseWithMedication>): ComplianceCardUiModel {
         val now = currentTimeMillis()
         val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
-        val graceWindowMillis = 30 * 60 * 1000L
 
         return when {
             earliestDose == null -> ComplianceCardUiModel(
@@ -177,35 +177,50 @@ class PatientDashboardViewModel(
                 badgeText = "100% On-Time"
             )
 
-            (now - earliestDose.scheduledTime) > graceWindowMillis -> ComplianceCardUiModel(
-                status = ComplianceStatus.MISSED,
-                title = "Overdue: ${earliestDose.name}",
-                subtitle = "Was due earlier today",
-                badgeText = "Grace Expired"
-            )
+            (now - earliestDose.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> {
+                val formattedTime = formatTime(earliestDose.scheduledTime)
 
-            now >= earliestDose.scheduledTime -> {
-                val specificDosesLeft = pendingDoses.count { it.name.equals(earliestDose.name, ignoreCase = true) }
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.MISSED,
+                    title = "Overdue: ${earliestDose.name}",
+                    subtitle = "Scheduled time window expired",
+                    badgeText = "Missed: Was Due $formattedTime"
+                )
+            }
+
+            (now - earliestDose.scheduledTime) > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> {
+                val formattedTime = formatTime(earliestDose.scheduledTime)
 
                 ComplianceCardUiModel(
                     status = ComplianceStatus.LATE,
-                    title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
-                    subtitle = "Scheduled for today",
-                    badgeText = "$specificDosesLeft ${if (specificDosesLeft == 1) "Dose" else "Doses"} Left"
+                    title = "Late: ${earliestDose.name} ${earliestDose.dosage}",
+                    subtitle = "Take as soon as possible",
+                    badgeText = "Late: Was Due $formattedTime"
                 )
             }
+
+            now >= earliestDose.scheduledTime -> {
+                val formattedTime = formatTime(earliestDose.scheduledTime)
+
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.ON_TIME,
+                    title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
+                    subtitle = "Scheduled for today",
+                    badgeText = "Due Now: $formattedTime"
+                )
+            }
+
 
             else -> {
                 val isTomorrow = getDayOfMonth(earliestDose.scheduledTime) != getDayOfMonth(now)
                 val subtitleText = if (isTomorrow) "Scheduled for tomorrow" else "Scheduled for today"
-                val specificDosesLeft = pendingDoses.count { it.name.equals(earliestDose.name, ignoreCase = true) }
-                val badgeText = "$specificDosesLeft ${if (specificDosesLeft == 1) "Dose" else "Doses"} Left"
+                val formattedTime = formatTime(earliestDose.scheduledTime)
 
                 ComplianceCardUiModel(
-                    status = ComplianceStatus.LATE,
+                    status = ComplianceStatus.DEFAULT,
                     title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
                     subtitle = subtitleText,
-                    badgeText = badgeText
+                    badgeText = if (isTomorrow) "Tomorrow: $formattedTime" else "Upcoming: $formattedTime"
                 )
             }
         }

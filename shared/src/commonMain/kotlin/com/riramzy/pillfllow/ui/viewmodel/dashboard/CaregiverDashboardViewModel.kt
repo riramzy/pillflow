@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
@@ -81,27 +82,31 @@ class CaregiverDashboardViewModel(
                 }
                 .collectLatest { pendingDoses ->
                     val now = currentTimeMillis()
-                    val graceWindowMillis = 30 * 60 * 1000L
 
                     val mappedUiDoses = pendingDoses.map { dose ->
-                        val isOverdue = (now - dose.scheduledTime) > graceWindowMillis
-                        val isDueNow = now >= dose.scheduledTime && !isOverdue
+                        val formattedTime = formatTime(dose.scheduledTime)
+                        val elapsed = now - dose.scheduledTime
+
+                        val isOverdue = elapsed > DoseStateMachine.LATE_WINDOW_MILLIS
+                        val isLate = elapsed in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+                        val isDueNow = now >= dose.scheduledTime && elapsed <= DoseStateMachine.ON_TIME_WINDOW_MILLIS
 
                         val pillColor = PillColor.entries.firstOrNull {
                             it.name.equals(dose.colorHex, ignoreCase = true)
                         }
 
                         val (cardStatus, badgeText) = when {
-                            isOverdue -> ComplianceStatus.MISSED to "Grace Expired"
-                            isDueNow -> ComplianceStatus.LATE to "Due Now"
-                            else -> ComplianceStatus.DEFAULT to "Upcoming"
+                            isOverdue -> ComplianceStatus.MISSED to "Missed: Was Due $formattedTime"
+                            isLate -> ComplianceStatus.LATE to "Late: Was Due $formattedTime"
+                            isDueNow -> ComplianceStatus.ON_TIME to "Due Now: $formattedTime"
+                            else -> ComplianceStatus.DEFAULT to "Upcoming: $formattedTime"
                         }
 
                         ScheduledDoseUiModel(
                             id = dose.id,
                             name = dose.name,
                             dosage = dose.dosage,
-                            timeFormatted = formatTime(dose.scheduledTime),
+                            timeFormatted = formattedTime,
                             color = pillColor ?: PillColor.CORAL_RED,
                             status = cardStatus,
                             badgeText = badgeText,
@@ -116,12 +121,16 @@ class CaregiverDashboardViewModel(
                             ComplianceStatus.ON_TIME to "All Set For Today!"
                         }
 
-                        (now - earliestDose.scheduledTime) > graceWindowMillis -> {
+                        (now - earliestDose.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> {
                             ComplianceStatus.MISSED to "ALERT: ${earliestDose.name} ${earliestDose.dosage} was due at ${formatTime(earliestDose.scheduledTime)}"
                         }
 
+                        (now - earliestDose.scheduledTime) > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> {
+                            ComplianceStatus.LATE to "LATE: ${earliestDose.name} ${earliestDose.dosage} was due at ${formatTime(earliestDose.scheduledTime)}"
+                        }
+
                         now >= earliestDose.scheduledTime -> {
-                            ComplianceStatus.LATE to "DUE NOW: ${earliestDose.name} ${earliestDose.dosage} is scheduled for ${formatTime(earliestDose.scheduledTime)}"
+                            ComplianceStatus.ON_TIME to "DUE NOW: ${earliestDose.name} ${earliestDose.dosage} is scheduled for ${formatTime(earliestDose.scheduledTime)}"
                         }
 
                         else -> {

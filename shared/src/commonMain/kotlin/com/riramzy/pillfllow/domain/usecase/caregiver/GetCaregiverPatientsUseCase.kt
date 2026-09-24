@@ -1,5 +1,6 @@
 package com.riramzy.pillfllow.domain.usecase.caregiver
 
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
@@ -28,7 +29,6 @@ class GetCaregiverPatientsUseCase(
     operator fun invoke(caregiverId: String): Flow<List<PairedPatientUiModel>> {
         return pairingRepo.getPairingsForCaregiver(caregiverId).map { pairings ->
             val now = currentTimeMillis()
-            val graceWindowMillis = 30 * 60 * 1000L
 
             val caregiver = userRepo.getUserByIdOnce(caregiverId)
 
@@ -47,8 +47,12 @@ class GetCaregiverPatientsUseCase(
 
                 val patientDoses = medicationRepo.getPendingDosesForUser(patientId).firstOrNull() ?: emptyList()
 
-                val missedCount = patientDoses.count { now - it.scheduledTime > graceWindowMillis }
-                val lateCount = patientDoses.count { now >= it.scheduledTime && (now - it.scheduledTime) <= graceWindowMillis }
+                val missedCount = patientDoses.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+
+                val lateCount = patientDoses.count {
+                    val diff = now - it.scheduledTime
+                    diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+                }
 
                 val patientStatus = when {
                     missedCount > 0 -> ComplianceStatus.MISSED
@@ -64,6 +68,7 @@ class GetCaregiverPatientsUseCase(
 
                 PairedPatientUiModel(
                     id = patientId,
+                    pairingId = pairing?.pairingId ?: "",
                     name = patientName,
                     relation = relation,
                     phoneNumber = pairing?.phoneNumber?.ifBlank { null } ?: patient?.phoneNumber ?: "",

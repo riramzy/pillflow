@@ -1,6 +1,8 @@
 package com.riramzy.pillfllow.data.repo
 
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
+import com.riramzy.pillfllow.data.local.dao.PairingDao
+import com.riramzy.pillfllow.data.local.dao.UserDao
 import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
@@ -10,6 +12,7 @@ import com.riramzy.pillfllow.data.remote.dto.MedicationDto
 import com.riramzy.pillfllow.data.remote.dto.ScheduledDoseDto
 import com.riramzy.pillfllow.data.remote.dto.toDto
 import com.riramzy.pillfllow.data.remote.dto.toEntity
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.session.SessionManager
@@ -26,6 +29,8 @@ import kotlinx.coroutines.launch
 
 class MedicationRepoImpl(
     private val medicationDao: MedicationDao,
+    private val userDao: UserDao? = null,
+    private val pairingDao: PairingDao? = null,
     private val platformNotifier: PlatformNotifier = PlatformNotifier(),
     private val firestore: FirebaseFirestore,
     private val sessionManager: SessionManager
@@ -91,16 +96,29 @@ class MedicationRepoImpl(
             syncScheduledDosesForUser(patientId)
         }
 
+        val users = userDao?.getAllUsersOnce()?.associateBy { it.id } ?: emptyMap()
+
+        val caregiverId = sessionManager.currentUser.value?.id
+
+        val pairings = if (caregiverId != null) {
+            pairingDao?.getPairingsForCaregiverOnce(caregiverId)?.associateBy { it.patientId } ?: emptyMap()
+        } else emptyMap()
+
         medicationDao.getPendingDosesForPatients(patientIds).distinctUntilChanged().collect { doses ->
             val now = currentTimeMillis()
 
             doses.forEach { dose ->
-                val escalationTime = dose.scheduledTime + 30 * 60 * 1000L + 60_000L
+                val escalationTime = dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS + 60_000L
+
                 if (escalationTime > now) {
+                    val patientName = pairings[dose.userId]?.relation?.ifBlank { null }
+                        ?: users[dose.userId]?.firstName?.ifBlank { null }
+                        ?: "Your patient"
+
                     platformNotifier.scheduleCaregiverEscalation(
                         doseId = dose.id,
                         pillName = dose.name,
-                        patientName = "Your patient",
+                        patientName = patientName,
                         triggerTimeMillis = escalationTime
                     )
                 }

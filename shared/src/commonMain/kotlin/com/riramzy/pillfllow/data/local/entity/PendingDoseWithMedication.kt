@@ -6,5 +6,6 @@ data class PendingDoseWithMedication(
     val dosage: String,
     val colorHex: String,
     val shape: String = "CAPSULE",
-    val scheduledTime: Long
+    val scheduledTime: Long,
+    val userId: String = ""
 )
