@@ -1,5 +1,6 @@
 package com.riramzy.pillfllow.receiver
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,17 +8,21 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.riramzy.pillfllow.MainActivity
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
 import com.riramzy.pillfllow.domain.session.SessionManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.koin.java.KoinJavaComponent.inject
 
+@Suppress("DEPRECATION")
 class CaregiverEscalationReceiver: BroadcastReceiver() {
     private val sessionManager: SessionManager by inject(SessionManager::class.java)
     private val medicationDao: MedicationDao by inject(MedicationDao::class.java)
 
+    @SuppressLint("FullScreenIntentPolicy")
     override fun onReceive(context: Context, intent: Intent) {
         val activeUser = sessionManager.currentUser.value ?: return
         if (activeUser.userType.lowercase() != "caregiver") return
@@ -27,8 +32,20 @@ class CaregiverEscalationReceiver: BroadcastReceiver() {
             val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
             val patientName = intent.getStringExtra("PATIENT_NAME") ?: "Your patient"
 
-            val isTaken = runBlocking { medicationDao.getScheduledDoseById(doseId)?.isTaken == true }
-            if (isTaken) return
+            val dose = runBlocking(Dispatchers.IO) {
+                medicationDao.getScheduledDoseById(doseId)
+            }
+
+            if (dose == null || dose.isTaken) {
+                return
+            }
+
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val wakeLock = powerManager.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "PillFlow:EscalationWakeLock"
+            )
+            wakeLock.acquire(5000L)
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channelId = "pillflow_escalation_channel"
@@ -60,9 +77,11 @@ class CaregiverEscalationReceiver: BroadcastReceiver() {
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentTitle("Urgent: Missed Dose Alert")
                 .setContentText("$patientName has missed their scheduled dose of $pillName!")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setFullScreenIntent(pendingIntent, true)
                 .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
                 .build()
 
             notificationManager.notify(doseId.hashCode(), notification)

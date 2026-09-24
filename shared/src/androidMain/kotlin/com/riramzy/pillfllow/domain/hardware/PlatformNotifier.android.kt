@@ -119,11 +119,27 @@ actual class PlatformNotifier {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-
             pendingIntent?.let {
                 alarmManager.cancel(it)
                 it.cancel()
             }
+        }
+
+        val escalationIntent = Intent().apply {
+            action = "com.riramzy.pillfllow.CAREGIVER_DOSE_ESCALATION"
+            `package` = androidContext.packageName
+        }
+
+        val escalationPending = PendingIntent.getBroadcast(
+            androidContext,
+            "escalation_$doseId".hashCode(),
+            escalationIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        escalationPending?.let {
+            alarmManager.cancel(it)
+            it.cancel()
         }
     }
 
