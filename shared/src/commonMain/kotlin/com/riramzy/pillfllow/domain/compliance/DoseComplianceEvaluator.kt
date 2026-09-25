@@ -9,6 +9,7 @@ import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
+import com.riramzy.pillfllow.utils.platform.isSameDay
 import com.riramzy.pillfllow.utils.platform.isSameMonthAndYear
 
 data class DoseCardEvaluation(
@@ -60,21 +61,23 @@ object DoseComplianceEvaluator {
         val isOverdue = elapsed > DoseStateMachine.LATE_WINDOW_MILLIS
         val isLate = elapsed in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
         val isDueNow = now >= scheduledTime && elapsed <= DoseStateMachine.ON_TIME_WINDOW_MILLIS
-        val isTomorrow = getDayOfMonth(scheduledTime) != getDayOfMonth(now)
+
+        val isDishEligible = !isTaken &&
+                isSameDay(scheduledTime, now) &&
+                now in (scheduledTime - DoseStateMachine.ON_TIME_WINDOW_MILLIS)..(scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)
 
         val (status, badge) = when {
             isTaken -> ComplianceStatus.ON_TIME to "Taken: $formattedTime"
             isOverdue -> ComplianceStatus.MISSED to "Missed: Was Due $formattedTime"
             isLate -> ComplianceStatus.LATE to "Late: Was Due $formattedTime"
             isDueNow -> ComplianceStatus.DEFAULT to "Due Now: $formattedTime"
-            isTomorrow -> ComplianceStatus.DEFAULT to "Tomorrow: $formattedTime"
             else -> ComplianceStatus.DEFAULT to "Upcoming: $formattedTime"
         }
 
         return DoseCardEvaluation(
             status = status,
             badgeText = badge,
-            isDishEligible = !isTaken && now in (scheduledTime - DoseStateMachine.ON_TIME_WINDOW_MILLIS)..(scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)
+            isDishEligible = isDishEligible
         )
     }
 
@@ -206,14 +209,11 @@ object DoseComplianceEvaluator {
             )
 
             else -> {
-                val isTomorrow = getDayOfMonth(earliestDose.scheduledTime) != getDayOfMonth(now)
-                val subtitleText = if (isTomorrow) "Scheduled for tomorrow" else "Scheduled for today"
-
                 ComplianceCardUiModel(
                     status = ComplianceStatus.DEFAULT,
                     title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
-                    subtitle = subtitleText,
-                    badgeText = if (isTomorrow) "Tomorrow: $formattedTime" else "Upcoming: $formattedTime"
+                    subtitle = "Scheduled for today",
+                    badgeText = "Upcoming: $formattedTime"
                 )
             }
         }

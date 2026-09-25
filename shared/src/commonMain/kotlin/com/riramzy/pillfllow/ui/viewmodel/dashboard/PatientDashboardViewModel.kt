@@ -19,6 +19,7 @@ import com.riramzy.pillfllow.utils.pill.PillShape
 import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
+import com.riramzy.pillfllow.utils.platform.isSameDay
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -73,7 +74,9 @@ class PatientDashboardViewModel(
                         getPendingDosesForUserUseCase(user.id),
                         tickerFlow()
                     ) { pendingDoses, now ->
-                        val activeDishDoses = pendingDoses.filter { dose ->
+                        val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
+
+                        val activeDishDoses = todayPendingDoses.filter { dose ->
                             DoseComplianceEvaluator.evaluateDoseCard(
                                 dose.scheduledTime,
                                 now,
@@ -105,7 +108,7 @@ class PatientDashboardViewModel(
                             )
                         }
 
-                        val mappedUiDoses = pendingDoses.map { dose ->
+                        val mappedUiDoses = todayPendingDoses.map { dose ->
                             val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
                                 dose.scheduledTime,
                                 now,
@@ -127,7 +130,7 @@ class PatientDashboardViewModel(
                         }
 
                         val complianceInfo = DoseComplianceEvaluator.evaluatePatientComplianceCard(
-                            pendingDoses,
+                            todayPendingDoses,
                             now
                         )
 
@@ -135,7 +138,7 @@ class PatientDashboardViewModel(
                             it.copy(
                                 scheduledDoses = mappedUiDoses,
                                 pills = mappedPills,
-                                totalDoses = activeDishDoses.size,
+                                totalDoses = todayPendingDoses.size,
                                 complianceStatus = complianceInfo.status,
                                 complianceTitle = complianceInfo.title,
                                 complianceSubtitle = complianceInfo.subtitle,

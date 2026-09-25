@@ -66,3 +66,10 @@ actual fun isSameMonthAndYear(millis1: Long, millis2: Long): Boolean {
 
     return comp1.year == comp2.year && comp1.month == comp2.month
 }
+
+actual fun isSameDay(millis1: Long, millis2: Long): Boolean {
+    val cal = NSCalendar.currentCalendar
+    val d1 = NSDate.dateWithTimeIntervalSince1970(millis1 / 1000.0)
+    val d2 = NSDate.dateWithTimeIntervalSince1970(millis2 / 1000.0)
+    return cal.isDate(d1, inSameDayAsDate = d2)
+}

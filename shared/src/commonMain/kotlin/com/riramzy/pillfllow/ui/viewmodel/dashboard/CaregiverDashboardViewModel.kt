@@ -14,6 +14,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
+import com.riramzy.pillfllow.utils.platform.isSameDay
 import com.riramzy.pillfllow.utils.platform.openPhoneDialer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,7 +81,16 @@ class CaregiverDashboardViewModel(
                 .collectLatest { pendingDoses ->
                     val now = currentTimeMillis()
 
-                    val mappedUiDoses = pendingDoses.map { dose ->
+                    val patientName = _state.value.activePatient?.name ?: "Patient"
+
+
+                    val todayDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
+                    val earliestDose = todayDoses.minByOrNull { it.scheduledTime }
+                    val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(earliestDose, now)
+
+                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(todayDoses, now)
+
+                    val mappedUiDoses = todayDoses.map { dose ->
                         val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
                             dose.scheduledTime,
                             now,
@@ -101,14 +111,7 @@ class CaregiverDashboardViewModel(
                         )
                     }
 
-                    val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
-
-                    val patientName = _state.value.activePatient?.name ?: "Patient"
-
-                    val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(earliestDose, now)
-                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(pendingDoses, now)
-
-                    val activities = pendingDoses.take(3).map { dose ->
+                    val activities = todayDoses.take(3).map { dose ->
                         val evalDose = DoseComplianceEvaluator.evaluateLiveActivity(
                             dose.name,
                             dose.dosage,

@@ -7,6 +7,7 @@ import com.riramzy.pillfllow.domain.repo.UserRepo
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.utils.app.AvatarMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.isSameDay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -31,8 +32,9 @@ class GetCaregiverPatientsUseCase(
                 val relation = pairing?.relation?.ifBlank { "Patient" } ?: "Patient"
                 val patientName = patient?.firstName?.ifBlank { null } ?: relation
                 val patientDoses = medicationRepo.getPendingDosesForUser(patientId).firstOrNull() ?: emptyList()
+                val todayPatientDoses = patientDoses.filter { isSameDay(it.scheduledTime, now) }
 
-                val summary = DoseComplianceEvaluator.evaluatePatientSummary(patientDoses, now)
+                val summary = DoseComplianceEvaluator.evaluatePatientSummary(todayPatientDoses, now)
 
                 PairedPatientUiModel(
                     id = patientId,

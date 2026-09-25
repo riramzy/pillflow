@@ -45,3 +45,11 @@ actual fun isSameMonthAndYear(millis1: Long, millis2: Long): Boolean {
     return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
             cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH)
 }
+
+actual fun isSameDay(millis1: Long, millis2: Long): Boolean {
+    val c1 = Calendar.getInstance().apply { timeInMillis = millis1 }
+    val c2 = Calendar.getInstance().apply { timeInMillis = millis2 }
+
+    return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
+            c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)
+}
