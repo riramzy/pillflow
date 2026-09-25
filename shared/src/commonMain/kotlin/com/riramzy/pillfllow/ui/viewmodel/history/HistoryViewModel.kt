@@ -12,6 +12,7 @@ import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatMonthYear
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
 import com.riramzy.pillfllow.utils.platform.isSameMonthAndYear
@@ -129,6 +130,7 @@ class HistoryViewModel(
                     } else {
                         "Dose Missed"
                     }
+
                     HistoryLogRecordUiModel(
                         id = record.id,
                         patientName = "",
@@ -139,8 +141,11 @@ class HistoryViewModel(
                     )
                 }
 
+                val currentMonthTitle = formatMonthYear(now)
+
                 _state.update {
                     it.copy(
+                        monthYearTitle = currentMonthTitle,
                         scorePercentage = score,
                         onTimeCount = onTime,
                         lateCount = late,

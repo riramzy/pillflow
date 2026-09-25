@@ -144,14 +144,29 @@ fun CaregiverHistoryScreenContent(
                 }
 
                 item {
-                    PillFlowMonthlyScoreCard(
-                        monthYearText = state.monthYearTitle,
-                        scorePercentage = state.scorePercentage,
-                        onTimeCount = state.onTimeCount,
-                        lateCount = state.lateCount,
-                        missedCount = state.missedCount,
-                        modifier = Modifier.padding(horizontal = 15.dp)
-                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Monthly Score",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        PillFlowMonthlyScoreCard(
+                            monthYearText = state.monthYearTitle,
+                            scorePercentage = state.scorePercentage,
+                            onTimeCount = state.onTimeCount,
+                            lateCount = state.lateCount,
+                            missedCount = state.missedCount
+                        )
+                    }
                 }
 
                 item {

@@ -20,6 +20,16 @@ actual fun formatTime(millis: Long): String {
     return formatter.stringFromDate(date)
 }
 
+actual fun formatMonthYear(millis: Long): String {
+    val formatter = NSDateFormatter().apply {
+        dateFormat = "MMMM yyyy"
+    }
+
+    val date = NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)
+
+    return formatter.stringFromDate(date)
+}
+
 actual fun getDayOfMonth(millis: Long): Int {
     val date = NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)
     return NSCalendar.currentCalendar.component(NSCalendarUnitDay, fromDate = date).toInt()

@@ -4,9 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,8 +60,8 @@ fun PillFlowStatusCard(
 
     Box(
         modifier = modifier
-            .width(130.dp)
-            .height(20.dp)
+            .widthIn(min = 130.dp)
+            .heightIn(min = 20.dp)
             .background(
                 color = customBackgroundColor?: backgroundColor,
                 shape = RoundedCornerShape(32.dp)
@@ -74,7 +74,7 @@ fun PillFlowStatusCard(
             style = MaterialTheme.typography.bodySmall,
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(vertical = 2.dp)
+            modifier = Modifier.padding(vertical = 2.dp, horizontal = 2.dp)
         )
 
     }

@@ -8,7 +8,7 @@ data class HistoryState(
     val isCaregiver: Boolean = false,
     val pairedPatients: List<PairedPatientUiModel> = emptyList(),
     val selectedPatientId: String = "",
-    val monthYearTitle: String = "July 2026",
+    val monthYearTitle: String = "",
     val scorePercentage: Int = 0,
     val onTimeCount: Int = 0,
     val lateCount: Int = 0,

@@ -67,7 +67,7 @@ fun PillFlowMonthlyScoreCard(
                 ) {
                     Column {
                         Text(
-                            text = "Monthly Score: $monthYearText",
+                            text = monthYearText,
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
