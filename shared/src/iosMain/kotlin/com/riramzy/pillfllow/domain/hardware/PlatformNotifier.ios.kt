@@ -23,9 +23,15 @@ actual class PlatformNotifier {
 
         val center = UNUserNotificationCenter.currentNotificationCenter()
 
+        val (title, body) = when (stage) {
+            DoseReminderStage.ADVANCE_30MIN -> "Upcoming Medication" to "Your $pillName is scheduled in 30 minutes."
+            DoseReminderStage.DUE_NOW -> "Time for your medication!" to "Take your $pillName now. Ready in your dish."
+            DoseReminderStage.PRE_EXPIRY_15MIN -> "Dose Overdue: $pillName" to "You haven't logged your $pillName. Please take it soon to prevent caregiver escalation."
+        }
+
         val content = UNMutableNotificationContent().apply {
-            setTitle("Medication Reminder")
-            setBody("Time to take your $pillName")
+            setTitle(title)
+            setBody(body)
             setSound(UNNotificationSound.defaultSound())
         }
 

@@ -40,26 +40,31 @@ class DoseReminderReceiver: BroadcastReceiver() {
                 return
             }
 
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-            val wakeLock = powerManager.newWakeLock(
-                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
-                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                        PowerManager.ON_AFTER_RELEASE,
-                "PillFlow:DoseWakeLock"
-            )
-            wakeLock.acquire(5000L)
+            val isAdvance = stageName == DoseReminderStage.ADVANCE_30MIN.name
+            val isDueNow = stageName == DoseReminderStage.DUE_NOW.name
+
+            if (!isAdvance) {
+                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+                val wakeLock = powerManager.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
+                            PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                            PowerManager.ON_AFTER_RELEASE,
+                    "PillFlow:DoseWakeLock"
+                )
+                wakeLock.acquire(5000L)
+            }
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channelId = "pillflow_dose_channel"
+            val channelId = if (isAdvance) "pillflow_advance_channel" else "pillflow_dose_channel"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
                     channelId,
-                    "Medication Reminders",
-                    NotificationManager.IMPORTANCE_HIGH
+                    if (isAdvance) "Upcoming Medication Reminders" else "Medication Reminders",
+                    if (isAdvance) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = "Timely medication dose reminders"
-                    enableVibration(true)
+                    enableVibration(!isAdvance)
                 }
                 notificationManager.createNotificationChannel(channel)
             }
@@ -84,19 +89,21 @@ class DoseReminderReceiver: BroadcastReceiver() {
                     "Upcoming Medication" to "Your $pillName is scheduled in 30 minutes."
             }
 
-            val notification = NotificationCompat.Builder(context, channelId)
+            val builder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setPriority(if (isAdvance) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_MAX)
+                .setCategory(if (isAdvance) NotificationCompat.CATEGORY_REMINDER else NotificationCompat.CATEGORY_ALARM)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setFullScreenIntent(pendingIntent, true)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-                .build()
 
-            notificationManager.notify("$doseId:$stageName".hashCode(), notification)
+            if (isDueNow) {
+                builder.setFullScreenIntent(pendingIntent, true)
+            }
+
+            notificationManager.notify(doseId.hashCode(), builder.build())
         }
     }
 }
