@@ -11,7 +11,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
-import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.openPhoneDialer
@@ -87,10 +87,7 @@ class CaregiverDashboardViewModel(
                             isTaken = false
                         )
 
-                        val pillColor = PillColor.entries.firstOrNull {
-                            it.name.equals(dose.colorHex, ignoreCase = true) ||
-                                    it.label.equals(dose.colorHex, ignoreCase = true)
-                        } ?: PillColor.CORAL_RED
+                        val pillColor = PillColorMapper.fromRaw(dose.colorHex)
 
                         ScheduledDoseUiModel(
                             id = dose.id,

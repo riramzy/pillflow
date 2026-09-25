@@ -10,9 +10,10 @@ import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
-import com.riramzy.pillfllow.utils.pill.PillColor
-import com.riramzy.pillfllow.utils.pill.PillShape
+import com.riramzy.pillfllow.utils.pill.PillColorMapper
+import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatRelativeNextDose
 import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,14 +61,9 @@ class PatientPrescriptionsViewModel(
                             .filter { it.name.equals(med.name, ignoreCase = true) }
                             .minByOrNull { it.scheduledTime }
 
-                        val pillShape = runCatching {
-                            PillShape.valueOf(med.shape.uppercase())
-                        }.getOrDefault(PillShape.CAPSULE)
+                        val pillShape = PillShapeMapper.fromRaw(med.shape)
 
-                        val pillColor = PillColor.entries.firstOrNull {
-                            it.name.equals(med.colorHex, ignoreCase = true) ||
-                                    it.label.equals(med.colorHex, ignoreCase = true)
-                        } ?: PillColor.SKY_BLUE
+                        val pillColor = PillColorMapper.fromRaw(med.colorHex)
 
                         PrescriptionUiModel(
                             id = med.id,
@@ -178,30 +174,6 @@ class PatientPrescriptionsViewModel(
                 action.timeOfDay, action.colorHex, action.shape, action.scheduledTimesMillis
             )
             is PatientPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
-        }
-    }
-}
-
-fun formatRelativeNextDose(
-    scheduledTime: Long?,
-    now: Long
-): String {
-    if (scheduledTime == null) return "No upcoming doses"
-    val diffMillis = scheduledTime - now
-
-    return when {
-        diffMillis < -30 * 60 * 1000L -> "Overdue"
-        diffMillis <= 0 -> "Due now"
-
-        else -> {
-            val minutes = (diffMillis / (1000 * 60)).toInt()
-            val hours = minutes / 60
-
-            when {
-                minutes < 60 -> "Next dose in $minutes mins"
-                hours < 24 -> "Next dose in $hours ${if (hours == 1) "hour" else "hours"}"
-                else -> "Next dose at ${formatTime(scheduledTime)}"
-            }
         }
     }
 }

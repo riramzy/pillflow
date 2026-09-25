@@ -1,12 +1,9 @@
 package com.riramzy.pillfllow.ui.viewmodel.dashboard
 
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.remote.dto.NudgeDto
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
-import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
@@ -14,17 +11,14 @@ import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
-import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
-import com.riramzy.pillfllow.utils.medication.ComplianceStatus
-import com.riramzy.pillfllow.utils.medication.parseColorHex
-import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.pill.PillShape
+import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
-import com.riramzy.pillfllow.utils.platform.getDayOfMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -94,18 +88,9 @@ class PatientDashboardViewModel(
                                 isTaken = false
                             ).isDishEligible
 
-                            val resolvedPillColor = PillColor.entries.firstOrNull {
-                                it.name.equals(dose.colorHex, ignoreCase = true) ||
-                                        it.label.equals(dose.colorHex, ignoreCase = true)
-                            }
+                            val color = PillColorMapper.fromRaw(dose.colorHex).color
 
-                            val color = resolvedPillColor?.color ?: runCatching {
-                                Color(parseColorHex(dose.colorHex))
-                            }.getOrDefault(Color(0xFFE53935))
-
-                            val shape = runCatching {
-                                PillShape.valueOf(dose.shape.uppercase())
-                            }.getOrDefault(PillShape.CIRCLE)
+                            val shape = PillShapeMapper.fromRaw(dose.shape, default = PillShape.CIRCLE)
 
                             PillEntity(
                                 id = dose.id,
@@ -127,10 +112,7 @@ class PatientDashboardViewModel(
                                 isTaken = false
                             )
 
-                            val pillColor = PillColor.entries.firstOrNull {
-                                it.name.equals(dose.colorHex, ignoreCase = true) ||
-                                        it.label.equals(dose.colorHex, ignoreCase = true)
-                            } ?: PillColor.CORAL_RED
+                            val pillColor = PillColorMapper.fromRaw(dose.colorHex)
 
                             ScheduledDoseUiModel(
                                 id = dose.id,
@@ -144,7 +126,10 @@ class PatientDashboardViewModel(
                             )
                         }
 
-                        val complianceInfo = computeComplianceInfo(pendingDoses)
+                        val complianceInfo = DoseComplianceEvaluator.evaluatePatientComplianceCard(
+                            pendingDoses,
+                            now
+                        )
 
                         _state.update {
                             it.copy(
@@ -160,67 +145,6 @@ class PatientDashboardViewModel(
                         }
                     }.collect()
                 }
-            }
-        }
-    }
-
-    private fun computeComplianceInfo(pendingDoses: List<PendingDoseWithMedication>): ComplianceCardUiModel {
-        val now = currentTimeMillis()
-        val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
-
-        return when {
-            earliestDose == null -> ComplianceCardUiModel(
-                status = ComplianceStatus.ON_TIME,
-                title = "All Set For Today!",
-                subtitle = "All scheduled doses completed",
-                badgeText = "100% On-Time"
-            )
-
-            (now - earliestDose.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> {
-                val formattedTime = formatTime(earliestDose.scheduledTime)
-
-                ComplianceCardUiModel(
-                    status = ComplianceStatus.MISSED,
-                    title = "Overdue: ${earliestDose.name}",
-                    subtitle = "Scheduled time window expired",
-                    badgeText = "Missed: Was Due $formattedTime"
-                )
-            }
-
-            (now - earliestDose.scheduledTime) > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> {
-                val formattedTime = formatTime(earliestDose.scheduledTime)
-
-                ComplianceCardUiModel(
-                    status = ComplianceStatus.LATE,
-                    title = "Late: ${earliestDose.name} ${earliestDose.dosage}",
-                    subtitle = "Take as soon as possible",
-                    badgeText = "Late: Was Due $formattedTime"
-                )
-            }
-
-            now >= earliestDose.scheduledTime -> {
-                val formattedTime = formatTime(earliestDose.scheduledTime)
-
-                ComplianceCardUiModel(
-                    status = ComplianceStatus.ON_TIME,
-                    title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
-                    subtitle = "Scheduled for today",
-                    badgeText = "Due Now: $formattedTime"
-                )
-            }
-
-
-            else -> {
-                val isTomorrow = getDayOfMonth(earliestDose.scheduledTime) != getDayOfMonth(now)
-                val subtitleText = if (isTomorrow) "Scheduled for tomorrow" else "Scheduled for today"
-                val formattedTime = formatTime(earliestDose.scheduledTime)
-
-                ComplianceCardUiModel(
-                    status = ComplianceStatus.DEFAULT,
-                    title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
-                    subtitle = subtitleText,
-                    badgeText = if (isTomorrow) "Tomorrow: $formattedTime" else "Upcoming: $formattedTime"
-                )
             }
         }
     }

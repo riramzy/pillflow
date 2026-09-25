@@ -11,6 +11,7 @@ import com.riramzy.pillfllow.domain.usecase.patient.SetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
+import com.riramzy.pillfllow.utils.app.AvatarMapper
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,15 +24,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.avatar1
-import pillfllow.shared.generated.resources.avatar2
-import pillfllow.shared.generated.resources.avatar3
-import pillfllow.shared.generated.resources.avatar4
-import pillfllow.shared.generated.resources.avatar5
-import pillfllow.shared.generated.resources.avatar6
-import pillfllow.shared.generated.resources.avatar7
-import pillfllow.shared.generated.resources.avatar8
 
 class PatientSettingsViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
@@ -63,16 +55,7 @@ class PatientSettingsViewModel(
             observeCurrentUserUseCase()
                 .filterNotNull()
                 .flatMapLatest { user ->
-                    val avatarRes = when (user.avatarRes) {
-                        "avatar1" -> Res.drawable.avatar1
-                        "avatar2" -> Res.drawable.avatar2
-                        "avatar3" -> Res.drawable.avatar3
-                        "avatar4" -> Res.drawable.avatar4
-                        "avatar5" -> Res.drawable.avatar5
-                        "avatar6" -> Res.drawable.avatar6
-                        "avatar7" -> Res.drawable.avatar7
-                        else -> Res.drawable.avatar8
-                    }
+                    val avatarRes = AvatarMapper.fromRaw(user.avatarRes)
 
                     _state.update {
                         it.copy(

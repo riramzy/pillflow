@@ -1,10 +1,15 @@
 package com.riramzy.pillfllow.domain.compliance
 
+import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
+import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
+import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
+import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
+import com.riramzy.pillfllow.utils.platform.isSameMonthAndYear
 
 data class DoseCardEvaluation(
     val status: ComplianceStatus,
@@ -25,6 +30,22 @@ data class LiveActivityEvaluation(
 data class WeeklyComplianceEvaluation(
     val days: List<ComplianceDayUiModel>,
     val weeklyRate: Int
+)
+
+data class HistoryAnalyticsEvaluation(
+    val scorePercentage: Int,
+    val onTimeCount: Int,
+    val lateCount: Int,
+    val missedCount: Int,
+    val monthlyHeatmap: List<MonthDaysCompliance>,
+    val logRecords: List<HistoryLogRecordUiModel>
+)
+
+data class PatientSummaryEvaluation(
+    val status: ComplianceStatus,
+    val lateDosesCount: Int,
+    val missedDosesCount: Int,
+    val compliancePercentage: Int
 )
 
 object DoseComplianceEvaluator {
@@ -142,5 +163,170 @@ object DoseComplianceEvaluator {
         val rate = ((totalRecorded - missedDays) * 100) / totalRecorded.coerceAtLeast(1)
 
         return WeeklyComplianceEvaluation(days, rate)
+    }
+
+    fun evaluatePatientComplianceCard(
+        pendingDoses: List<PendingDoseWithMedication>,
+        now: Long
+    ): ComplianceCardUiModel {
+        val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
+
+        if (earliestDose == null) {
+            return ComplianceCardUiModel(
+                status = ComplianceStatus.ON_TIME,
+                title = "All Set For Today!",
+                subtitle = "All scheduled doses completed",
+                badgeText = "100% On-Time"
+            )
+        }
+
+        val elapsed = now - earliestDose.scheduledTime
+        val formattedTime = formatTime(earliestDose.scheduledTime)
+
+        return when {
+            elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceCardUiModel(
+                status = ComplianceStatus.MISSED,
+                title = "Overdue: ${earliestDose.name}",
+                subtitle = "Scheduled time window expired",
+                badgeText = "Missed: Was Due $formattedTime"
+            )
+
+            elapsed > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> ComplianceCardUiModel(
+                status = ComplianceStatus.LATE,
+                title = "Late: ${earliestDose.name} ${earliestDose.dosage}",
+                subtitle = "Take as soon as possible",
+                badgeText = "Late: Was Due $formattedTime"
+            )
+
+            now >= earliestDose.scheduledTime -> ComplianceCardUiModel(
+                status = ComplianceStatus.DEFAULT, // Correct neutral status for Due Now
+                title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
+                subtitle = "Scheduled for today",
+                badgeText = "Due Now: $formattedTime"
+            )
+
+            else -> {
+                val isTomorrow = getDayOfMonth(earliestDose.scheduledTime) != getDayOfMonth(now)
+                val subtitleText = if (isTomorrow) "Scheduled for tomorrow" else "Scheduled for today"
+
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.DEFAULT,
+                    title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
+                    subtitle = subtitleText,
+                    badgeText = if (isTomorrow) "Tomorrow: $formattedTime" else "Upcoming: $formattedTime"
+                )
+            }
+        }
+    }
+
+    fun evaluateHistoryAnalytics(
+        historyDoses: List<DoseHistoryEntity>,
+        now: Long
+    ): HistoryAnalyticsEvaluation {
+        val sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000L)
+        val rollingDoses = historyDoses.filter { it.scheduledTime >= sevenDaysAgo }
+
+        var onTime = 0
+        var late = 0
+        var missed = 0
+
+        rollingDoses.forEach { record ->
+            when {
+                record.isTaken && record.complianceStatus == "ON_TIME" -> onTime++
+                record.isTaken && record.complianceStatus == "LATE" -> late++
+                !record.isTaken && now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS) -> missed++
+                record.complianceStatus == "MISSED" -> missed++
+            }
+        }
+
+        val total = onTime + late + missed
+        val score = if (total > 0) ((onTime * 100) / total) else 100
+
+        val currentMonthDoses = historyDoses.filter { isSameMonthAndYear(it.scheduledTime, now) }
+
+        val heatmapDays = (1..31).map { day ->
+            val dayDoses = currentMonthDoses.filter { getDayOfMonth(it.scheduledTime) == day }
+
+            val dayStatus = when {
+                dayDoses.isEmpty() -> ComplianceStatus.DEFAULT
+
+                dayDoses.any {
+                    (!it.isTaken && now > (it.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)) ||
+                            it.complianceStatus == "MISSED"
+                } -> ComplianceStatus.MISSED
+
+                dayDoses.any { it.complianceStatus == "LATE" } -> ComplianceStatus.LATE
+
+                dayDoses.all { it.isTaken && it.complianceStatus == "ON_TIME" } -> ComplianceStatus.ON_TIME
+
+                else -> ComplianceStatus.DEFAULT
+            }
+
+            MonthDaysCompliance(dayNumber = day.toString(), status = dayStatus)
+        }
+
+        val pastOrTakenDoses = historyDoses.filter { record ->
+            record.isTaken || (now - record.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS
+        }
+
+        val logRecords = pastOrTakenDoses.map { record ->
+            val recordStatus = when {
+                record.isTaken && record.complianceStatus == "ON_TIME" -> ComplianceStatus.ON_TIME
+                record.isTaken && record.complianceStatus == "LATE" -> ComplianceStatus.LATE
+                !record.isTaken && (now - record.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceStatus.MISSED
+                else -> ComplianceStatus.DEFAULT
+            }
+
+            val recordTimestampText = if (record.isTaken && record.takenTime != null) {
+                "Logged ${formatTime(record.takenTime)}"
+            } else {
+                "Dose Missed"
+            }
+
+            HistoryLogRecordUiModel(
+                id = record.id,
+                patientName = "",
+                actionTitle = "${record.name} ${record.dosage}",
+                actionDescription = "Scheduled ${formatTime(record.scheduledTime)}",
+                timestampText = recordTimestampText,
+                status = recordStatus,
+            )
+        }
+
+        return HistoryAnalyticsEvaluation(
+            scorePercentage = score,
+            onTimeCount = onTime,
+            lateCount = late,
+            missedCount = missed,
+            monthlyHeatmap = heatmapDays,
+            logRecords = logRecords
+        )
+    }
+
+    fun evaluatePatientSummary(
+        patientDoses: List<PendingDoseWithMedication>,
+        now: Long
+    ): PatientSummaryEvaluation {
+        val missedCount = patientDoses.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+
+        val lateCount = patientDoses.count {
+            val diff = now - it.scheduledTime
+            diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+        }
+
+        val status = when {
+            missedCount > 0 -> ComplianceStatus.MISSED
+            lateCount > 0 -> ComplianceStatus.LATE
+            else -> ComplianceStatus.ON_TIME
+        }
+
+        val score = if (patientDoses.isEmpty()) 100 else (100 - ((missedCount * 100) / patientDoses.size))
+
+        return PatientSummaryEvaluation(
+            status = status,
+            lateDosesCount = lateCount,
+            missedDosesCount = missedCount,
+            compliancePercentage = score
+        )
     }
 }

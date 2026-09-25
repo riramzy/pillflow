@@ -11,9 +11,10 @@ import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
-import com.riramzy.pillfllow.utils.pill.PillColor
-import com.riramzy.pillfllow.utils.pill.PillShape
+import com.riramzy.pillfllow.utils.pill.PillColorMapper
+import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatRelativeNextDose
 import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,6 +57,7 @@ class CaregiverPrescriptionsViewModel(
                         if (patients.isNotEmpty() && (_selectedPatientId.value == null || !validIds.contains(_selectedPatientId.value))) {
                             _selectedPatientId.value = patients.first().id
                         }
+
                         _state.update {
                             it.copy(
                                 pairedPatients = patients,
@@ -86,14 +88,9 @@ class CaregiverPrescriptionsViewModel(
                             .filter { it.name.equals(med.name, ignoreCase = true) }
                             .minByOrNull { it.scheduledTime }
 
-                        val pillShape = runCatching {
-                            PillShape.valueOf(med.shape.uppercase())
-                        }.getOrDefault(PillShape.CAPSULE)
+                        val pillShape = PillShapeMapper.fromRaw(med.shape)
 
-                        val pillColor = PillColor.entries.firstOrNull {
-                            it.name.equals(med.colorHex, ignoreCase = true) ||
-                                    it.label.equals(med.colorHex, ignoreCase = true)
-                        } ?: PillColor.SKY_BLUE
+                        val pillColor = PillColorMapper.fromRaw(med.colorHex)
 
                         PrescriptionUiModel(
                             id = med.id,
@@ -175,6 +172,7 @@ class CaregiverPrescriptionsViewModel(
                 shape = shape,
                 scheduledTimesMillis = scheduledTimesMillis
             )
+
             closeAddSheet()
         }
     }
