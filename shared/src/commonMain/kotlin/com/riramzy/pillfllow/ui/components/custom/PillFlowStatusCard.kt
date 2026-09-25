@@ -74,7 +74,7 @@ fun PillFlowStatusCard(
             style = MaterialTheme.typography.bodySmall,
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(vertical = 2.dp, horizontal = 2.dp)
+            modifier = Modifier.padding(vertical = 2.dp, horizontal = 6.dp)
         )
 
     }
