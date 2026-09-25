@@ -28,3 +28,22 @@ fun formatRelativeNextDose(
         }
     }
 }
+
+fun parseTimeStringToMillis(timeStr: String): Long? {
+    return runCatching {
+        val parts = timeStr.trim().split(" ")
+        if (parts.size != 2) return null
+        val timeParts = parts[0].split(":")
+        var hour = timeParts[0].toInt()
+        val minute = timeParts[1].toInt()
+        val amPm = parts[1].uppercase()
+        if (amPm == "PM" && hour < 12) hour += 12
+        if (amPm == "AM" && hour == 12) hour = 0
+        getTodayTimeInMillis(hour, minute)
+    }.getOrNull()
+}
+
+fun parseScheduleTimeToMillis(scheduleText: String?): List<Long> {
+    if (scheduleText.isNullOrBlank()) return emptyList()
+    return scheduleText.split(",").mapNotNull { parseTimeStringToMillis(it.trim()) }
+}

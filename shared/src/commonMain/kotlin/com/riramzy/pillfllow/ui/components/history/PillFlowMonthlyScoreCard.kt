@@ -50,66 +50,78 @@ fun PillFlowMonthlyScoreCard(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.6f),
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                shape = RoundedCornerShape(25.dp)
+            Column(
+                modifier = Modifier,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(vertical = 10.dp, horizontal = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Text(
+                    text = "Monthly Score",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.6f),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    shape = RoundedCornerShape(25.dp)
                 ) {
-                    Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(vertical = 10.dp, horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = monthYearText,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Text(
+                                text = "On-Time Compliance overall",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+
                         Text(
-                            text = monthYearText,
+                            text = "$scorePercentage%",
                             style = MaterialTheme.typography.bodySmall,
-                            fontSize = 14.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold
                         )
-
-                        Text(
-                            text = "On-Time Compliance overall",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Normal
-                        )
                     }
+                }
 
-                    Text(
-                        text = "$scorePercentage%",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PillFlowStatusCard(
+                        modifier = Modifier.weight(1f),
+                        status = ComplianceStatus.ON_TIME,
+                        customText = "$onTimeCount On Time"
+                    )
+
+                    PillFlowStatusCard(
+                        modifier = Modifier.weight(1f),
+                        status = ComplianceStatus.LATE,
+                        customText = "$lateCount Late"
+                    )
+
+                    PillFlowStatusCard(
+                        modifier = Modifier.weight(1f),
+                        status = ComplianceStatus.MISSED,
+                        customText = "$missedCount Missed"
                     )
                 }
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PillFlowStatusCard(
-                    modifier = Modifier.weight(1f),
-                    status = ComplianceStatus.ON_TIME,
-                    customText = "$onTimeCount On Time"
-                )
-
-                PillFlowStatusCard(
-                    modifier = Modifier.weight(1f),
-                    status = ComplianceStatus.LATE,
-                    customText = "$lateCount Late"
-                )
-
-                PillFlowStatusCard(
-                    modifier = Modifier.weight(1f),
-                    status = ComplianceStatus.MISSED,
-                    customText = "$missedCount Missed"
-                )
             }
         }
     }

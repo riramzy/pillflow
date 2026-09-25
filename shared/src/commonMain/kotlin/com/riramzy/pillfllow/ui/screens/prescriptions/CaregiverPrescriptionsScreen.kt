@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,11 +85,14 @@ fun CaregiverPrescriptionsScreenContent(
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
 
     if (state.isAddSheetOpen) {
         ModalBottomSheet(
             onDismissRequest = { onAction(CaregiverPrescriptionsAction.CloseAddSheet) },
+            sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             PrescriptionSheet(

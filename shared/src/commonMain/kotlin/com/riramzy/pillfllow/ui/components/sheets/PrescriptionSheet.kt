@@ -36,6 +36,7 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
 import com.riramzy.pillfllow.utils.platform.getTodayTimeInMillis
+import com.riramzy.pillfllow.utils.platform.parseScheduleTimeToMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,8 +98,6 @@ fun PrescriptionSheet(
         )
     }
 
-    var selectedTime: Pair<String, @Composable () -> Unit>? by remember { mutableStateOf(null) }
-
     val totalDoses = when (selectedRepetition?.first) {
         "Twice Daily" -> 2
         "3 Times Daily" -> 3
@@ -107,11 +106,9 @@ fun PrescriptionSheet(
 
     var showTimeDialog by remember { mutableStateOf(false) }
 
-    var currentDoseIndex by remember { mutableStateOf(0) }
-
-    var accumulatedTimes by remember { mutableStateOf(mutableListOf<String>()) }
-
-    var accumulatedMillis by remember { mutableStateOf(mutableListOf<Long>()) }
+    var currentDoseIndex by remember(initialMedication?.id) { mutableStateOf(0) }
+    var accumulatedTimes by remember(initialMedication?.id) { mutableStateOf(mutableListOf<String>()) }
+    var accumulatedMillis by remember(initialMedication?.id) { mutableStateOf(mutableListOf<Long>()) }
 
     var selectedTimeText by remember(initialMedication) {
         mutableStateOf(
@@ -259,7 +256,9 @@ fun PrescriptionSheet(
                 selectedItem = selectedRepetition,
                 onItemSelected = {
                     selectedRepetition = it
-                    selectedTime = null
+                    accumulatedTimes = mutableListOf()
+                    accumulatedMillis = mutableListOf()
+                    currentDoseIndex = 0
                 }
             )
 
@@ -281,10 +280,10 @@ fun PrescriptionSheet(
             modifier = Modifier.fillMaxWidth(),
             text = if (initialMedication != null) "Update Prescription" else "Save Prescription",
             onClick = {
-                val finalScheduledMillis = if (accumulatedMillis.isEmpty() && initialMedication == null) {
-                    listOf(getTodayTimeInMillis(8, 0))
-                } else {
-                    accumulatedMillis
+                val finalScheduledMillis = when {
+                    accumulatedMillis.isNotEmpty() -> accumulatedMillis
+                    !selectedTimeText.isNullOrBlank() -> parseScheduleTimeToMillis(selectedTimeText)
+                    else -> listOf(getTodayTimeInMillis(8, 0))
                 }
 
                 onMedicationSaved(

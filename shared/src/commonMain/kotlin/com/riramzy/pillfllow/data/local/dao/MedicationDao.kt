@@ -157,4 +157,18 @@ interface MedicationDao {
 
     @Query("SELECT * FROM scheduled_doses WHERE id = :id")
     suspend fun getScheduledDoseById(id: String): ScheduledDoseEntity?
+
+    @Query("DELETE FROM scheduled_doses WHERE medicationId = :medicationId AND isTaken = 0")
+    suspend fun deletePendingDosesByMedicationId(medicationId: String)
+
+    @Query("DELETE FROM scheduled_doses WHERE id IN (:ids)")
+    suspend fun deleteScheduledDosesByIds(ids: List<String>)
+
+    @Query("""
+        SELECT scheduled_doses.id 
+        FROM scheduled_doses 
+        INNER JOIN medications ON scheduled_doses.medicationId = medications.id 
+        WHERE medications.userId = :userId AND scheduled_doses.isSynced = 1"""
+    )
+    suspend fun getSyncedScheduledDoseIdsForUser(userId: String): List<String>
 }
