@@ -2,18 +2,15 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
-import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
+import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
-import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
-import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
@@ -84,69 +81,57 @@ class CaregiverDashboardViewModel(
                     val now = currentTimeMillis()
 
                     val mappedUiDoses = pendingDoses.map { dose ->
-                        val formattedTime = formatTime(dose.scheduledTime)
-                        val elapsed = now - dose.scheduledTime
-
-                        val isOverdue = elapsed > DoseStateMachine.LATE_WINDOW_MILLIS
-                        val isLate = elapsed in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
-                        val isDueNow = now >= dose.scheduledTime && elapsed <= DoseStateMachine.ON_TIME_WINDOW_MILLIS
+                        val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
+                            dose.scheduledTime,
+                            now,
+                            isTaken = false
+                        )
 
                         val pillColor = PillColor.entries.firstOrNull {
-                            it.name.equals(dose.colorHex, ignoreCase = true)
-                        }
-
-                        val (cardStatus, badgeText) = when {
-                            isOverdue -> ComplianceStatus.MISSED to "Missed: Was Due $formattedTime"
-                            isLate -> ComplianceStatus.LATE to "Late: Was Due $formattedTime"
-                            isDueNow -> ComplianceStatus.ON_TIME to "Due Now: $formattedTime"
-                            else -> ComplianceStatus.DEFAULT to "Upcoming: $formattedTime"
-                        }
+                            it.name.equals(dose.colorHex, ignoreCase = true) ||
+                                    it.label.equals(dose.colorHex, ignoreCase = true)
+                        } ?: PillColor.CORAL_RED
 
                         ScheduledDoseUiModel(
                             id = dose.id,
                             name = dose.name,
                             dosage = dose.dosage,
-                            timeFormatted = formattedTime,
-                            color = pillColor ?: PillColor.CORAL_RED,
-                            status = cardStatus,
-                            badgeText = badgeText,
+                            timeFormatted = formatTime(dose.scheduledTime),
+                            color = pillColor,
+                            status = evalDose.status,
+                            badgeText = evalDose.badgeText,
                             scheduledTime = dose.scheduledTime
                         )
                     }
 
                     val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
 
-                    val (status, alertText) = when {
-                        earliestDose == null -> {
-                            ComplianceStatus.ON_TIME to "All Set For Today!"
-                        }
-
-                        (now - earliestDose.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> {
-                            ComplianceStatus.MISSED to "ALERT: ${earliestDose.name} ${earliestDose.dosage} was due at ${formatTime(earliestDose.scheduledTime)}"
-                        }
-
-                        (now - earliestDose.scheduledTime) > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> {
-                            ComplianceStatus.LATE to "LATE: ${earliestDose.name} ${earliestDose.dosage} was due at ${formatTime(earliestDose.scheduledTime)}"
-                        }
-
-                        now >= earliestDose.scheduledTime -> {
-                            ComplianceStatus.ON_TIME to "DUE NOW: ${earliestDose.name} ${earliestDose.dosage} is scheduled for ${formatTime(earliestDose.scheduledTime)}"
-                        }
-
-                        else -> {
-                            ComplianceStatus.DEFAULT to "Next: ${earliestDose.name} ${earliestDose.dosage} is scheduled for ${formatTime(earliestDose.scheduledTime)}"
-                        }
-                    }
-
-                    val (weeklyDays, weeklyRate) = calculateWeeklyCompliance(pendingDoses, now)
-
                     val patientName = _state.value.activePatient?.name ?: "Patient"
-                    val activities = generateLiveActivities(patientName, pendingDoses, now)
+
+                    val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(earliestDose, now)
+                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(pendingDoses, now)
+
+                    val activities = pendingDoses.take(3).map { dose ->
+                        val evalDose = DoseComplianceEvaluator.evaluateLiveActivity(
+                            dose.name,
+                            dose.dosage,
+                            dose.scheduledTime,
+                            now
+                        )
+
+                        RecentActivityUiModel(
+                            id = dose.id,
+                            patientName = patientName,
+                            actionDescription = evalDose.actionDescription,
+                            timestampText = "at ${formatTime(dose.scheduledTime)}",
+                            status = evalDose.status
+                        )
+                    }
 
                     _state.update {
                         it.copy(
                             selectedPatientDoses = mappedUiDoses,
-                            selectedPatientDailyStatus = status,
+                            selectedPatientDailyStatus = dailyStatus,
                             dailyStatusAlertText = alertText,
                             weeklyCompliance = weeklyDays,
                             recentActivities = activities,
@@ -193,64 +178,6 @@ class CaregiverDashboardViewModel(
 
             delay(3000L.milliseconds)
             _state.update { it.copy(dailyStatusAlertText = previousAlert) }
-        }
-    }
-
-    private fun calculateWeeklyCompliance(
-        pendingDoses: List<PendingDoseWithMedication>,
-        now: Long
-    ): Pair<List<ComplianceDayUiModel>, Int> {
-        val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        val graceWindowMillis = 30 * 60 * 1000L
-
-        val overdueCount = pendingDoses.count { (now - it.scheduledTime) > graceWindowMillis }
-        val lateCount = pendingDoses.count { now >= it.scheduledTime && (now - it.scheduledTime) <= graceWindowMillis }
-
-        val todayStatus = when {
-            overdueCount > 0 -> ComplianceStatus.MISSED
-            lateCount > 0 -> ComplianceStatus.LATE
-            else -> ComplianceStatus.ON_TIME
-        }
-
-        val weeklyDays = dayNames.mapIndexed { index, dayName ->
-            when {
-                index < 4 -> ComplianceDayUiModel(dayName, ComplianceStatus.ON_TIME)
-                index == 4 -> ComplianceDayUiModel(dayName, todayStatus)
-                else -> ComplianceDayUiModel(dayName, ComplianceStatus.DEFAULT)
-            }
-        }
-
-        val totalRecorded = 5
-        val missedDays = if (todayStatus == ComplianceStatus.MISSED) 1 else 0
-        val rate = (((totalRecorded - missedDays) * 100) / totalRecorded)
-
-        return weeklyDays to rate
-    }
-
-    private fun generateLiveActivities(
-        patientName: String,
-        doses: List<PendingDoseWithMedication>,
-        now: Long
-    ): List<RecentActivityUiModel> {
-        val graceWindowMillis = 30 * 60 * 1000L
-
-        return doses.take(3).map { dose ->
-            val isOverdue = (now - dose.scheduledTime) > graceWindowMillis
-            val isDueNow = now >= dose.scheduledTime && !isOverdue
-
-            val (status, action) = when {
-                isOverdue -> ComplianceStatus.MISSED to "missed ${dose.name} ${dose.dosage}"
-                isDueNow -> ComplianceStatus.LATE to "has ${dose.name} ${dose.dosage} due now"
-                else -> ComplianceStatus.DEFAULT to "scheduled for ${dose.name} ${dose.dosage}"
-            }
-
-            RecentActivityUiModel(
-                id = dose.id,
-                patientName = patientName,
-                actionDescription = action,
-                timestampText = "at ${formatTime(dose.scheduledTime)}",
-                status = status
-            )
         }
     }
 

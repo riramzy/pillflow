@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.remote.dto.NudgeDto
+import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.physics.PillEntity
@@ -79,12 +80,20 @@ class PatientDashboardViewModel(
                         tickerFlow()
                     ) { pendingDoses, now ->
                         val activeDishDoses = pendingDoses.filter { dose ->
-                            val windowStart = dose.scheduledTime - DoseStateMachine.ON_TIME_WINDOW_MILLIS
-                            val windowEnd = dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS
-                            now in windowStart..windowEnd
+                            DoseComplianceEvaluator.evaluateDoseCard(
+                                dose.scheduledTime,
+                                now,
+                                isTaken = false
+                            ).isDishEligible
                         }
 
                         val mappedPills = activeDishDoses.mapIndexed { index, dose ->
+                            DoseComplianceEvaluator.evaluateDoseCard(
+                                dose.scheduledTime,
+                                now,
+                                isTaken = false
+                            ).isDishEligible
+
                             val resolvedPillColor = PillColor.entries.firstOrNull {
                                 it.name.equals(dose.colorHex, ignoreCase = true) ||
                                         it.label.equals(dose.colorHex, ignoreCase = true)
@@ -112,35 +121,25 @@ class PatientDashboardViewModel(
                         }
 
                         val mappedUiDoses = pendingDoses.map { dose ->
-                            val formattedTime = formatTime(dose.scheduledTime)
-                            val elapsed = now - dose.scheduledTime
-
-                            val isOverdue = elapsed > DoseStateMachine.LATE_WINDOW_MILLIS
-                            val isLate = elapsed in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
-                            val isDueNow = now >= dose.scheduledTime && elapsed <= DoseStateMachine.ON_TIME_WINDOW_MILLIS
-                            val isTomorrow = getDayOfMonth(dose.scheduledTime) != getDayOfMonth(now)
+                            val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
+                                dose.scheduledTime,
+                                now,
+                                isTaken = false
+                            )
 
                             val pillColor = PillColor.entries.firstOrNull {
                                 it.name.equals(dose.colorHex, ignoreCase = true) ||
                                         it.label.equals(dose.colorHex, ignoreCase = true)
                             } ?: PillColor.CORAL_RED
 
-                            val (cardStatus, badgeText) = when {
-                                isOverdue -> ComplianceStatus.MISSED to "Missed: Was Due $formattedTime"
-                                isLate -> ComplianceStatus.LATE to "Late: Was Due $formattedTime"
-                                isDueNow -> ComplianceStatus.ON_TIME to "Due Now: $formattedTime"
-                                isTomorrow -> ComplianceStatus.DEFAULT to "Tomorrow: $formattedTime"
-                                else -> ComplianceStatus.DEFAULT to "Upcoming: $formattedTime"
-                            }
-
                             ScheduledDoseUiModel(
                                 id = dose.id,
                                 name = dose.name,
                                 dosage = dose.dosage,
-                                timeFormatted = formattedTime,
+                                timeFormatted = formatTime(dose.scheduledTime),
                                 color = pillColor,
-                                status = cardStatus,
-                                badgeText = badgeText,
+                                status = evalDose.status,
+                                badgeText = evalDose.badgeText,
                                 scheduledTime = dose.scheduledTime
                             )
                         }
