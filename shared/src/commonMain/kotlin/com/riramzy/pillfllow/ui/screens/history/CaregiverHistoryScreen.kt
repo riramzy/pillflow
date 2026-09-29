@@ -27,6 +27,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
+import com.riramzy.pillfllow.ui.components.history.PillFlowMonthSelectionCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
@@ -111,7 +112,7 @@ fun CaregiverHistoryScreenContent(
                     )
 
                     Text(
-                        text = "30-day compliance tracking & log history",
+                        text = "Monthly compliance tracking & log history",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
@@ -139,6 +140,15 @@ fun CaregiverHistoryScreenContent(
                         selectedPatientId = state.selectedPatientId,
                         onPatientSelected = { patientId ->
                             onAction(HistoryAction.SelectPatient(patientId)) },
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
+
+                item {
+                    PillFlowMonthSelectionCard(
+                        currentMonthTitle = state.monthYearTitle,
+                        onPreviousMonthClick = { onAction(HistoryAction.PreviousMonth) },
+                        onNextMonthClick = { onAction(HistoryAction.NextMonth) },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }

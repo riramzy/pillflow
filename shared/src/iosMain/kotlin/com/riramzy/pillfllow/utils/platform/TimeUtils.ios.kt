@@ -5,6 +5,7 @@ import platform.Foundation.NSCalendarUnitDay
 import platform.Foundation.NSCalendarUnitMonth
 import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSDate
+import platform.Foundation.NSDateComponents
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.dateWithTimeInterval
 import platform.Foundation.dateWithTimeIntervalSince1970
@@ -72,4 +73,39 @@ actual fun isSameDay(millis1: Long, millis2: Long): Boolean {
     val d1 = NSDate.dateWithTimeIntervalSince1970(millis1 / 1000.0)
     val d2 = NSDate.dateWithTimeIntervalSince1970(millis2 / 1000.0)
     return cal.isDate(d1, inSameDayAsDate = d2)
+}
+
+actual fun shiftMonth(millis: Long, amount: Int): Long {
+    val cal = NSCalendar.currentCalendar
+    val date = NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)
+    val components = NSDateComponents().apply {
+        month = amount.toLong()
+    }
+    val shiftedDate = cal.dateByAddingComponents(components, toDate = date, options = 0u) ?: date
+
+    return (shiftedDate.timeIntervalSince1970 * 1000).toLong()
+}
+
+actual fun getDaysInMonth(millis: Long): Int {
+    val cal = NSCalendar.currentCalendar
+    val date = NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)
+
+    val components = cal.components(
+        NSCalendarUnitYear or NSCalendarUnitMonth,
+        fromDate = date
+    )
+
+    val startOfMonth = cal.dateFromComponents(components) ?: date
+
+    val nextMonthComp = NSDateComponents().apply { month = 1 }
+    val startOfNextMonth = cal.dateByAddingComponents(nextMonthComp, toDate = startOfMonth, options = 0u) ?: date
+
+    val dayComponents = cal.components(
+        NSCalendarUnitDay,
+        fromDate = startOfMonth,
+        toDate = startOfNextMonth,
+        options = 0u
+    )
+
+    return dayComponents.day.toInt()
 }

@@ -8,6 +8,7 @@ data class HistoryState(
     val isCaregiver: Boolean = false,
     val pairedPatients: List<PairedPatientUiModel> = emptyList(),
     val selectedPatientId: String = "",
+    val selectedMonthMillis: Long = 0L,
     val monthYearTitle: String = "",
     val scorePercentage: Int = 0,
     val onTimeCount: Int = 0,
@@ -36,4 +37,6 @@ data class HistoryLogRecordUiModel(
 
 sealed interface HistoryAction {
     data class SelectPatient(val patientId: String): HistoryAction
+    data object PreviousMonth : HistoryAction
+    data object NextMonth : HistoryAction
 }

@@ -9,6 +9,7 @@ import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
+import com.riramzy.pillfllow.utils.platform.getDaysInMonth
 import com.riramzy.pillfllow.utils.platform.isSameDay
 import com.riramzy.pillfllow.utils.platform.isSameMonthAndYear
 
@@ -221,16 +222,16 @@ object DoseComplianceEvaluator {
 
     fun evaluateHistoryAnalytics(
         historyDoses: List<DoseHistoryEntity>,
+        targetMonthMillis: Long,
         now: Long
     ): HistoryAnalyticsEvaluation {
-        val sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000L)
-        val rollingDoses = historyDoses.filter { it.scheduledTime >= sevenDaysAgo }
+        val monthDoses = historyDoses.filter { isSameMonthAndYear(it.scheduledTime, targetMonthMillis) }
 
         var onTime = 0
         var late = 0
         var missed = 0
 
-        rollingDoses.forEach { record ->
+        monthDoses.forEach { record ->
             when {
                 record.isTaken && record.complianceStatus == "ON_TIME" -> onTime++
                 record.isTaken && record.complianceStatus == "LATE" -> late++
@@ -239,13 +240,13 @@ object DoseComplianceEvaluator {
             }
         }
 
-        val total = onTime + late + missed
-        val score = if (total > 0) ((onTime * 100) / total) else 100
+        val totalEvaluated = onTime + late + missed
+        val score = if (totalEvaluated > 0) ((onTime * 100) / totalEvaluated) else 100
 
-        val currentMonthDoses = historyDoses.filter { isSameMonthAndYear(it.scheduledTime, now) }
+        val daysInMonth = getDaysInMonth(targetMonthMillis)
 
-        val heatmapDays = (1..31).map { day ->
-            val dayDoses = currentMonthDoses.filter { getDayOfMonth(it.scheduledTime) == day }
+        val heatmap = (1..daysInMonth).map { day ->
+            val dayDoses = monthDoses.filter { getDayOfMonth(it.scheduledTime) == day }
 
             val dayStatus = when {
                 dayDoses.isEmpty() -> ComplianceStatus.DEFAULT
@@ -265,11 +266,7 @@ object DoseComplianceEvaluator {
             MonthDaysCompliance(dayNumber = day.toString(), status = dayStatus)
         }
 
-        val pastOrTakenDoses = historyDoses.filter { record ->
-            record.isTaken || (now - record.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS
-        }
-
-        val logRecords = pastOrTakenDoses.map { record ->
+        val logRecords = monthDoses.map { record ->
             val recordStatus = when {
                 record.isTaken && record.complianceStatus == "ON_TIME" -> ComplianceStatus.ON_TIME
                 record.isTaken && record.complianceStatus == "LATE" -> ComplianceStatus.LATE
@@ -298,7 +295,7 @@ object DoseComplianceEvaluator {
             onTimeCount = onTime,
             lateCount = late,
             missedCount = missed,
-            monthlyHeatmap = heatmapDays,
+            monthlyHeatmap = heatmap,
             logRecords = logRecords
         )
     }

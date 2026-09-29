@@ -26,8 +26,10 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
+import com.riramzy.pillfllow.ui.components.history.PillFlowMonthSelectionCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
+import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
@@ -48,6 +50,7 @@ fun PatientHistoryScreen(
 
     PatientHistoryScreenContent(
         state = state,
+        onAction = historyViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onNavigateToSettings = onNavigateToSettings,
@@ -58,6 +61,7 @@ fun PatientHistoryScreen(
 @Composable
 fun PatientHistoryScreenContent(
     state: HistoryState = HistoryState(),
+    onAction: (HistoryAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -101,13 +105,22 @@ fun PatientHistoryScreenContent(
                     )
 
                     Text(
-                        text = "30-day compliance tracking & log history",
+                        text = "Monthly compliance tracking & log history",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+            }
+
+            item {
+                PillFlowMonthSelectionCard(
+                    currentMonthTitle = state.monthYearTitle,
+                    onPreviousMonthClick = { onAction(HistoryAction.PreviousMonth) },
+                    onNextMonthClick = { onAction(HistoryAction.NextMonth) },
+                    modifier = Modifier.padding(horizontal = 15.dp)
+                )
             }
 
             item {

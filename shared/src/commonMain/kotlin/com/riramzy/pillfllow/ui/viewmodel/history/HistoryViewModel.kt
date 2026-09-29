@@ -10,6 +10,7 @@ import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatMonthYear
+import com.riramzy.pillfllow.utils.platform.shiftMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
@@ -17,8 +18,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -31,6 +34,7 @@ class HistoryViewModel(
     val state: StateFlow<HistoryState> = _state.asStateFlow()
 
     private val _selectedPatientId = MutableStateFlow<String?>(null)
+    private val _selectedMonthMillis = MutableStateFlow(currentTimeMillis())
 
     init {
         observeUserAndRole()
@@ -67,20 +71,28 @@ class HistoryViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeDoseHistory() {
         viewModelScope.launch(Dispatchers.IO) {
-            _selectedPatientId.filterNotNull().flatMapLatest { patientId ->
-                getDoseHistoryForUserUseCase(patientId)
-            }.collectLatest { historyDoses ->
-                val now = currentTimeMillis()
-                val currentMonthTitle = formatMonthYear(now)
+            combine(
+                _selectedPatientId.filterNotNull(),
+                _selectedMonthMillis
+            ) { patientId, selectedMonth ->
+                patientId to selectedMonth
+            }.flatMapLatest { (patientId, selectedMonth) ->
+                getDoseHistoryForUserUseCase(patientId).map { historyDoses ->
+                    Triple(historyDoses, selectedMonth, currentTimeMillis())
+                }
+            }.collectLatest { (historyDoses, selectedMonth, now) ->
+                val monthTitle = formatMonthYear(selectedMonth)
 
                 val analytics = DoseComplianceEvaluator.evaluateHistoryAnalytics(
-                    historyDoses,
-                    now
+                    historyDoses = historyDoses,
+                    targetMonthMillis = selectedMonth,
+                    now = now
                 )
 
                 _state.update {
                     it.copy(
-                        monthYearTitle = currentMonthTitle,
+                        selectedMonthMillis = selectedMonth,
+                        monthYearTitle = monthTitle,
                         scorePercentage = analytics.scorePercentage,
                         onTimeCount = analytics.onTimeCount,
                         lateCount = analytics.lateCount,
@@ -102,6 +114,8 @@ class HistoryViewModel(
     fun onAction(action: HistoryAction) {
         when (action) {
             is HistoryAction.SelectPatient -> selectPatient(action.patientId)
+            is HistoryAction.PreviousMonth -> _selectedMonthMillis.update { shiftMonth(it, -1) }
+            is HistoryAction.NextMonth -> _selectedMonthMillis.update { shiftMonth(it, 1) }
         }
     }
 }

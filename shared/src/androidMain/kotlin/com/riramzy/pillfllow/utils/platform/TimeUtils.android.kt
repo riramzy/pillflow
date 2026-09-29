@@ -53,3 +53,17 @@ actual fun isSameDay(millis1: Long, millis2: Long): Boolean {
     return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
             c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)
 }
+
+
+actual fun shiftMonth(millis: Long, amount: Int): Long {
+    val cal = Calendar.getInstance().apply {
+        timeInMillis = millis
+        add(Calendar.MONTH, amount)
+    }
+    return cal.timeInMillis
+}
+
+actual fun getDaysInMonth(millis: Long): Int {
+    val cal = Calendar.getInstance().apply { timeInMillis = millis }
+    return cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+}
