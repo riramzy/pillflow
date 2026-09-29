@@ -139,6 +139,7 @@ fun PatientDashboardScreenContent(
             item {
                 PillFlowPillJarSandbox(
                     pillsState = state.pills,
+                    totalRemainingDoses = state.totalDoses,
                     tiltX = tiltX,
                     tiltY = tiltY,
                     onLogMedication = { pillId ->
@@ -168,12 +169,14 @@ fun PatientDashboardScreenContent(
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    PillFlowComplianceCard(
-                        title = state.complianceTitle,
-                        subtitle = state.complianceSubtitle,
-                        badgeText = state.complianceBadgeText,
-                        status = state.complianceStatus
-                    )
+                    state.complianceCards.forEach { card ->
+                        PillFlowComplianceCard(
+                            title = card.title,
+                            subtitle = card.subtitle,
+                            badgeText = card.badgeText,
+                            status = card.status
+                        )
+                    }
                 }
             }
 
@@ -266,7 +269,7 @@ fun PatientDashboardScreenPreview() {
                         position = Vector2D(x = 1f, y = 1f)
                     )
                 ),
-                complianceStatus = ComplianceStatus.LATE,
+                complianceStatus = ComplianceStatus.DEFAULT,
                 complianceTitle = "Next: Aspirin 500mg",
                 complianceSubtitle = "Scheduled for 8:00 PM (In 2 hours)",
                 complianceBadgeText = "2 Doses Left",
@@ -326,7 +329,7 @@ fun PatientDashboardScreenPreviewDark() {
                         position = Vector2D(x = 1.2f, y = 2f)
                     )
                 ),
-                complianceStatus = ComplianceStatus.LATE,
+                complianceStatus = ComplianceStatus.DEFAULT,
                 complianceTitle = "Next: Aspirin 500mg",
                 complianceSubtitle = "Scheduled for 8:00 PM (In 2 hours)",
                 complianceBadgeText = "2 Doses Left",

@@ -48,6 +48,7 @@ import kotlinx.coroutines.isActive
 @Composable
 fun PillFlowPillJarSandbox(
     pillsState: List<PillEntity>,
+    totalRemainingDoses: Int = pillsState.size,
     tiltX: Float,
     tiltY: Float,
     onLogMedication: (String) -> Unit,
@@ -247,7 +248,7 @@ fun PillFlowPillJarSandbox(
             }
 
             PillFlowStatusCard(
-                customText = "${activePills.size} pills remaining",
+                customText = "$totalRemainingDoses pills remaining",
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 20.dp)

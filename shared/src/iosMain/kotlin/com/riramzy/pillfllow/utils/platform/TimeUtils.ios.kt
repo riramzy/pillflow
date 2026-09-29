@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.utils.platform
 import platform.Foundation.NSCalendar
 import platform.Foundation.NSCalendarUnitDay
 import platform.Foundation.NSCalendarUnitMonth
+import platform.Foundation.NSCalendarUnitWeekday
 import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateComponents
@@ -108,4 +109,17 @@ actual fun getDaysInMonth(millis: Long): Int {
     )
 
     return dayComponents.day.toInt()
+}
+
+actual fun getFirstDayOfWeekOfMonth(millis: Long): Int {
+    val cal = NSCalendar.currentCalendar
+    val date = NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)
+    val comp = cal.components(NSCalendarUnitYear or NSCalendarUnitMonth, fromDate = date).apply {
+        day = 1
+    }
+
+    val firstDay = cal.dateFromComponents(comp) ?: date
+    val weekday = cal.component(NSCalendarUnitWeekday, fromDate = firstDay).toInt()
+
+    return (weekday + 5) % 7
 }

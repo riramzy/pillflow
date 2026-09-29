@@ -69,6 +69,7 @@ val defaultSampleDays = listOf(
 fun PillFlowMonthlyHeatmapCard(
     monthDays: List<MonthDaysCompliance> = defaultSampleDays,
     monthYearText: String = "July 2026",
+    firstDayOffset: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -120,7 +121,8 @@ fun PillFlowMonthlyHeatmapCard(
                 }
             }
 
-            val weeks = monthDays.chunked(7)
+            val paddedDays: List<MonthDaysCompliance?> = List(firstDayOffset) { null } + monthDays
+            val weeks = paddedDays.chunked(7)
 
             weeks.forEach { week ->
                 Row(

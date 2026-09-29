@@ -35,7 +35,7 @@ import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.compliance_late
 import pillfllow.shared.generated.resources.compliance_missed
 import pillfllow.shared.generated.resources.compliance_ontime
-import pillfllow.shared.generated.resources.nugde
+import pillfllow.shared.generated.resources.next
 
 @Composable
 fun PillFlowComplianceCard(
@@ -51,7 +51,7 @@ fun PillFlowComplianceCard(
 
     when (status) {
         ComplianceStatus.DEFAULT -> {
-            icon = Res.drawable.nugde
+            icon = Res.drawable.next
             color = MaterialTheme.colorScheme.onPrimary
             backgroundColor = MaterialTheme.colorScheme.primary
         }
@@ -150,6 +150,13 @@ fun PilFlowComplianceCardPreview() {
                 title = "All Set For Today!",
                 subtitle = "All 3 scheduled doses completed",
                 badgeText = "100% On-Time",
+                status = ComplianceStatus.DEFAULT
+            )
+
+            PillFlowComplianceCard(
+                title = "All Set For Today!",
+                subtitle = "All 3 scheduled doses completed",
+                badgeText = "100% On-Time",
                 status = ComplianceStatus.ON_TIME
             )
 
@@ -178,6 +185,13 @@ fun PilFlowComplianceCardPreviewDark() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.padding(10.dp)
         ) {
+            PillFlowComplianceCard(
+                title = "All Set For Today!",
+                subtitle = "All 3 scheduled doses completed",
+                badgeText = "100% On-Time",
+                status = ComplianceStatus.DEFAULT
+            )
+
             PillFlowComplianceCard(
                 title = "All Set For Today!",
                 subtitle = "All 3 scheduled doses completed",

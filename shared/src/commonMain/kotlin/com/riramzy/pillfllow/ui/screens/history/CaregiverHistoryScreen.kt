@@ -38,6 +38,7 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.history.HistoryViewModel
 import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.platform.getFirstDayOfWeekOfMonth
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.add
@@ -183,6 +184,7 @@ fun CaregiverHistoryScreenContent(
                         PillFlowMonthlyHeatmapCard(
                             monthDays = state.monthlyComplianceDays,
                             monthYearText = state.monthYearTitle,
+                            firstDayOffset = getFirstDayOfWeekOfMonth(state.selectedMonthMillis)
                         )
                     }
                 }

@@ -67,3 +67,12 @@ actual fun getDaysInMonth(millis: Long): Int {
     val cal = Calendar.getInstance().apply { timeInMillis = millis }
     return cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 }
+
+actual fun getFirstDayOfWeekOfMonth(millis: Long): Int {
+    val cal = Calendar.getInstance().apply {
+        timeInMillis = millis
+        set(Calendar.DAY_OF_MONTH, 1)
+    }
+
+    return (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+}

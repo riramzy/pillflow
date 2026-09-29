@@ -169,50 +169,56 @@ object DoseComplianceEvaluator {
         return WeeklyComplianceEvaluation(days, rate)
     }
 
-    fun evaluatePatientComplianceCard(
+    fun evaluatePatientComplianceCards(
         pendingDoses: List<PendingDoseWithMedication>,
         now: Long
-    ): ComplianceCardUiModel {
-        val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
+    ): List<ComplianceCardUiModel> {
+        val sortedDoses = pendingDoses.sortedWith(
+            compareBy<PendingDoseWithMedication> { it.scheduledTime }
+                .thenBy { it.name }
+                .thenBy { it.id }
+        )
 
-        if (earliestDose == null) {
-            return ComplianceCardUiModel(
+        val earliestDose = sortedDoses.firstOrNull() ?: return listOf(
+            ComplianceCardUiModel(
                 status = ComplianceStatus.ON_TIME,
                 title = "All Set For Today!",
                 subtitle = "All scheduled doses completed",
                 badgeText = "100% On-Time"
             )
-        }
+        )
 
-        val elapsed = now - earliestDose.scheduledTime
-        val formattedTime = formatTime(earliestDose.scheduledTime)
+        val sameTimeDoses = sortedDoses.filter { it.scheduledTime == earliestDose.scheduledTime }
 
-        return when {
-            elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceCardUiModel(
-                status = ComplianceStatus.MISSED,
-                title = "Overdue: ${earliestDose.name}",
-                subtitle = "Scheduled time window expired",
-                badgeText = "Missed: Was Due $formattedTime"
-            )
+        return sameTimeDoses.map { dose ->
+            val elapsed = now - dose.scheduledTime
+            val formattedTime = formatTime(dose.scheduledTime)
 
-            elapsed > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> ComplianceCardUiModel(
-                status = ComplianceStatus.LATE,
-                title = "Late: ${earliestDose.name} ${earliestDose.dosage}",
-                subtitle = "Take as soon as possible",
-                badgeText = "Late: Was Due $formattedTime"
-            )
+            when {
+                elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceCardUiModel(
+                    status = ComplianceStatus.MISSED,
+                    title = "Overdue: ${dose.name} ${dose.dosage}",
+                    subtitle = "Scheduled time window expired",
+                    badgeText = "Missed: Was Due $formattedTime"
+                )
 
-            now >= earliestDose.scheduledTime -> ComplianceCardUiModel(
-                status = ComplianceStatus.DEFAULT, // Correct neutral status for Due Now
-                title = "Due Now: ${earliestDose.name} ${earliestDose.dosage}",
-                subtitle = "Scheduled for today",
-                badgeText = "Due Now: $formattedTime"
-            )
+                elapsed > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> ComplianceCardUiModel(
+                    status = ComplianceStatus.LATE,
+                    title = "Late: ${dose.name} ${dose.dosage}",
+                    subtitle = "Take as soon as possible",
+                    badgeText = "Late: Was Due $formattedTime"
+                )
 
-            else -> {
-                ComplianceCardUiModel(
+                now >= dose.scheduledTime -> ComplianceCardUiModel(
                     status = ComplianceStatus.DEFAULT,
-                    title = "Next: ${earliestDose.name} ${earliestDose.dosage}",
+                    title = "Due Now: ${dose.name} ${dose.dosage}",
+                    subtitle = "Scheduled for today",
+                    badgeText = "Due Now: $formattedTime"
+                )
+
+                else -> ComplianceCardUiModel(
+                    status = ComplianceStatus.DEFAULT,
+                    title = "Next: ${dose.name} ${dose.dosage}",
                     subtitle = "Scheduled for today",
                     badgeText = "Upcoming: $formattedTime"
                 )
@@ -230,6 +236,12 @@ object DoseComplianceEvaluator {
         var onTime = 0
         var late = 0
         var missed = 0
+
+        val pastOrTakenRecords = monthDoses.filter { record ->
+            record.isTaken ||
+                    now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS) ||
+                    record.complianceStatus == "MISSED"
+        }
 
         monthDoses.forEach { record ->
             when {
@@ -266,18 +278,21 @@ object DoseComplianceEvaluator {
             MonthDaysCompliance(dayNumber = day.toString(), status = dayStatus)
         }
 
-        val logRecords = monthDoses.map { record ->
+        val logRecords = pastOrTakenRecords.map { record ->
+            val isMissed = (!record.isTaken && now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)) ||
+                    record.complianceStatus == "MISSED"
+
             val recordStatus = when {
                 record.isTaken && record.complianceStatus == "ON_TIME" -> ComplianceStatus.ON_TIME
                 record.isTaken && record.complianceStatus == "LATE" -> ComplianceStatus.LATE
-                !record.isTaken && (now - record.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceStatus.MISSED
+                isMissed -> ComplianceStatus.MISSED
                 else -> ComplianceStatus.DEFAULT
             }
 
-            val recordTimestampText = if (record.isTaken && record.takenTime != null) {
-                "Logged ${formatTime(record.takenTime)}"
-            } else {
-                "Dose Missed"
+            val recordTimestampText = when {
+                record.isTaken && record.takenTime != null -> "Logged ${formatTime(record.takenTime)}"
+                isMissed -> "Dose Missed"
+                else -> "Scheduled ${formatTime(record.scheduledTime)}"
             }
 
             HistoryLogRecordUiModel(

@@ -11,6 +11,7 @@ expect fun isSameMonthAndYear(millis1: Long, millis2: Long): Boolean
 expect fun isSameDay(millis1: Long, millis2: Long): Boolean
 expect fun shiftMonth(millis: Long, amount: Int): Long
 expect fun getDaysInMonth(millis: Long): Int
+expect fun getFirstDayOfWeekOfMonth(millis: Long): Int
 fun formatRelativeNextDose(
     scheduledTime: Long?,
     now: Long

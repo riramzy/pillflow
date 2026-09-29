@@ -15,6 +15,7 @@ data class PatientDashboardState(
     val complianceTitle: String = "All Set For Today!",
     val complianceSubtitle: String = "All scheduled doses completed",
     val complianceBadgeText: String = "100% On-Time",
+    val complianceCards: List<ComplianceCardUiModel> = emptyList(),
     val adherenceScore: Int = 100,
     val dosesTaken: Int = 0,
     val totalDoses: Int = 0,

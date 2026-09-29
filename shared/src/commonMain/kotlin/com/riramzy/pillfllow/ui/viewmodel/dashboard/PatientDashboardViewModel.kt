@@ -129,7 +129,7 @@ class PatientDashboardViewModel(
                             )
                         }
 
-                        val complianceInfo = DoseComplianceEvaluator.evaluatePatientComplianceCard(
+                        val complianceCards = DoseComplianceEvaluator.evaluatePatientComplianceCards(
                             todayPendingDoses,
                             now
                         )
@@ -139,10 +139,7 @@ class PatientDashboardViewModel(
                                 scheduledDoses = mappedUiDoses,
                                 pills = mappedPills,
                                 totalDoses = sortedDishDoses.size,
-                                complianceStatus = complianceInfo.status,
-                                complianceTitle = complianceInfo.title,
-                                complianceSubtitle = complianceInfo.subtitle,
-                                complianceBadgeText = complianceInfo.badgeText,
+                                complianceCards = complianceCards,
                                 isLoading = false
                             )
                         }
