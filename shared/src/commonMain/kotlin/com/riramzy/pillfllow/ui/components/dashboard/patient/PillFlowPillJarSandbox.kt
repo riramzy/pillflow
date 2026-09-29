@@ -53,6 +53,8 @@ fun PillFlowPillJarSandbox(
     onLogMedication: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val loggedPillIds = remember { mutableSetOf<String>() }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -79,6 +81,7 @@ fun PillFlowPillJarSandbox(
             val jarCenterOffset = Offset(center.x, center.y)
 
             LaunchedEffect(pillsState) {
+                loggedPillIds.clear()
                 activePills.clear()
                 activePills.addAll(pillsState)
             }
@@ -91,9 +94,11 @@ fun PillFlowPillJarSandbox(
                     jarCenter = center,
                     chuteWidth = chuteWidth,
                     onPillLogged = { pillId ->
-                        haptics.pulseDispensed()
-                        activePills.removeAll { it.id == pillId }
-                        onLogMedication(pillId)
+                        if (loggedPillIds.add(pillId)) {
+                            haptics.pulseDispensed()
+                            activePills.removeAll { it.id == pillId }
+                            onLogMedication(pillId)
+                        }
                     },
                     onCollision = {
                         haptics.tickCollision()
@@ -116,7 +121,6 @@ fun PillFlowPillJarSandbox(
                 }
             }
 
-            // 1. HEADER
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -140,7 +144,6 @@ fun PillFlowPillJarSandbox(
                 )
             }
 
-            // 2. THE STANDALONE 3D GLASS DISH
             PillFlowPillsDish(
                 center = jarCenterOffset,
                 radius = radius,
@@ -148,8 +151,9 @@ fun PillFlowPillJarSandbox(
                 handleWidth = handleWidth
             )
 
-            // 3. PILLS RENDERING
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(
+                modifier = Modifier.fillMaxSize()
+            ) {
                 triggerRedraw
 
                 activePills.forEach { pill ->
@@ -171,6 +175,7 @@ fun PillFlowPillJarSandbox(
                                 radius = pill.radius,
                                 center = Offset(pill.position.x, pill.position.y)
                             )
+
                             drawCircle(
                                 color = Color.White.copy(alpha = 0.4f),
                                 radius = pill.radius * 0.2f,
@@ -221,6 +226,7 @@ fun PillFlowPillJarSandbox(
                                 start = Offset(pill.position.x, topLeft.y),
                                 end = Offset(pill.position.x, topLeft.y + capHeight)
                             )
+
                             drawRoundRect(
                                 brush = splitBrush,
                                 topLeft = topLeft,
@@ -240,7 +246,6 @@ fun PillFlowPillJarSandbox(
                 }
             }
 
-            // 4. BOTTOM BADGE
             PillFlowStatusCard(
                 customText = "${activePills.size} pills remaining",
                 modifier = Modifier

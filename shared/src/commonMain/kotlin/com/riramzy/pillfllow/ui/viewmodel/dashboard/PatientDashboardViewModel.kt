@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.remote.dto.NudgeDto
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
@@ -76,7 +77,7 @@ class PatientDashboardViewModel(
                     ) { pendingDoses, now ->
                         val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
 
-                        val activeDishDoses = todayPendingDoses.filter { dose ->
+                        val eligibleDishDoses = todayPendingDoses.filter { dose ->
                             DoseComplianceEvaluator.evaluateDoseCard(
                                 dose.scheduledTime,
                                 now,
@@ -84,29 +85,28 @@ class PatientDashboardViewModel(
                             ).isDishEligible
                         }
 
-                        val mappedPills = activeDishDoses.mapIndexed { index, dose ->
-                            DoseComplianceEvaluator.evaluateDoseCard(
-                                dose.scheduledTime,
-                                now,
-                                isTaken = false
-                            ).isDishEligible
+                        val sortedDishDoses = eligibleDishDoses.sortedWith(
+                            compareBy<PendingDoseWithMedication> { it.scheduledTime }
+                                .thenBy { it.name }
+                                .thenBy { it.id }
+                        )
 
+                        val currentDishDose = sortedDishDoses.firstOrNull()
+
+                        val mappedPills = currentDishDose?.let { dose ->
                             val color = PillColorMapper.fromRaw(dose.colorHex).color
-
                             val shape = PillShapeMapper.fromRaw(dose.shape, default = PillShape.CIRCLE)
-
-                            PillEntity(
-                                id = dose.id,
-                                name = dose.name,
-                                color = color,
-                                shape = shape,
-                                radius = 32f,
-                                position = Vector2D(
-                                    x = 350f + (index * 40f) % 120f,
-                                    y = 480f + (index * 30f) % 100f
+                            listOf(
+                                PillEntity(
+                                    id = dose.id,
+                                    name = dose.name,
+                                    color = color,
+                                    shape = shape,
+                                    radius = 32f,
+                                    position = Vector2D(x = 350f, y = 480f)
                                 )
                             )
-                        }
+                        } ?: emptyList()
 
                         val mappedUiDoses = todayPendingDoses.map { dose ->
                             val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
@@ -138,7 +138,7 @@ class PatientDashboardViewModel(
                             it.copy(
                                 scheduledDoses = mappedUiDoses,
                                 pills = mappedPills,
-                                totalDoses = todayPendingDoses.size,
+                                totalDoses = sortedDishDoses.size,
                                 complianceStatus = complianceInfo.status,
                                 complianceTitle = complianceInfo.title,
                                 complianceSubtitle = complianceInfo.subtitle,

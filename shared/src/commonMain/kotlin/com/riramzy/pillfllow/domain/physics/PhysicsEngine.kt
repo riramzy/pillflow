@@ -23,15 +23,22 @@ class PhysicsEngine(
         val gravityScale = 9.81f * 120f
         val gravity = Vector2D(-tiltX * gravityScale, tiltY * gravityScale)
 
+        val exitedPills = mutableListOf<String>()
+
         for (i in pills.indices) {
-            val pill = pills[i]
+            val pill = pills.getOrNull(i) ?: continue
+
             pill.velocity = (pill.velocity + gravity * deltaTime) * friction
             pill.position += pill.velocity * deltaTime
 
             resolveBoundaryCollision(pill, jarRadius, jarCenter, chuteWidth, restitution, onCollision)
-            checkChuteExit(pill, jarCenter, jarRadius, onPillLogged)
+
+            checkChuteExit(pill, jarCenter, jarRadius) { loggedId ->
+                exitedPills.add(loggedId)
+            }
         }
 
         resolveInterPillCollision(pills, restitution, onCollision)
+        exitedPills.forEach { onPillLogged(it) }
     }
 }
