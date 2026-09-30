@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowActivityCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
@@ -38,6 +40,7 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.CaregiverDashboardViewModel
 import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.avatar1
@@ -51,6 +54,7 @@ import pillfllow.shared.generated.resources.user_patient
 @Composable
 fun CaregiverDashboardScreen(
     caregiverDashboardViewModel: CaregiverDashboardViewModel = koinViewModel(),
+    notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -59,9 +63,11 @@ fun CaregiverDashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val state = caregiverDashboardViewModel.state.collectAsStateWithLifecycle()
+    val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
 
     CaregiverDashboardScreenContent(
         state = state.value,
+        hasUnreadNotifications = notificationState.hasUnread,
         onAction = caregiverDashboardViewModel::onAction,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
@@ -75,6 +81,7 @@ fun CaregiverDashboardScreen(
 @Composable
 fun CaregiverDashboardScreenContent(
     state: CaregiverDashboardState = CaregiverDashboardState(),
+    hasUnreadNotifications: Boolean = false,
     onAction: (CaregiverDashboardAction) -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
@@ -86,6 +93,7 @@ fun CaregiverDashboardScreenContent(
     Scaffold(
         topBar = {
             PillFlowTopAppBar(
+                hasUnreadNotifications = hasUnreadNotifications,
                 onProfileClick = onProfileClick,
                 onNotificationsClick = onNotificationsClick,
                 modifier = Modifier.padding(15.dp)
@@ -186,6 +194,29 @@ fun CaregiverDashboardScreenContent(
                             .padding(horizontal = 15.dp)
                     ) {
                         Text(
+                            text = "Weekly Overview",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        PillFlowPatientWeeklyOverviewCard(
+                            weeklyRatePercentage = state.weeklyRatePercentage,
+                            weeklyDays = state.weeklyCompliance,
+                        )
+                    }
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(15.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
                             text = "Today's Schedule",
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 20.sp,
@@ -211,29 +242,6 @@ fun CaregiverDashboardScreenContent(
                                 )
                             }
                         }
-                    }
-                }
-
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(15.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Weekly Overview",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        PillFlowPatientWeeklyOverviewCard(
-                            weeklyRatePercentage = state.weeklyRatePercentage,
-                            weeklyDays = state.weeklyCompliance,
-                        )
                     }
                 }
 

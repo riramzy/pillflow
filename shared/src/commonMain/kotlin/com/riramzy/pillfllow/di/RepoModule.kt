@@ -2,10 +2,12 @@ package com.riramzy.pillfllow.di
 
 import com.riramzy.pillfllow.data.repo.AuthRepoImpl
 import com.riramzy.pillfllow.data.repo.MedicationRepoImpl
+import com.riramzy.pillfllow.data.repo.NotificationsRepoImpl
 import com.riramzy.pillfllow.data.repo.PairingRepoImpl
 import com.riramzy.pillfllow.data.repo.UserRepoImpl
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
+import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
 import com.riramzy.pillfllow.domain.session.SessionManager
@@ -45,6 +47,16 @@ val repoModule: Module = module {
         AuthRepoImpl(
             firebaseAuth = get(),
             userRepo = get(),
+            firestore = get()
+        )
+    }
+
+    single<NotificationsRepo> {
+        NotificationsRepoImpl(
+            observeCurrentUserUseCase = get(),
+            getPendingDosesForUserUseCase = get(),
+            getCaregiverPatientsUseCase = get(),
+            logDoseTakenUseCase = get(),
             firestore = get()
         )
     }

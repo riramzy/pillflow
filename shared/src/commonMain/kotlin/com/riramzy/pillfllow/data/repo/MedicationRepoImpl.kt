@@ -108,7 +108,7 @@ class MedicationRepoImpl(
             val now = currentTimeMillis()
 
             doses.forEach { dose ->
-                val escalationTime = dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS + 60_000L
+                val escalationTime = dose.scheduledTime + DoseStateMachine.ON_TIME_WINDOW_MILLIS + 60_000L
 
                 if (escalationTime > now) {
                     val patientName = pairings[dose.userId]?.relation?.ifBlank { null }
@@ -139,15 +139,18 @@ class MedicationRepoImpl(
             val currentUserId = sessionManager.currentUser.value?.id
 
             if (med?.userId == currentUserId && !dose.isTaken) {
-                if (dose.scheduledTime > now) {
-                    val tMinus30 = (dose.scheduledTime - 30 * 60 * 1000L).coerceAtLeast(now + 1000L)
 
-                    platformNotifier.scheduleDoseReminder(
-                        doseId = dose.id,
-                        pillName = medName,
-                        triggerTimeMillis = tMinus30,
-                        stage = DoseReminderStage.ADVANCE_30MIN
-                    )
+                if (dose.scheduledTime > now) {
+                    val advanceTarget = dose.scheduledTime - 30 * 60 * 1000L
+
+                    if (advanceTarget > now) {
+                        platformNotifier.scheduleDoseReminder(
+                            doseId = dose.id,
+                            pillName = medName,
+                            triggerTimeMillis = advanceTarget,
+                            stage = DoseReminderStage.ADVANCE_30MIN
+                        )
+                    }
 
                     platformNotifier.scheduleDoseReminder(
                         doseId = dose.id,
@@ -371,14 +374,16 @@ class MedicationRepoImpl(
                                     val medName = med?.name ?: "Medication"
 
                                     if (dose.scheduledTime > now) {
-                                        val tMinus30 = (dose.scheduledTime - 30 * 60 * 1000L).coerceAtLeast(now + 1000L)
+                                        val advanceTarget = dose.scheduledTime - 30 * 60 * 1000L
 
-                                        platformNotifier.scheduleDoseReminder(
-                                            doseId = dose.id,
-                                            pillName = medName,
-                                            triggerTimeMillis = tMinus30,
-                                            stage = DoseReminderStage.ADVANCE_30MIN
-                                        )
+                                        if (advanceTarget > now) {
+                                            platformNotifier.scheduleDoseReminder(
+                                                doseId = dose.id,
+                                                pillName = medName,
+                                                triggerTimeMillis = advanceTarget,
+                                                stage = DoseReminderStage.ADVANCE_30MIN
+                                            )
+                                        }
 
                                         platformNotifier.scheduleDoseReminder(
                                             doseId = dose.id,

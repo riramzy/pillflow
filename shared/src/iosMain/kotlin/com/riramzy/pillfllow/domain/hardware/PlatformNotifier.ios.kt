@@ -73,9 +73,9 @@ actual class PlatformNotifier {
     }
 
     actual fun cancelReminder(context: Any?, doseId: String) {
-        val identifiers = DoseReminderStage.entries.map { "$doseId:${it.name}" } + "escalation_$doseId"
         val center = UNUserNotificationCenter.currentNotificationCenter()
-        center.removePendingNotificationRequestsWithIdentifiers(identifiers)
+        val identifiers = DoseReminderStage.entries.map { "${doseId}:${it.name}" } + listOf("escalation_$doseId")
+        center.removeDeliveredNotificationsWithIdentifiers(identifiers)
     }
 
     actual fun cancelAllReminders(context: Any?)  {

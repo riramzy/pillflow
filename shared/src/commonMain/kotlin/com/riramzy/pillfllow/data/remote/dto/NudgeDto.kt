@@ -9,5 +9,6 @@ data class NudgeDto(
     val caregiverId: String = "",
     val caregiverName: String = "",
     val timestamp: Long = 0L,
-    val isHandled: Boolean = false
+    val isHandled: Boolean = false,
+    val isDelivered: Boolean = false
 )

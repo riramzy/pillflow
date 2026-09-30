@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.data.local.entity.UserEntity
+import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
@@ -49,11 +50,13 @@ import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.platform.copyToClipboard
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PatientSettingsScreen(
     patientSettingsViewModel: PatientSettingsViewModel = koinViewModel(),
+    notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
@@ -63,9 +66,11 @@ fun PatientSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val state by patientSettingsViewModel.state.collectAsStateWithLifecycle()
+    val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
 
     PatientSettingsScreenContent(
         state = state,
+        hasUnreadNotifications = notificationState.hasUnread,
         onAction = patientSettingsViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
@@ -81,6 +86,7 @@ fun PatientSettingsScreen(
 @Composable
 fun PatientSettingsScreenContent(
     state: PatientSettingsState = PatientSettingsState(),
+    hasUnreadNotifications: Boolean = false,
     onAction: (PatientSettingsAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
@@ -211,6 +217,7 @@ fun PatientSettingsScreenContent(
     Scaffold(
         topBar = {
             PillFlowTopAppBar(
+                hasUnreadNotifications = hasUnreadNotifications,
                 onProfileClick = onProfileClick,
                 onNotificationsClick = onNotificationsClick,
                 modifier = Modifier.padding(15.dp)

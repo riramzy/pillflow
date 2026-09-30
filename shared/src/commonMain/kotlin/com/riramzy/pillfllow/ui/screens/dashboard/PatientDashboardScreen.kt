@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.domain.hardware.PlatformSensor
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
+import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
@@ -43,6 +44,7 @@ import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.add
@@ -52,6 +54,7 @@ import pillfllow.shared.generated.resources.pills
 @Composable
 fun PatientDashboardScreen(
     patientDashboardViewModel: PatientDashboardViewModel = koinViewModel(),
+    notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -60,9 +63,11 @@ fun PatientDashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val state by patientDashboardViewModel.state.collectAsStateWithLifecycle()
+    val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
 
     PatientDashboardScreenContent(
         state = state,
+        hasUnreadNotifications = notificationState.hasUnread,
         onAction = patientDashboardViewModel::onAction,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
@@ -76,6 +81,7 @@ fun PatientDashboardScreen(
 @Composable
 fun PatientDashboardScreenContent(
     state: PatientDashboardState = PatientDashboardState(),
+    hasUnreadNotifications: Boolean = false,
     onAction: (PatientDashboardAction) -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
@@ -100,6 +106,7 @@ fun PatientDashboardScreenContent(
     Scaffold(
         topBar = {
             PillFlowTopAppBar(
+                hasUnreadNotifications = hasUnreadNotifications,
                 onProfileClick = onProfileClick,
                 onNotificationsClick = onNotificationsClick,
                 modifier = Modifier.padding(15.dp)

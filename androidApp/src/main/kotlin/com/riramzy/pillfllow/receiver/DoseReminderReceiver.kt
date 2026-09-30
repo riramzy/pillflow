@@ -14,8 +14,9 @@ import com.riramzy.pillfllow.MainActivity
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
 import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.utils.medication.DoseReminderStage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 
 @Suppress("DEPRECATION")
@@ -26,84 +27,85 @@ class DoseReminderReceiver: BroadcastReceiver() {
     @SuppressLint("FullScreenIntentPolicy")
     override fun onReceive(context: Context, intent: Intent) {
         sessionManager.currentUser.value ?: return
+        if (intent.action != "com.riramzy.pillfllow.DOSE_REMINDER") return
 
-        if (intent.action == "com.riramzy.pillfllow.DOSE_REMINDER") {
-            val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
-            val doseId = intent.getStringExtra("DOSE_ID") ?: ""
-            val stageName = intent.getStringExtra("REMINDER_STAGE") ?: DoseReminderStage.ADVANCE_30MIN.name
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
+                val doseId = intent.getStringExtra("DOSE_ID") ?: ""
+                val stageName = intent.getStringExtra("REMINDER_STAGE") ?: DoseReminderStage.ADVANCE_30MIN.name
 
-            val dose = runBlocking(Dispatchers.IO) {
-                medicationDao.getScheduledDoseById(doseId)
-            }
+                val dose = medicationDao.getScheduledDoseById(doseId)
+                if (dose == null || dose.isTaken) return@launch
 
-            if (dose == null || dose.isTaken) {
-                return
-            }
+                val isAdvance = stageName == DoseReminderStage.ADVANCE_30MIN.name
+                val isDueNow = stageName == DoseReminderStage.DUE_NOW.name
 
-            val isAdvance = stageName == DoseReminderStage.ADVANCE_30MIN.name
-            val isDueNow = stageName == DoseReminderStage.DUE_NOW.name
-
-            if (!isAdvance) {
-                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-                val wakeLock = powerManager.newWakeLock(
-                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
-                            PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                            PowerManager.ON_AFTER_RELEASE,
-                    "PillFlow:DoseWakeLock"
-                )
-                wakeLock.acquire(5000L)
-            }
-
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channelId = if (isAdvance) "pillflow_advance_channel" else "pillflow_dose_channel"
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    channelId,
-                    if (isAdvance) "Upcoming Medication Reminders" else "Medication Reminders",
-                    if (isAdvance) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Timely medication dose reminders"
-                    enableVibration(!isAdvance)
+                if (!isAdvance) {
+                    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+                    val wakeLock = powerManager.newWakeLock(
+                        PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
+                                PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                                PowerManager.ON_AFTER_RELEASE,
+                        "PillFlow:DoseWakeLock"
+                    )
+                    wakeLock.acquire(5000L)
                 }
-                notificationManager.createNotificationChannel(channel)
+
+                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val channelId = if (isAdvance) "pillflow_advance_channel" else "pillflow_dose_channel"
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val channel = NotificationChannel(
+                        channelId,
+                        if (isAdvance) "Upcoming Medication Reminders" else "Medication Reminders",
+                        if (isAdvance) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH
+                    ).apply {
+                        description = "Timely medication dose reminders"
+                        enableVibration(!isAdvance)
+                    }
+                    notificationManager.createNotificationChannel(channel)
+                }
+
+                val openAppIntent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+
+                val pendingIntent = PendingIntent.getActivity(
+                    context,
+                    0,
+                    openAppIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                val (title, message) = when (stageName) {
+                    DoseReminderStage.DUE_NOW.name ->
+                        "Time for your medication!" to "Your $pillName is ready in the dish to dispense."
+                    DoseReminderStage.PRE_EXPIRY_15MIN.name ->
+                        "Urgent: Grace Window Closing!" to "Please take your $pillName. Grace period ends in 15 minutes."
+                    else ->
+                        "Upcoming Medication" to "Your $pillName is scheduled in 30 minutes."
+                }
+
+                val builder = NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                    .setContentTitle(title)
+                    .setContentText(message)
+                    .setPriority(if (isAdvance) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_MAX)
+                    .setCategory(if (isAdvance) NotificationCompat.CATEGORY_REMINDER else NotificationCompat.CATEGORY_ALARM)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+
+                if (isDueNow) {
+                    builder.setFullScreenIntent(pendingIntent, true)
+                }
+
+                notificationManager.notify(doseId.hashCode(), builder.build())
+            } finally {
+                pendingResult.finish()
             }
-
-            val openAppIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-
-            val pendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                openAppIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val (title, message) = when (stageName) {
-                DoseReminderStage.DUE_NOW.name ->
-                    "Time for your medication!" to "Your $pillName is ready in the dish to dispense."
-                DoseReminderStage.PRE_EXPIRY_15MIN.name ->
-                    "Urgent: Grace Window Closing!" to "Please take your $pillName. Grace period ends in 15 minutes."
-                else ->
-                    "Upcoming Medication" to "Your $pillName is scheduled in 30 minutes."
-            }
-
-            val builder = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setPriority(if (isAdvance) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_MAX)
-                .setCategory(if (isAdvance) NotificationCompat.CATEGORY_REMINDER else NotificationCompat.CATEGORY_ALARM)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-
-            if (isDueNow) {
-                builder.setFullScreenIntent(pendingIntent, true)
-            }
-
-            notificationManager.notify(doseId.hashCode(), builder.build())
         }
     }
 }

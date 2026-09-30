@@ -179,20 +179,26 @@ class PatientDashboardViewModel(
                     if (user == null) {
                         emptyFlow()
                     } else {
-                        firestore.collection("nudges")
+                        firestore
+                            .collection("nudges")
                             .where { "patientId" equalTo user.id }
-                            .where { "isHandled" equalTo false }
+                            .where { "isDelivered" equalTo false }
                             .snapshots
                     }
                 }
                 .collect { snapshot ->
                     snapshot.documents.forEach { doc ->
                         val nudge = doc.data<NudgeDto>()
+
                         platformNotifier.sendInstantNudge(
                             title = "Caregiver Reminder",
                             message = "${nudge.caregiverName} wants to remind you to take your medication!"
                         )
-                        firestore.collection("nudges").document(nudge.id).delete()
+
+                        firestore
+                            .collection("nudges")
+                            .document(nudge.id)
+                            .update("isDelivered" to true)
                     }
                 }
         }

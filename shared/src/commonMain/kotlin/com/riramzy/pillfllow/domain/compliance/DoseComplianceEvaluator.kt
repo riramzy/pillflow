@@ -178,17 +178,21 @@ object DoseComplianceEvaluator {
                 .thenBy { it.name }
                 .thenBy { it.id }
         )
-
-        val earliestDose = sortedDoses.firstOrNull() ?: return listOf(
-            ComplianceCardUiModel(
-                status = ComplianceStatus.ON_TIME,
-                title = "All Set For Today!",
-                subtitle = "All scheduled doses completed",
-                badgeText = "100% On-Time"
+        if (sortedDoses.isEmpty()) {
+            return listOf(
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.ON_TIME,
+                    title = "All Set For Today!",
+                    subtitle = "All scheduled doses completed",
+                    badgeText = "100% On-Time"
+                )
             )
-        )
+        }
 
-        val sameTimeDoses = sortedDoses.filter { it.scheduledTime == earliestDose.scheduledTime }
+        val activeDoses = sortedDoses.filter { now <= it.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS }
+        val targetDose = activeDoses.firstOrNull() ?: sortedDoses.first()
+        val sameTimeDoses = sortedDoses.filter { it.scheduledTime == targetDose.scheduledTime }
+
 
         return sameTimeDoses.map { dose ->
             val elapsed = now - dose.scheduledTime

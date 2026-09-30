@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
@@ -46,6 +47,7 @@ import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.add
@@ -58,6 +60,7 @@ import pillfllow.shared.generated.resources.user_patient
 @Composable
 fun CaregiverPrescriptionsScreen(
     caregiverPrescriptionsViewModel: CaregiverPrescriptionsViewModel = koinViewModel(),
+    notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -66,9 +69,11 @@ fun CaregiverPrescriptionsScreen(
     modifier: Modifier = Modifier
 ) {
     val state by caregiverPrescriptionsViewModel.state.collectAsStateWithLifecycle()
+    val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
 
     CaregiverPrescriptionsScreenContent(
         state = state,
+        hasUnreadNotifications = notificationState.hasUnread,
         onAction = caregiverPrescriptionsViewModel::onAction,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
@@ -83,6 +88,7 @@ fun CaregiverPrescriptionsScreen(
 @Composable
 fun CaregiverPrescriptionsScreenContent(
     state: CaregiverPrescriptionsState = CaregiverPrescriptionsState(),
+    hasUnreadNotifications: Boolean = false,
     onAction: (CaregiverPrescriptionsAction) -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
@@ -171,6 +177,7 @@ fun CaregiverPrescriptionsScreenContent(
     Scaffold(
         topBar = {
             PillFlowTopAppBar(
+                hasUnreadNotifications = hasUnreadNotifications,
                 onProfileClick = onProfileClick,
                 onNotificationsClick = onNotificationsClick,
                 modifier = Modifier.padding(15.dp)

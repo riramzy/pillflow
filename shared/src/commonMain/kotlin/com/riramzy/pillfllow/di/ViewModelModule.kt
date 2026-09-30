@@ -103,11 +103,7 @@ val viewModelModule: Module = module {
 
     viewModel {
         NotificationsViewModel(
-            observeCurrentUserUseCase = get(),
-            getPendingDosesForUserUseCase = get(),
-            getCaregiverPatientsUseCase = get(),
-            logDoseTakenUseCase = get(),
-            firestore = get()
+            notificationsRepo = get()
         )
     }
 }

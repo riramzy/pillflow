@@ -107,6 +107,9 @@ actual class PlatformNotifier {
         val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
+        val notificationManager = androidContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        notificationManager?.cancel(doseId.hashCode())
+
         val intent = Intent().apply {
             action = "com.riramzy.pillfllow.DOSE_REMINDER"
             `package` = androidContext.packageName
