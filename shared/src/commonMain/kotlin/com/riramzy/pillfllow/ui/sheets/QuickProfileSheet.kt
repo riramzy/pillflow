@@ -11,9 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +41,50 @@ fun QuickProfileSheet(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showSignOutDialog by remember { mutableStateOf(false) }
+
+    if (showSignOutDialog) {
+        AlertDialog(
+            onDismissRequest = { showSignOutDialog = false },
+            title = {
+                Text(
+                    text = "Sign Out",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to sign out of your account?",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            confirmButton = {
+                PillFlowButton(
+                    text = "Sign Out",
+                    customColor = IndicatorColor.RED_CONTAINER.color,
+                    customTextColor = IndicatorColor.RED.color,
+                    onClick = {
+                        showSignOutDialog = false
+                        onSignOut()
+                    }
+                )
+            },
+            dismissButton = {
+                PillFlowButton(
+                    text = "Cancel",
+                    customColor = MaterialTheme.colorScheme.surface,
+                    customTextColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { showSignOutDialog = false }
+                )
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -122,7 +171,7 @@ fun QuickProfileSheet(
 
             PillFlowButton(
                 text = "Sign Out",
-                onClick = onSignOut,
+                onClick = { showSignOutDialog = true },
                 customColor = IndicatorColor.RED_CONTAINER.color,
                 customTextColor = IndicatorColor.RED.color,
                 modifier = Modifier.fillMaxWidth()
