@@ -35,7 +35,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
-import com.riramzy.pillfllow.ui.components.sheets.PrescriptionSheet
+import com.riramzy.pillfllow.ui.sheets.PrescriptionSheet
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsState
@@ -61,6 +61,8 @@ fun CaregiverPrescriptionsScreen(
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by caregiverPrescriptionsViewModel.state.collectAsStateWithLifecycle()
@@ -71,6 +73,8 @@ fun CaregiverPrescriptionsScreen(
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToSettings = onNavigateToSettings,
+        onProfileClick = onProfileClick,
+        onNotificationsClick = onNotificationsClick,
         modifier = modifier
     )
 }
@@ -83,6 +87,8 @@ fun CaregiverPrescriptionsScreenContent(
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -163,7 +169,13 @@ fun CaregiverPrescriptionsScreenContent(
     }
 
     Scaffold(
-        topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
+        topBar = {
+            PillFlowTopAppBar(
+                onProfileClick = onProfileClick,
+                onNotificationsClick = onNotificationsClick,
+                modifier = Modifier.padding(15.dp)
+            )
+                 },
         floatingActionButton = {
             PillFlowBottomNavBar(
                 selectedPage = Screen.Prescriptions.route,

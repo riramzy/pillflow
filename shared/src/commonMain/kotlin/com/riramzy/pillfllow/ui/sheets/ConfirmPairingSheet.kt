@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.ui.components.sheets
+package com.riramzy.pillfllow.ui.sheets
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

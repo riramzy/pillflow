@@ -4,6 +4,7 @@ import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.CaregiverDashboardViewModel
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
 import com.riramzy.pillfllow.ui.viewmodel.history.HistoryViewModel
+import com.riramzy.pillfllow.ui.viewmodel.notifications.NotificationsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.prescriptions.CaregiverPrescriptionsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.prescriptions.PatientPrescriptionsViewModel
 import com.riramzy.pillfllow.ui.viewmodel.settings.CaregiverSettingsViewModel
@@ -97,6 +98,16 @@ val viewModelModule: Module = module {
             observeCurrentUserUseCase = get(),
             getCaregiverPatientsUseCase = get(),
             getDoseHistoryForUserUseCase = get()
+        )
+    }
+
+    viewModel {
+        NotificationsViewModel(
+            observeCurrentUserUseCase = get(),
+            getPendingDosesForUserUseCase = get(),
+            getCaregiverPatientsUseCase = get(),
+            logDoseTakenUseCase = get(),
+            firestore = get()
         )
     }
 }

@@ -52,6 +52,8 @@ fun CaregiverHistoryScreen(
     onNavigateToHome: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by historyViewModel.state.collectAsStateWithLifecycle()
@@ -62,6 +64,8 @@ fun CaregiverHistoryScreen(
         onNavigateToHome = onNavigateToHome,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onNavigateToSettings = onNavigateToSettings,
+        onProfileClick = onProfileClick,
+        onNotificationsClick = onNotificationsClick,
         modifier = modifier
     )
 }
@@ -73,10 +77,18 @@ fun CaregiverHistoryScreenContent(
     onNavigateToHome: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
+        topBar = {
+            PillFlowTopAppBar(
+                onProfileClick = onProfileClick,
+                onNotificationsClick = onNotificationsClick,
+                modifier = Modifier.padding(15.dp)
+            )
+                 },
         floatingActionButton = {
             PillFlowBottomNavBar(
                 selectedPage = Screen.History.route,

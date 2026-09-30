@@ -54,6 +54,8 @@ fun CaregiverDashboardScreen(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state = caregiverDashboardViewModel.state.collectAsStateWithLifecycle()
@@ -64,6 +66,8 @@ fun CaregiverDashboardScreen(
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onNavigateToSettings = onNavigateToSettings,
+        onProfileClick = onProfileClick,
+        onNotificationsClick = onNotificationsClick,
         modifier = modifier
     )
 }
@@ -75,10 +79,18 @@ fun CaregiverDashboardScreenContent(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
+        topBar = {
+            PillFlowTopAppBar(
+                onProfileClick = onProfileClick,
+                onNotificationsClick = onNotificationsClick,
+                modifier = Modifier.padding(15.dp)
+            )
+                 },
         floatingActionButton = {
             PillFlowBottomNavBar(
                 selectedPage = Screen.Home.route,

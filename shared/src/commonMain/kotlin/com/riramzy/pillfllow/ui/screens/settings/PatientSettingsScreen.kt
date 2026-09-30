@@ -40,7 +40,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPhysicsSensitivityCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
-import com.riramzy.pillfllow.ui.components.sheets.UpdateProfileSheet
+import com.riramzy.pillfllow.ui.sheets.UpdateProfileSheet
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
@@ -58,6 +58,8 @@ fun PatientSettingsScreen(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onSignOutSuccess: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by patientSettingsViewModel.state.collectAsStateWithLifecycle()
@@ -69,6 +71,8 @@ fun PatientSettingsScreen(
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToPrescriptions = onNavigateToPrescriptions,
         onSignOutSuccess = onSignOutSuccess,
+        onProfileClick = onProfileClick,
+        onNotificationsClick = onNotificationsClick,
         modifier = modifier
     )
 }
@@ -82,6 +86,8 @@ fun PatientSettingsScreenContent(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onSignOutSuccess: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -203,7 +209,13 @@ fun PatientSettingsScreenContent(
     }
 
     Scaffold(
-        topBar = { PillFlowTopAppBar(modifier = Modifier.padding(15.dp)) },
+        topBar = {
+            PillFlowTopAppBar(
+                onProfileClick = onProfileClick,
+                onNotificationsClick = onNotificationsClick,
+                modifier = Modifier.padding(15.dp)
+            )
+                 },
         floatingActionButton = {
             PillFlowBottomNavBar(
                 selectedPage = Screen.Settings.route,

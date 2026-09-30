@@ -31,13 +31,14 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
-import pillfllow.shared.generated.resources.notifications
+import pillfllow.shared.generated.resources.notification
 import pillfllow.shared.generated.resources.pillflow_logo
 import pillfllow.shared.generated.resources.profile
 
 @Composable
 fun PillFlowTopAppBar(
     modifier: Modifier = Modifier,
+    hasUnreadNotifications: Boolean = false,
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {}
 ) {
@@ -94,12 +95,22 @@ fun PillFlowTopAppBar(
                         .clickable { onNotificationsClick() },
                 ) {
                     Image(
-                        imageVector = vectorResource(Res.drawable.notifications),
-                        modifier = Modifier.size(18.dp),
+                        imageVector = vectorResource(Res.drawable.notification),
+                        modifier = Modifier.size(24.dp),
                         contentScale = ContentScale.FillBounds,
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                        contentDescription = "null"
+                        contentDescription = "Notifications"
                     )
+
+
+                    if (hasUnreadNotifications) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .align(Alignment.TopEnd)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                        )
+                    }
                 }
 
                 Box(
@@ -117,7 +128,7 @@ fun PillFlowTopAppBar(
                         modifier = Modifier.size(18.dp),
                         contentScale = ContentScale.FillBounds,
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                        contentDescription = "null"
+                        contentDescription = "Profile"
                     )
                 }
             }
