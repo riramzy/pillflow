@@ -6,6 +6,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
@@ -15,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.riramzy.pillfllow.domain.session.SessionManager
+import com.riramzy.pillfllow.domain.usecase.auth.LogoutUseCase
 import com.riramzy.pillfllow.ui.screens.auth.AuthRoleSelectionScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthSignInScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthSignUpScreen
@@ -31,14 +33,18 @@ import com.riramzy.pillfllow.ui.sheets.NotificationsSheet
 import com.riramzy.pillfllow.ui.sheets.QuickProfileSheet
 import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.app.UserType
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavApp(
     navController: NavHostController = rememberNavController(),
-    sessionManager: SessionManager = koinInject()
+    sessionManager: SessionManager = koinInject(),
+    logoutUseCase: LogoutUseCase = koinInject()
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     val currentUser by sessionManager.currentUser.collectAsStateWithLifecycle()
     val isCaregiver = currentUser?.userType?.equals("CAREGIVER", ignoreCase = true) == true
 
@@ -215,7 +221,10 @@ fun NavApp(
                 },
                 onSignOut = {
                     showProfileSheet = false
-                    onLogoutSuccess()
+                    coroutineScope.launch {
+                        logoutUseCase()
+                        onLogoutSuccess()
+                    }
                 }
             )
         }

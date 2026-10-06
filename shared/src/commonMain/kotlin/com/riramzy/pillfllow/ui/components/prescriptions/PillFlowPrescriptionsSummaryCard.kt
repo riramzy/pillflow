@@ -34,10 +34,11 @@ import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PillFlowPrescriptionsSummaryCard(
+    modifier: Modifier = Modifier,
     activeCount: Int = 3,
     nextDoseTime: String = "9:00 AM",
     nextDoseMedication: String = "Aspirin 500mg",
-    modifier: Modifier = Modifier
+    isForOnboarding: Boolean = false,
 ) {
     Card(
         modifier = modifier
@@ -61,6 +62,7 @@ fun PillFlowPrescriptionsSummaryCard(
                 title = activeCount.toString(),
                 subtitle = "Active Prescriptions",
                 icon = Res.drawable.pills,
+                isForOnboarding = isForOnboarding,
                 modifier = Modifier
                     .weight(1f)
             )
@@ -69,6 +71,7 @@ fun PillFlowPrescriptionsSummaryCard(
                 title = nextDoseTime,
                 subtitle = "Next: $nextDoseMedication",
                 icon = Res.drawable.next,
+                isForOnboarding = isForOnboarding,
                 modifier = Modifier
                     .weight(1f)
             )
@@ -78,15 +81,18 @@ fun PillFlowPrescriptionsSummaryCard(
 
 @Composable
 fun SummaryCard(
+    modifier: Modifier = Modifier,
     title: String = "Next Dose",
     subtitle: String = "Aspirin 500mg",
     icon: DrawableResource = Res.drawable.pills,
-    modifier: Modifier = Modifier
+    isForOnboarding: Boolean = false,
 ) {
     Box(
         modifier = modifier
             .background(
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = if (isForOnboarding) MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(20.dp)
             ),
         contentAlignment = Alignment.CenterStart

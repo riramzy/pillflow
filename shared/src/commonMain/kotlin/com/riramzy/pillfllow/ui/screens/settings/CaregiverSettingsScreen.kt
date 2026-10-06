@@ -36,9 +36,9 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
-import com.riramzy.pillfllow.ui.components.custom.PillFlowPatientCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
+import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPatientPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.sheets.ConfirmPairingSheet

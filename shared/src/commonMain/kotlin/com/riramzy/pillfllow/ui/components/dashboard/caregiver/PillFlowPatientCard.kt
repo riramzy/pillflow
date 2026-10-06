@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.ui.components.custom
+package com.riramzy.pillfllow.ui.components.dashboard.caregiver
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.riramzy.pillfllow.ui.components.dashboard.caregiver.SelectedPatientCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import org.jetbrains.compose.resources.painterResource

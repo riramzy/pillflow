@@ -27,11 +27,11 @@ import kotlin.math.cos
 
 @Composable
 fun PillFlowPillsDish(
+    modifier: Modifier = Modifier,
     center: Offset,
     radius: Float,
     chuteWidth: Float = 200f,
     handleWidth: Float = 110f,
-    modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
     val shadowColor = if (isDark) {

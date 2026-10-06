@@ -31,9 +31,9 @@ import com.riramzy.pillfllow.utils.platform.defaultSampleDays
 
 @Composable
 fun PillFlowPatientWeeklyOverviewCard(
+    modifier: Modifier = Modifier,
     weeklyDays: List<ComplianceDayUiModel> = defaultSampleDays,
     weeklyRatePercentage: Int = 95,
-    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
