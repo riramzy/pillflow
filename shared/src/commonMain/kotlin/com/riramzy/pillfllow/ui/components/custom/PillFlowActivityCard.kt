@@ -26,11 +26,11 @@ import com.riramzy.pillfllow.utils.medication.IndicatorColor
 
 @Composable
 fun PillFlowActivityCard(
+    modifier: Modifier = Modifier,
     patientName: String = "Mary",
     actionDescription: String = "took Aspirin 500mg",
     timestampText: String = "Today at 08:02 AM",
     status: ComplianceStatus = ComplianceStatus.MISSED,
-    modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (status) {
         ComplianceStatus.DEFAULT -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
@@ -63,8 +63,11 @@ fun PillFlowActivityCard(
                 modifier = Modifier.size(20.dp)
             )
 
+            val timeSuffix = if (timestampText.isNotBlank()) " ,$timestampText" else ""
+            val namePrefix = if (patientName.isNotBlank()) "$patientName " else ""
+
             Text(
-                text = "$patientName $actionDescription ,$timestampText",
+                text = "$namePrefix$actionDescription$timeSuffix",
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold

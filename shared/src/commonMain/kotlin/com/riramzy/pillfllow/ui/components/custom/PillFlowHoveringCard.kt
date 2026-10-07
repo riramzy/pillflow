@@ -80,7 +80,7 @@ fun PillFlowHoveringCard(
         Row(
             modifier = Modifier
                 .wrapContentSize()
-                .padding(horizontal = 35.dp, vertical = 4.dp),
+                .padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
