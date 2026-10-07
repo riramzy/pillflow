@@ -24,6 +24,7 @@ import com.riramzy.pillfllow.ui.screens.dashboard.CaregiverDashboardScreen
 import com.riramzy.pillfllow.ui.screens.dashboard.PatientDashboardScreen
 import com.riramzy.pillfllow.ui.screens.history.CaregiverHistoryScreen
 import com.riramzy.pillfllow.ui.screens.history.PatientHistoryScreen
+import com.riramzy.pillfllow.ui.screens.onboarding.OnboardingPagerScreen
 import com.riramzy.pillfllow.ui.screens.prescriptions.CaregiverPrescriptionsScreen
 import com.riramzy.pillfllow.ui.screens.prescriptions.PatientPrescriptionsScreen
 import com.riramzy.pillfllow.ui.screens.settings.CaregiverSettingsScreen
@@ -70,6 +71,18 @@ fun NavApp(
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(navController = navController)
+        }
+
+        composable(Screen.Onboarding.route) {
+            OnboardingPagerScreen(
+                onFinishOnboarding = {
+                    sessionManager.setOnboardingCompleted(true)
+
+                    navController.navigate(Screen.RoleSelection.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.RoleSelection.route) {

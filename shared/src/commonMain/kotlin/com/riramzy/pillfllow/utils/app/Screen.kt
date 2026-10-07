@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.utils.app
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
+    object Onboarding : Screen("onboarding")
     object RoleSelection: Screen("role_selection")
     object SignIn: Screen("sign_in")
     object SignUp: Screen("sign_up")

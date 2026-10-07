@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.ui.state.splash.SplashAction
 import com.riramzy.pillfllow.ui.state.splash.SplashNavEvent
@@ -18,6 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class SplashViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val sessionManager: SessionManager,
 ): ViewModel() {
     private val _state = MutableStateFlow(SplashState())
     val state: StateFlow<SplashState> = _state.asStateFlow()
@@ -43,10 +45,18 @@ class SplashViewModel(
 
             if (user != null) {
                 _state.update { it.copy(isLoading = false) }
+
                 _navEvent.value = SplashNavEvent.NavigateToHome
             } else {
+                val isOnboardingDone = sessionManager.isOnboardingCompleted()
+
                 _state.update { it.copy(isLoading = false) }
-                _navEvent.value = SplashNavEvent.NavigateToRoleSelection
+
+                _navEvent.value = if (isOnboardingDone) {
+                    SplashNavEvent.NavigateToRoleSelection
+                } else {
+                    SplashNavEvent.NavigateToOnboarding
+                }
             }
         }
     }

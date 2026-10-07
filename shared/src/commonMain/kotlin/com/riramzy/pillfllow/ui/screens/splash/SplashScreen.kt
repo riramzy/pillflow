@@ -37,6 +37,12 @@ fun SplashScreen(
                 }
             }
 
+            is SplashNavEvent.NavigateToOnboarding -> {
+                navController.navigate(Screen.Onboarding.route) {
+                    popUpTo(Screen.Splash.route) { inclusive = true }
+                }
+            }
+
             null -> Unit
         }
     }

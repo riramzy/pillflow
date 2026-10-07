@@ -17,7 +17,8 @@ import org.koin.dsl.module
 val viewModelModule: Module = module {
     viewModel {
         SplashViewModel(
-            observeCurrentUserUseCase = get()
+            observeCurrentUserUseCase = get(),
+            sessionManager = get()
         )
     }
 

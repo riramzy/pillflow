@@ -22,6 +22,14 @@ class SessionManager(
     private val _physicsSensitivity = MutableStateFlow(initialSensitivity)
     val physicsSensitivity: StateFlow<PhysicsSensitivity> = _physicsSensitivity.asStateFlow()
 
+    fun isOnboardingCompleted(): Boolean {
+        return appPreferences.getString("onboarding_completed", "false").toBoolean()
+    }
+
+    fun setOnboardingCompleted(completed: Boolean) {
+        appPreferences.setString("onboarding_completed", completed.toString())
+    }
+
     fun setUser(user: UserEntity) {
         _currentUser.value = user
     }
