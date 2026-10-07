@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -51,7 +51,8 @@ fun PillFlowOnboardingMedicationHero(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .height(325.dp)
-                .width(355.dp)
+                .fillMaxWidth(0.92f)
+                .widthIn(max = 355.dp)
         ) {
             val widthPx = constraints.maxWidth.toFloat()
             val heightPx = constraints.maxHeight.toFloat()

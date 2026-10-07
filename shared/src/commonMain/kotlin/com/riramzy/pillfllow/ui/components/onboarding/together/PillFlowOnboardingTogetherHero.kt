@@ -179,7 +179,7 @@ fun PillFlowOnboardingTogetherHero(
                 status = ComplianceStatus.ON_TIME,
                 modifier = Modifier
                     .width(200.dp)
-                    .offset(x = 60.dp, y = 235.dp)
+                    .offset(x = 40.dp, y = 235.dp)
                     .graphicsLayer {
                         rotationZ = 8f
                         scaleX = animDelivered.value
@@ -204,7 +204,7 @@ fun PillFlowOnboardingTogetherHero(
                 modifier = Modifier
                     .height(35.dp)
                     .width(225.dp)
-                    .offset(x = (-60).dp, y = 200.dp)
+                    .offset(x = (-40).dp, y = 200.dp)
                     .graphicsLayer {
                         rotationZ = -5f
                         scaleX = animSchedule.value
@@ -224,7 +224,7 @@ fun PillFlowOnboardingTogetherHero(
 
             PillFlowMessageCard(
                 modifier = Modifier
-                    .offset(x = 60.dp, y = 150.dp)
+                    .offset(x = 40.dp, y = 150.dp)
                     .graphicsLayer {
                         rotationZ = 9f
                         scaleX = animReply.value

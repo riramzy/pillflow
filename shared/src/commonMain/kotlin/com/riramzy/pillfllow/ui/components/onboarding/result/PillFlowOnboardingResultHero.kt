@@ -169,45 +169,44 @@ fun PillFlowOnboardingResultHero(
         ) {
             PillFlowActivityCard(
                 patientName = "",
-                actionDescription = "29 On-Time",
                 timestampText = "",
+                actionDescription = "29 On-Time",
                 status = ComplianceStatus.ON_TIME,
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
                     .width(100.dp)
-                    .offset(x = 30.dp, y = 0.dp)
+                    .offset(x = (-80).dp)
                     .graphicsLayer {
-                        translationX = (1f - animOnTime.value) * 220.dp.toPx()
+                        translationX = (1f - animOnTime.value) * 160.dp.toPx()
                         alpha = animOnTime.value
                     }
             )
 
+            // 2. Middle Card: "1 Late" (dead center)
             PillFlowActivityCard(
                 patientName = "",
-                actionDescription = "1 Late",
                 timestampText = "",
+                actionDescription = "1 Late",
                 status = ComplianceStatus.LATE,
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(x = 0.dp, y = 0.dp)
                     .width(100.dp)
+                    .offset(x = 0.dp)
                     .graphicsLayer {
-                        translationX = (1f - animLate.value) * 220.dp.toPx()
+                        translationX = (1f - animLate.value) * 160.dp.toPx()
                         alpha = animLate.value
                     }
             )
 
+            // 3. Right Card: "1 Missed" (shifted right from center)
             PillFlowActivityCard(
                 patientName = "",
-                actionDescription = "1 Missed",
                 timestampText = "",
+                actionDescription = "1 Missed",
                 status = ComplianceStatus.MISSED,
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .offset(x = (-35).dp, y = 0.dp)
                     .width(100.dp)
+                    .offset(x = 80.dp)
                     .graphicsLayer {
-                        translationX = (1f - animMissed.value) * 220.dp.toPx()
+                        translationX = (1f - animMissed.value) * 160.dp.toPx()
                         alpha = animMissed.value
                     }
             )
