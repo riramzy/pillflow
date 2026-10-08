@@ -56,6 +56,8 @@ class AuthRepoImpl(
         withContext(Dispatchers.IO) {
             val now = currentTimeMillis()
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, pass)
+
+
             val firebaseUser = authResult.user ?: throw Exception("User ID not found")
             val uid = firebaseUser.uid
 
@@ -78,10 +80,15 @@ class AuthRepoImpl(
             )
 
             val userDto = userEntity.toDto(updatedAt = now)
-            firestore.
-            collection("users")
-                .document(uid)
-                .set(userDto)
+
+            try {
+                firestore.collection("users")
+                    .document(uid)
+                    .set(userDto)
+            } catch (e: Exception) {
+                runCatching { firebaseUser.delete() }
+                throw e
+            }
 
             userRepo.insertUser(userEntity)
             userEntity
@@ -97,26 +104,16 @@ class AuthRepoImpl(
             val firebaseUser = authResult.user ?: throw Exception("User ID not found")
             val uid = firebaseUser.uid
 
-            val remoteUser = runCatching {
+            val remoteUser = try {
                 val doc = firestore.collection("users").document(uid).get()
                 if (doc.exists) doc.data<UserDto>().toEntity() else null
-            }.getOrNull()
+            } catch (e: Exception) {
+                userRepo.getUserByIdOnce(uid) ?: throw e
+            }
 
-            val displayName = firebaseUser.displayName ?: ""
-            val roleFromProfile = if (displayName.contains("CAREGIVER", ignoreCase = true)) "CAREGIVER" else "PATIENT"
-            val names = displayName.substringBefore("|").trim().split(" ")
-            val fName = names.firstOrNull()?.ifBlank { null } ?: email.substringBefore("@").replaceFirstChar { it.uppercase() }
-            val lName = names.drop(1).joinToString(" ")
-
-            val finalUser = remoteUser ?: userRepo.getUserByIdOnce(uid) ?: UserEntity(
-                id = uid,
-                firstName = fName,
-                lastName = lName,
-                email = email,
-                userType = roleFromProfile,
-                createdAt = currentTimeMillis(),
-                avatarRes = "avatar1"
-            )
+            val finalUser = remoteUser
+                ?: userRepo.getUserByIdOnce(uid)
+                ?: throw Exception("User profile not found in cloud or local cache")
 
             userRepo.insertUser(finalUser)
             finalUser

@@ -40,19 +40,13 @@ class SplashViewModel(
     private fun checkSession() {
         viewModelScope.launch(Dispatchers.IO) {
             delay(1000.milliseconds)
+            val user = runCatching { observeCurrentUserUseCase.once() }.getOrNull()
+            _state.update { it.copy(isLoading = false) }
 
-            val user = observeCurrentUserUseCase.once()
-
-            if (user != null) {
-                _state.update { it.copy(isLoading = false) }
-
-                _navEvent.value = SplashNavEvent.NavigateToHome
+            _navEvent.value = if (user != null) {
+                SplashNavEvent.NavigateToHome
             } else {
-                val isOnboardingDone = sessionManager.isOnboardingCompleted()
-
-                _state.update { it.copy(isLoading = false) }
-
-                _navEvent.value = if (isOnboardingDone) {
+                if (sessionManager.isOnboardingCompleted()) {
                     SplashNavEvent.NavigateToRoleSelection
                 } else {
                     SplashNavEvent.NavigateToOnboarding

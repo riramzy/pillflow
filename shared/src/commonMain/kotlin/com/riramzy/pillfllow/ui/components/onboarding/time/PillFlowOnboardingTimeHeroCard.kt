@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -107,12 +108,12 @@ fun PillFlowOnboardingTimeHeroCard(
         PillFlowPatientWeeklyOverviewCard(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .width(300.dp)
+                .widthIn(min = 280.dp)
                 .graphicsLayer {
                     rotationZ = 7f
                     translationY = drop4.value.dp.toPx()
                 }
-                .offset(x = 60.dp, y = 325.dp)
+                .offset(x = 45.dp, y = 325.dp)
                 .dropShadow(
                     shape = RoundedCornerShape(25.dp),
                     shadow = Shadow(

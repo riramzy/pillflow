@@ -12,7 +12,6 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.riramzy.pillfllow.MainActivity
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
-import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.utils.medication.DoseReminderStage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,12 +20,10 @@ import org.koin.java.KoinJavaComponent.inject
 
 @Suppress("DEPRECATION")
 class DoseReminderReceiver: BroadcastReceiver() {
-    private val sessionManager: SessionManager by inject(SessionManager::class.java)
     private val medicationDao: MedicationDao by inject(MedicationDao::class.java)
 
     @SuppressLint("FullScreenIntentPolicy")
     override fun onReceive(context: Context, intent: Intent) {
-        sessionManager.currentUser.value ?: return
         if (intent.action != "com.riramzy.pillfllow.DOSE_REMINDER") return
 
         val pendingResult = goAsync()
