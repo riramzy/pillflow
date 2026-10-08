@@ -3,10 +3,10 @@ package com.riramzy.pillfllow.ui.components.custom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,9 +40,7 @@ fun PillFlowActivityCard(
     }
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor,
             contentColor = textColor
@@ -51,7 +49,7 @@ fun PillFlowActivityCard(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
+                .wrapContentWidth()
                 .wrapContentHeight()
                 .padding(vertical = 8.dp, horizontal = 6.dp),
             verticalAlignment = Alignment.CenterVertically,

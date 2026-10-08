@@ -9,15 +9,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -45,10 +50,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun PillFlowOnboardingTogetherHero(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isActive: Boolean = true
 ) {
     val isPreview = LocalInspectionMode.current
     val start = if (isPreview) 1f else 0f
+    var hasAnimated by remember { mutableStateOf(false) }
 
     val animAlex = remember { Animatable(start) }
     val animArrow = remember { Animatable(start) }
@@ -60,8 +67,9 @@ fun PillFlowOnboardingTogetherHero(
     val animSchedule = remember { Animatable(start) }
     val animDelivered = remember { Animatable(start) }
 
-    LaunchedEffect(Unit) {
-        if (isPreview) return@LaunchedEffect
+    LaunchedEffect(isActive) {
+        if (!isActive || hasAnimated || isPreview) return@LaunchedEffect
+        hasAnimated = true
 
         val springSpec = spring<Float>(
             dampingRatio = 0.70f,
@@ -95,7 +103,7 @@ fun PillFlowOnboardingTogetherHero(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(420.dp),
+            .heightIn(min = 420.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
@@ -143,7 +151,7 @@ fun PillFlowOnboardingTogetherHero(
                     customTitle = "Linked",
                     customIcon = Res.drawable.key,
                     modifier = Modifier
-                        .width(100.dp)
+                        .widthIn(min = 100.dp)
                         .graphicsLayer {
                             scaleX = animLinked.value
                             scaleY = animLinked.value

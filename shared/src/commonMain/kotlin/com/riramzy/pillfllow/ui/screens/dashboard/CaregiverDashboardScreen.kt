@@ -53,6 +53,7 @@ import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverDashboardScreen(
+    modifier: Modifier = Modifier,
     caregiverDashboardViewModel: CaregiverDashboardViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHistory: () -> Unit = {},
@@ -60,7 +61,6 @@ fun CaregiverDashboardScreen(
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val state = caregiverDashboardViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -80,6 +80,7 @@ fun CaregiverDashboardScreen(
 
 @Composable
 fun CaregiverDashboardScreenContent(
+    modifier: Modifier = Modifier,
     state: CaregiverDashboardState = CaregiverDashboardState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (CaregiverDashboardAction) -> Unit = {},
@@ -88,7 +89,6 @@ fun CaregiverDashboardScreenContent(
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = {
@@ -273,7 +273,8 @@ fun CaregiverDashboardScreenContent(
                                     patientName = action.patientName,
                                     actionDescription = action.actionDescription,
                                     timestampText = action.timestampText,
-                                    status = action.status
+                                    status = action.status,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }

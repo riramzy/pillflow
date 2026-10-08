@@ -13,13 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -43,10 +48,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun PillFlowOnboardingResultHero(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isActive: Boolean = true
 ) {
     val isPreview = LocalInspectionMode.current
     val start = if (isPreview) 1f else 0f
+    var hasAnimated by remember { mutableStateOf(false) }
 
     val animHeatmap = remember { Animatable(start) }
     val animScore = remember { Animatable(start) }
@@ -56,8 +63,9 @@ fun PillFlowOnboardingResultHero(
     val animLate = remember { Animatable(start) }
     val animMissed = remember { Animatable(start) }
 
-    LaunchedEffect(Unit) {
-        if (isPreview) return@LaunchedEffect
+    LaunchedEffect(isActive) {
+        if (!isActive || hasAnimated || isPreview) return@LaunchedEffect
+        hasAnimated = true
 
         val dropSpring = spring<Float>(
             dampingRatio = 0.70f,
@@ -88,13 +96,13 @@ fun PillFlowOnboardingResultHero(
 
     Column(
         modifier = modifier
-            .height(485.dp),
+            .wrapContentHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         BoxWithConstraints(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
+            modifier = Modifier.padding(top = 10.dp)
 
         ) {
             Card(
@@ -173,7 +181,7 @@ fun PillFlowOnboardingResultHero(
                 actionDescription = "29 On-Time",
                 status = ComplianceStatus.ON_TIME,
                 modifier = Modifier
-                    .width(100.dp)
+                    .widthIn(min = 100.dp)
                     .offset(x = (-80).dp)
                     .graphicsLayer {
                         translationX = (1f - animOnTime.value) * 160.dp.toPx()
@@ -181,14 +189,13 @@ fun PillFlowOnboardingResultHero(
                     }
             )
 
-            // 2. Middle Card: "1 Late" (dead center)
             PillFlowActivityCard(
                 patientName = "",
                 timestampText = "",
                 actionDescription = "1 Late",
                 status = ComplianceStatus.LATE,
                 modifier = Modifier
-                    .width(100.dp)
+                    .widthIn(min = 100.dp)
                     .offset(x = 0.dp)
                     .graphicsLayer {
                         translationX = (1f - animLate.value) * 160.dp.toPx()
@@ -196,14 +203,13 @@ fun PillFlowOnboardingResultHero(
                     }
             )
 
-            // 3. Right Card: "1 Missed" (shifted right from center)
             PillFlowActivityCard(
                 patientName = "",
                 timestampText = "",
                 actionDescription = "1 Missed",
                 status = ComplianceStatus.MISSED,
                 modifier = Modifier
-                    .width(100.dp)
+                    .widthIn(min = 100.dp)
                     .offset(x = 80.dp)
                     .graphicsLayer {
                         translationX = (1f - animMissed.value) * 160.dp.toPx()

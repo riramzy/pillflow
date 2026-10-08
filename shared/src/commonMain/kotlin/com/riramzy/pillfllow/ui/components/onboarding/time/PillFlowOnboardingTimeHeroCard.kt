@@ -16,7 +16,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -39,39 +42,42 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun PillFlowOnboardingTimeHeroCard(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isActive: Boolean = true,
 ) {
     val isPreview = LocalInspectionMode.current
     val startOffset = if (isPreview) 0f else -350f
+    var hasAnimated by remember { mutableStateOf(false) }
 
     val drop1 = remember { Animatable(startOffset) }
     val drop2 = remember { Animatable(startOffset) }
     val drop3 = remember { Animatable(startOffset) }
     val drop4 = remember { Animatable(startOffset) }
 
-    LaunchedEffect(Unit) {
-        if (isPreview) return@LaunchedEffect
+    LaunchedEffect(isActive) {
+        if (!isActive || hasAnimated || isPreview) return@LaunchedEffect
+        hasAnimated = true
 
-        val springSpec = spring<Float>(
-            dampingRatio = 0.65f,
-            stiffness = Spring.StiffnessMediumLow
+        val relaxedSpring = spring<Float>(
+            dampingRatio = 0.70f,
+            stiffness = Spring.StiffnessLow
         )
 
-        launch { drop1.animateTo(0f, springSpec) }
-
-        launch {
-            delay(100.milliseconds)
-            drop2.animateTo(0f, springSpec)
-        }
+        launch { drop1.animateTo(0f, relaxedSpring) }
 
         launch {
             delay(200.milliseconds)
-            drop3.animateTo(0f, springSpec)
+            drop2.animateTo(0f, relaxedSpring)
         }
 
         launch {
-            delay(300.milliseconds)
-            drop4.animateTo(0f, springSpec)
+            delay(400.milliseconds)
+            drop3.animateTo(0f, relaxedSpring)
+        }
+
+        launch {
+            delay(600.milliseconds)
+            drop4.animateTo(0f, relaxedSpring)
         }
     }
 
