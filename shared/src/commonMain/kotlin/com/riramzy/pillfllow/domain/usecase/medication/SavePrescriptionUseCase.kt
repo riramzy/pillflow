@@ -1,8 +1,8 @@
 package com.riramzy.pillfllow.domain.usecase.medication
 
 import com.riramzy.pillfllow.data.local.entity.MedicationEntity
-import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
+import com.riramzy.pillfllow.domain.scheduler.MedicationScheduler
 import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.app.safeCall
 import com.riramzy.pillfllow.utils.platform.randomUUID
@@ -43,17 +43,10 @@ class SavePrescriptionUseCase(
             if (editingMedicationId != null) {
                 medicationRepo.deletePendingDosesForMedication(editingMedicationId)
             }
-
-            val scheduledDoses = scheduledTimesMillis.map { time ->
-                ScheduledDoseEntity(
-                    medicationId = medication.id,
-                    scheduledTime = time,
-                    complianceStatus = "PENDING",
-                    isTaken = false,
-                    isSynced = false
-                )
-            }
-
+            val scheduledDoses = MedicationScheduler.generateRollingDoses(
+                medicationId = medication.id,
+                baseTimesToday = scheduledTimesMillis
+            )
             medicationRepo.insertScheduledDoses(scheduledDoses)
         }
 

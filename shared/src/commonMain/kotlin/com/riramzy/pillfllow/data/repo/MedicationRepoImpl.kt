@@ -242,13 +242,15 @@ class MedicationRepoImpl(
 
     override suspend fun deleteMedicationById(id: String) {
         val pendingDoseIds = medicationDao.getPendingDoseIdsForMedication(id)
+
         pendingDoseIds.forEach { doseId ->
             platformNotifier.cancelReminder(doseId = doseId)
             runCatching {
                 firestore.collection("scheduled_doses").document(doseId).delete()
             }
         }
-        medicationDao.deleteScheduledDosesByMedicationId(id)
+
+        medicationDao.deletePendingDosesByMedicationId(id)
         medicationDao.deleteMedicationById(id)
 
         runCatching {
