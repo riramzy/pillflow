@@ -155,6 +155,9 @@ interface MedicationDao {
     @Query("SELECT * FROM scheduled_doses WHERE isTaken = 0")
     suspend fun getAllPendingScheduledDosesOnce(): List<ScheduledDoseEntity>
 
+    @Query("SELECT * FROM scheduled_doses")
+    suspend fun getAllScheduledDosesOnce(): List<ScheduledDoseEntity>
+
     @Query("SELECT * FROM scheduled_doses WHERE id = :id")
     suspend fun getScheduledDoseById(id: String): ScheduledDoseEntity?
 

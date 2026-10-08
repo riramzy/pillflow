@@ -96,11 +96,29 @@ actual class PlatformNotifier {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        alarmManager.setAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerTimeMillis,
-            pendingIntent
-        )
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTimeMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTimeMillis,
+                    pendingIntent
+                )
+            }
+        } catch (e: SecurityException) {
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerTimeMillis,
+                pendingIntent
+            )
+
+            e.printStackTrace()
+        }
     }
 
     actual fun cancelReminder(context: Any?, doseId: String) {
@@ -169,15 +187,31 @@ actual class PlatformNotifier {
             manager.createNotificationChannel(channel)
         }
 
-        val notification = NotificationCompat.Builder(ctx, channelId)
+        val launchIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        val pendingIntent = launchIntent?.let {
+            PendingIntent.getActivity(
+                ctx,
+                0,
+                it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        val builder = NotificationCompat.Builder(ctx, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .build()
 
-        manager.notify((System.currentTimeMillis() % 10000).toInt(), notification)
+        if (pendingIntent != null) {
+            builder.setContentIntent(pendingIntent)
+        }
+
+        manager.notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
     }
 
     private fun resolveContext(context: Any?): Context? {

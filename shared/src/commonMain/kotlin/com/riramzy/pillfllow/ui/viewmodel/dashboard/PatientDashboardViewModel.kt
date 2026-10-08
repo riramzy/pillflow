@@ -3,9 +3,7 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
-import com.riramzy.pillfllow.data.remote.dto.NudgeDto
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
-import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
@@ -21,9 +19,7 @@ import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.isSameDay
-import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -33,8 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,16 +38,13 @@ class PatientDashboardViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val logDoseTakenUseCase: LogDoseTakenUseCase,
-    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
-    private val platformNotifier: PlatformNotifier = PlatformNotifier(),
-    private val firestore: FirebaseFirestore
+    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
 
     init {
         loadDashboardData()
-        observeNudges()
         observePhysicsSensitivity()
     }
 
@@ -168,39 +159,6 @@ class PatientDashboardViewModel(
         while (true) {
             emit(currentTimeMillis())
             delay(periodMillis.milliseconds)
-        }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun observeNudges() {
-        viewModelScope.launch(Dispatchers.IO) {
-            observeCurrentUserUseCase()
-                .flatMapLatest { user ->
-                    if (user == null) {
-                        emptyFlow()
-                    } else {
-                        firestore
-                            .collection("nudges")
-                            .where { "patientId" equalTo user.id }
-                            .where { "isDelivered" equalTo false }
-                            .snapshots
-                    }
-                }
-                .collect { snapshot ->
-                    snapshot.documents.forEach { doc ->
-                        val nudge = doc.data<NudgeDto>()
-
-                        platformNotifier.sendInstantNudge(
-                            title = "Caregiver Reminder",
-                            message = "${nudge.caregiverName} wants to remind you to take your medication!"
-                        )
-
-                        firestore
-                            .collection("nudges")
-                            .document(nudge.id)
-                            .update("isDelivered" to true)
-                    }
-                }
         }
     }
 }

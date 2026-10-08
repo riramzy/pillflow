@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.data.repo
 
 import com.riramzy.pillfllow.data.remote.dto.NudgeDto
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
+import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
@@ -36,10 +37,12 @@ class NotificationsRepoImpl(
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
     private val logDoseTakenUseCase: LogDoseTakenUseCase,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val platformNotifier: PlatformNotifier
 ): NotificationsRepo {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _dismissedIds = MutableStateFlow<Set<String>>(emptySet())
+    private val _deliveredNudgeIds = mutableSetOf<String>()
     private val _state = MutableStateFlow(NotificationsState(isLoading = true))
     override val state: StateFlow<NotificationsState> = _state.asStateFlow()
 
@@ -75,6 +78,24 @@ class NotificationsRepoImpl(
 
             nudgeSnapshots.documents.forEach { doc ->
                 val nudge = doc.data<NudgeDto>()
+
+                if (!nudge.isDelivered && !_deliveredNudgeIds.contains(nudge.id)) {
+                    _deliveredNudgeIds.add(nudge.id)
+
+                    platformNotifier.sendInstantNudge(
+                        title = "Caregiver Reminder",
+                        message = "${nudge.caregiverName} wants to remind you to take your medication!"
+                    )
+
+                    scope.launch {
+                        runCatching {
+                            firestore
+                                .collection("nudges")
+                                .document(nudge.id)
+                                .update("isDelivered" to true)
+                        }
+                    }
+                }
 
                 if (!nudge.isHandled && !dismissed.contains(nudge.id)) {
                     alerts.add(

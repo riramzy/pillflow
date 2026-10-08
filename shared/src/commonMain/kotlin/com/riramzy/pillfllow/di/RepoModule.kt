@@ -57,7 +57,8 @@ val repoModule: Module = module {
             getPendingDosesForUserUseCase = get(),
             getCaregiverPatientsUseCase = get(),
             logDoseTakenUseCase = get(),
-            firestore = get()
+            firestore = get(),
+            platformNotifier = get()
         )
     }
 }

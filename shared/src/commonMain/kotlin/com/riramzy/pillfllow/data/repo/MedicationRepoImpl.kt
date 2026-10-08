@@ -213,7 +213,9 @@ class MedicationRepoImpl(
                     "takenTime" to takenTime,
                     "complianceStatus" to complianceStatus,
                     "updatedAt" to currentTimeMillis()
-            )
+                )
+
+            medicationDao.markScheduledDoseSynced(id)
 
             val doseDoc = firestore
                 .collection("scheduled_doses")
@@ -358,24 +360,29 @@ class MedicationRepoImpl(
                         }
 
                         if (doses.isNotEmpty()) {
-                            val remoteEntities = querySnapshot.documents.map { it.data<ScheduledDoseDto>().toEntity(isSynced = true) }
+                            val localDosesMap = medicationDao.getAllScheduledDosesOnce().associateBy { it.id }
 
-                            if (remoteEntities.isNotEmpty()) {
-                                medicationDao.insertScheduledDoses(remoteEntities)
+                            val reconciledEntities = doses.map { remote ->
+                                val local = localDosesMap[remote.id]
+                                if (local != null && local.isTaken && !remote.isTaken) {
+                                    local
+                                } else {
+                                    remote
+                                }
                             }
+
+                            medicationDao.insertScheduledDoses(reconciledEntities)
 
                             val currentUserId = sessionManager.currentUser.value?.id
 
                             if (userId == currentUserId) {
                                 val now = currentTimeMillis()
-
-                                doses.filter { !it.isTaken }.forEach { dose ->
+                                reconciledEntities.filter { !it.isTaken }.forEach { dose ->
                                     val med = medicationDao.getAllMedicationsOnce().firstOrNull { it.id == dose.medicationId }
                                     val medName = med?.name ?: "Medication"
 
                                     if (dose.scheduledTime > now) {
                                         val advanceTarget = dose.scheduledTime - 30 * 60 * 1000L
-
                                         if (advanceTarget > now) {
                                             platformNotifier.scheduleDoseReminder(
                                                 doseId = dose.id,
@@ -394,7 +401,6 @@ class MedicationRepoImpl(
                                     }
 
                                     val tPlus15 = dose.scheduledTime + 15 * 60 * 1000L
-
                                     if (tPlus15 > now) {
                                         platformNotifier.scheduleDoseReminder(
                                             doseId = dose.id,
