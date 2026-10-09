@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.app.AvatarMapper
 import com.riramzy.pillfllow.utils.medication.IndicatorColor
+import com.riramzy.pillfllow.utils.user.AvatarMapper
 import org.jetbrains.compose.resources.painterResource
 
 @Composable

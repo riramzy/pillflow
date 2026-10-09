@@ -12,6 +12,11 @@ data class PatientSettingsState(
     val userEmail: String = "",
     val avatarRes: DrawableResource = Res.drawable.avatar1,
     val pairingCode: String = "",
+    val hasActivePairing: Boolean = false,
+    val activePairingId: String? = null,
+    val connectedCaregiverId: String? = null,
+    val connectedCaregiverName: String = "",
+    val connectedCaregiverRelation: String = "",
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
     val pendingSensitivity: PhysicsSensitivity? = null,
     val isLoading: Boolean = false,
@@ -32,4 +37,5 @@ sealed interface PatientSettingsAction {
     ): PatientSettingsAction
     data object DismissError: PatientSettingsAction
     data class SignOut(val onSignedOut: () -> Unit = {}): PatientSettingsAction
+    data object UnlinkCaregiver : PatientSettingsAction
 }

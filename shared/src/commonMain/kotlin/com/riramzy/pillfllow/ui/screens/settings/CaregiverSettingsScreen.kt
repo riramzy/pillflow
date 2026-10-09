@@ -38,7 +38,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
-import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCard
+import com.riramzy.pillfllow.ui.components.settings.PillFlowConnectedUserCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPatientPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.sheets.ConfirmPairingSheet
@@ -59,6 +59,7 @@ import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverSettingsScreen(
+    modifier: Modifier = Modifier,
     caregiverSettingsViewModel: CaregiverSettingsViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
@@ -67,7 +68,6 @@ fun CaregiverSettingsScreen(
     onSignOutSuccess: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val state by caregiverSettingsViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -89,6 +89,7 @@ fun CaregiverSettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaregiverSettingsScreenContent(
+    modifier: Modifier = Modifier,
     state: CaregiverSettingsState = CaregiverSettingsState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (CaregiverSettingsAction) -> Unit = {},
@@ -98,7 +99,6 @@ fun CaregiverSettingsScreenContent(
     onSignOutSuccess: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -355,7 +355,7 @@ fun CaregiverSettingsScreenContent(
                         )
                     } else {
                         state.activePatients.forEach { patient ->
-                            PillFlowPatientCard(
+                            PillFlowConnectedUserCard(
                                 patient = patient,
                                 onPatientClick = {
                                     if (patient.phoneNumber.isNotBlank()) {

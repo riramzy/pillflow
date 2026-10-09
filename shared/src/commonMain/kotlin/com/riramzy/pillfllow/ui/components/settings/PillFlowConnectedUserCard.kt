@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.ui.components.dashboard.caregiver
+package com.riramzy.pillfllow.ui.components.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.riramzy.pillfllow.ui.components.dashboard.caregiver.SelectedPatientCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import org.jetbrains.compose.resources.painterResource
@@ -28,11 +29,12 @@ import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.unlink
 
 @Composable
-fun PillFlowPatientCard(
+fun PillFlowConnectedUserCard(
+    modifier: Modifier = Modifier,
     patient: PairedPatientUiModel = PairedPatientUiModel(),
     onPatientClick: (String) -> Unit = {},
     onUnlinkClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    isCaregiver: Boolean = false
 ) {
     Card(
         modifier = modifier
@@ -59,7 +61,8 @@ fun PillFlowPatientCard(
                 status = patient.status,
                 lateDosesCount = patient.lateDosesCount,
                 missedDosesCount = patient.missedDosesCount,
-                compliancePercentage = patient.compliancePercentage
+                compliancePercentage = patient.compliancePercentage,
+                isCaregiver = isCaregiver
             )
 
             IconButton(
@@ -84,16 +87,16 @@ fun PillFlowPatientCard(
 
 @Preview(showBackground = true)
 @Composable
-fun PillFlowPatientCardPreview() {
+fun PillFlowConnectedUserCardPreview() {
     PillFlowTheme {
-        PillFlowPatientCard(modifier = Modifier.padding(15.dp))
+        PillFlowConnectedUserCard(modifier = Modifier.padding(15.dp))
     }
 }
 
 @Preview(uiMode = UI_MODE_NIGHT_YES, showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-fun PillFlowPatientCardPreviewDark() {
+fun PillFlowConnectedUserCardPreviewDark() {
     PillFlowTheme {
-        PillFlowPatientCard(modifier = Modifier.padding(15.dp))
+        PillFlowConnectedUserCard(modifier = Modifier.padding(15.dp))
     }
 }

@@ -42,10 +42,10 @@ import pillfllow.shared.generated.resources.avatar3
 
 @Composable
 fun PillFlowPatientCarousel(
+    modifier: Modifier = Modifier,
     patients: List<PairedPatientUiModel> = emptyList(),
     selectedPatientId: String = "",
     onPatientSelected: (String) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val activePatient = patients.find { it.id == selectedPatientId } ?: patients.firstOrNull()
     val unselectedPatients = patients.filter { it.id != activePatient?.id }
@@ -102,7 +102,8 @@ fun SelectedPatientCard(
     status: ComplianceStatus = ComplianceStatus.MISSED,
     lateDosesCount: Int = 2,
     missedDosesCount: Int = 1,
-    compliancePercentage: Int = 100
+    compliancePercentage: Int = 100,
+    isCaregiver: Boolean = false
 ) {
     var statusColor: IndicatorColor
     var statusText: String
@@ -160,34 +161,54 @@ fun SelectedPatientCard(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = "$name - $relation",
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .background(
-                            color = statusColor.color,
-                            shape = CircleShape
-                        )
-                )
-
+            if (!isCaregiver) {
                 Text(
-                    text = statusText,
+                    text = "$name - $relation",
                     style = MaterialTheme.typography.bodySmall,
-                    fontSize = 10.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
+            } else {
+                Column {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Text(
+                        text = relation,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Light
+                    )
+                }
             }
 
+
+            if (!isCaregiver) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(
+                                color = statusColor.color,
+                                shape = CircleShape
+                            )
+                    )
+
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
     }
 }

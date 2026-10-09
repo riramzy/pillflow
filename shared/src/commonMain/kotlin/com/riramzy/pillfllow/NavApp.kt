@@ -33,7 +33,7 @@ import com.riramzy.pillfllow.ui.screens.splash.SplashScreen
 import com.riramzy.pillfllow.ui.sheets.NotificationsSheet
 import com.riramzy.pillfllow.ui.sheets.QuickProfileSheet
 import com.riramzy.pillfllow.utils.app.Screen
-import com.riramzy.pillfllow.utils.app.UserType
+import com.riramzy.pillfllow.utils.user.UserType
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 

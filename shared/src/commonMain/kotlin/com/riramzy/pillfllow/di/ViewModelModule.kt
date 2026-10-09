@@ -56,7 +56,8 @@ val viewModelModule: Module = module {
             updateUserProfileUseCase = get(),
             logoutUseCase = get(),
             getPhysicsSensitivityUseCase = get(),
-            setPhysicsSensitivityUseCase = get()
+            setPhysicsSensitivityUseCase = get(),
+            unlinkPatientUseCase = get()
         )
     }
 

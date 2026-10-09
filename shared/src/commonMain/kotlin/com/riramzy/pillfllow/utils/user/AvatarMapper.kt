@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils.app
+package com.riramzy.pillfllow.utils.user
 
 import org.jetbrains.compose.resources.DrawableResource
 import pillfllow.shared.generated.resources.Res

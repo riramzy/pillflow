@@ -1,4 +1,4 @@
-package com.riramzy.pillfllow.utils.app
+package com.riramzy.pillfllow.utils.user
 
 enum class UserType(val label: String) {
     CAREGIVER("Caregiver"),

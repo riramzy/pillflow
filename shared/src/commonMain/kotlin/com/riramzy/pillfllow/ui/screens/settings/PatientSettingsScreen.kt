@@ -38,15 +38,18 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
+import com.riramzy.pillfllow.ui.components.settings.PillFlowConnectedUserCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPairingCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowPhysicsSensitivityCard
 import com.riramzy.pillfllow.ui.components.settings.PillFlowUserProfileCard
 import com.riramzy.pillfllow.ui.sheets.UpdateProfileSheet
+import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.settings.PatientSettingsViewModel
 import com.riramzy.pillfllow.utils.app.Screen
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.platform.copyToClipboard
 import kotlinx.coroutines.launch
@@ -55,6 +58,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PatientSettingsScreen(
+    modifier: Modifier = Modifier,
     patientSettingsViewModel: PatientSettingsViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
@@ -63,7 +67,6 @@ fun PatientSettingsScreen(
     onSignOutSuccess: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val state by patientSettingsViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -85,6 +88,7 @@ fun PatientSettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientSettingsScreenContent(
+    modifier: Modifier = Modifier,
     state: PatientSettingsState = PatientSettingsState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (PatientSettingsAction) -> Unit = {},
@@ -94,7 +98,6 @@ fun PatientSettingsScreenContent(
     onSignOutSuccess: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -289,20 +292,34 @@ fun PatientSettingsScreenContent(
             }
 
             item {
-                PillFlowPairingCard(
-                    pairingCode = state.pairingCode,
-                    onCopyClick = {
-                        if (state.pairingCode.isNotBlank()) {
-                            copyToClipboard(state.pairingCode)
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Pairing code copied to clipboard")
+                if (state.hasActivePairing) {
+                    PillFlowConnectedUserCard(
+                        modifier = Modifier.padding(horizontal = 15.dp),
+                        patient = PairedPatientUiModel(
+                            id = state.connectedCaregiverId ?: "",
+                            name = state.connectedCaregiverName,
+                            relation = state.connectedCaregiverRelation.ifBlank { "Caregiver" },
+                            status = ComplianceStatus.DEFAULT
+                        ),
+                        onUnlinkClick = { onAction(PatientSettingsAction.UnlinkCaregiver) },
+                        isCaregiver = true
+                    )
+                } else {
+                    PillFlowPairingCard(
+                        pairingCode = state.pairingCode,
+                        onCopyClick = {
+                            if (state.pairingCode.isNotBlank()) {
+                                copyToClipboard(state.pairingCode)
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Pairing code copied to clipboard")
+                                }
                             }
-                        }
-                    },
-                    onRegenerateClick = { onAction(PatientSettingsAction.RegenerateCode) },
-                    isRegenerating = state.isRegenerating,
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
+                        },
+                        onRegenerateClick = { onAction(PatientSettingsAction.RegenerateCode) },
+                        isRegenerating = state.isRegenerating,
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
             }
 
             item {
@@ -336,6 +353,11 @@ fun PatientSettingsScreenPreview() {
                 userEmail = "johndoe@gmai.com",
                 pairingCode = "123456",
                 physicsSensitivity = PhysicsSensitivity.NORMAL,
+                hasActivePairing = true,
+                activePairingId = "",
+                connectedCaregiverId = "",
+                connectedCaregiverName = "Ramzy",
+                connectedCaregiverRelation = "Son",
                 isLoading = false,
                 isRegenerating = false,
                 errorMessage = null
@@ -364,6 +386,11 @@ fun PatientSettingsScreenPreviewDark() {
                 userEmail = "johndoe@gmai.com",
                 pairingCode = "123456",
                 physicsSensitivity = PhysicsSensitivity.NORMAL,
+                hasActivePairing = true,
+                activePairingId = "",
+                connectedCaregiverId = "",
+                connectedCaregiverName = "Ramzy",
+                connectedCaregiverRelation = "Son",
                 isLoading = false,
                 isRegenerating = false,
                 errorMessage = null

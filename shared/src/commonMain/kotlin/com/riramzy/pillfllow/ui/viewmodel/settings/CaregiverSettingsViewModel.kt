@@ -11,8 +11,8 @@ import com.riramzy.pillfllow.domain.usecase.caregiver.UnlinkPatientUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
 import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.CaregiverSettingsState
-import com.riramzy.pillfllow.utils.app.AvatarMapper
 import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.user.AvatarMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO

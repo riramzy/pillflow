@@ -5,9 +5,9 @@ import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.domain.repo.PairingRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
-import com.riramzy.pillfllow.utils.app.AvatarMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.isSameDay
+import com.riramzy.pillfllow.utils.user.AvatarMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
