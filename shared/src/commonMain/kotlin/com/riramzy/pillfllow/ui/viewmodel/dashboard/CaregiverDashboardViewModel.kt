@@ -3,14 +3,17 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatTime
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
@@ -34,6 +38,7 @@ class CaregiverDashboardViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
+    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
     private val nudgePatientUseCase: NudgePatientUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(CaregiverDashboardState())
@@ -76,27 +81,24 @@ class CaregiverDashboardViewModel(
             _selectedPatientId
                 .filterNotNull()
                 .flatMapLatest { patientId ->
-                    getPendingDosesForUserUseCase(patientId)
+                    combine(
+                        getPendingDosesForUserUseCase(patientId),
+                        getDoseHistoryForUserUseCase(patientId)
+                    ) { pendingDoses, historyDoses ->
+                        Pair(pendingDoses, historyDoses)
+                    }
                 }
-                .collectLatest { pendingDoses ->
+                .collectLatest { (pendingDoses, historyDoses) ->
                     val now = currentTimeMillis()
-
                     val patientName = _state.value.activePatient?.name ?: "Patient"
 
-
-                    val todayDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
-                    val earliestDose = todayDoses.minByOrNull { it.scheduledTime }
+                    val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
+                    val earliestDose = todayPendingDoses.minByOrNull { it.scheduledTime }
                     val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(earliestDose, now)
+                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(todayPendingDoses, now)
 
-                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(todayDoses, now)
-
-                    val mappedUiDoses = todayDoses.map { dose ->
-                        val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
-                            dose.scheduledTime,
-                            now,
-                            isTaken = false
-                        )
-
+                    val mappedUiDoses = todayPendingDoses.map { dose ->
+                        val evalDose = DoseComplianceEvaluator.evaluateDoseCard(dose.scheduledTime, now, isTaken = false)
                         val pillColor = PillColorMapper.fromRaw(dose.colorHex)
 
                         ScheduledDoseUiModel(
@@ -111,12 +113,36 @@ class CaregiverDashboardViewModel(
                         )
                     }
 
-                    val activities = todayDoses.take(3).map { dose ->
+                    val todayTakenDoses = historyDoses.filter {
+                        it.isTaken && isSameDay(it.takenTime ?: it.scheduledTime, now)
+                    }
+
+                    val takenActivities = todayTakenDoses.map { dose ->
+                        val takenTime = dose.takenTime ?: dose.scheduledTime
+                        val status = when (dose.complianceStatus) {
+                            "ON_TIME" -> ComplianceStatus.ON_TIME
+                            "LATE" -> ComplianceStatus.LATE
+                            else -> ComplianceStatus.ON_TIME
+                        }
+
+                        RecentActivityUiModel(
+                            id = dose.id,
+                            patientName = patientName,
+                            actionDescription = "took ${dose.name} ${dose.dosage}",
+                            timestampText = "at ${formatTime(takenTime)}",
+                            status = status
+                        ) to takenTime
+                    }
+
+                    val overduePendingDoses = todayPendingDoses.filter { dose ->
+                        (now - dose.scheduledTime) > DoseStateMachine.ON_TIME_WINDOW_MILLIS
+                    }
+
+                    val alertActivities = overduePendingDoses.map { dose ->
                         val evalDose = DoseComplianceEvaluator.evaluateLiveActivity(
                             dose.name,
                             dose.dosage,
-                            dose.scheduledTime,
-                            now
+                            dose.scheduledTime, now
                         )
 
                         RecentActivityUiModel(
@@ -125,8 +151,13 @@ class CaregiverDashboardViewModel(
                             actionDescription = evalDose.actionDescription,
                             timestampText = "at ${formatTime(dose.scheduledTime)}",
                             status = evalDose.status
-                        )
+                        ) to dose.scheduledTime
                     }
+
+                    val activities = (takenActivities + alertActivities)
+                        .sortedByDescending { it.second }
+                        .map { it.first }
+                        .take(4)
 
                     _state.update {
                         it.copy(

@@ -66,7 +66,8 @@ val viewModelModule: Module = module {
             observeCurrentUserUseCase = get(),
             getCaregiverPatientsUseCase = get(),
             getPendingDosesForUserUseCase = get(),
-            nudgePatientUseCase = get()
+            nudgePatientUseCase = get(),
+            getDoseHistoryForUserUseCase = get()
         )
     }
 

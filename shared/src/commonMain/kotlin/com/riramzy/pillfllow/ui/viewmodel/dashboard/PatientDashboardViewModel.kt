@@ -84,20 +84,27 @@ class PatientDashboardViewModel(
 
                         val currentDishDose = sortedDishDoses.firstOrNull()
 
-                        val mappedPills = currentDishDose?.let { dose ->
-                            val color = PillColorMapper.fromRaw(dose.colorHex).color
-                            val shape = PillShapeMapper.fromRaw(dose.shape, default = PillShape.CIRCLE)
-                            listOf(
-                                PillEntity(
-                                    id = dose.id,
-                                    name = dose.name,
-                                    color = color,
-                                    shape = shape,
-                                    radius = 32f,
-                                    position = Vector2D(x = 350f, y = 480f)
+                        val currentPillId = _state.value.pills.firstOrNull()?.id
+                        val newPillId = currentDishDose?.id
+
+                        val mappedPills = if (currentPillId == newPillId && currentDishDose != null) {
+                            _state.value.pills
+                        } else {
+                            currentDishDose?.let { dose ->
+                                val color = PillColorMapper.fromRaw(dose.colorHex).color
+                                val shape = PillShapeMapper.fromRaw(dose.shape, default = PillShape.CIRCLE)
+                                listOf(
+                                    PillEntity(
+                                        id = dose.id,
+                                        name = dose.name,
+                                        color = color,
+                                        shape = shape,
+                                        radius = 32f,
+                                        position = Vector2D(x = 350f, y = 480f)
+                                    )
                                 )
-                            )
-                        } ?: emptyList()
+                            } ?: emptyList()
+                        }
 
                         val mappedUiDoses = todayPendingDoses.map { dose ->
                             val evalDose = DoseComplianceEvaluator.evaluateDoseCard(
