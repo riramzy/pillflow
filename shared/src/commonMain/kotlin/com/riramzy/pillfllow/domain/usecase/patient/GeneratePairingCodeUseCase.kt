@@ -17,18 +17,21 @@ class GeneratePairingCodeUseCase(
 
     suspend operator fun invoke(user: UserEntity): Result<String> = mutex.withLock {
         safeCall {
+            val now = currentTimeMillis()
+
             val newCode = Random.nextInt(100000, 999999).toString()
             pairingRepo.deletePendingPairingsForPatient(user.id)
 
             val pairing = CaregiverPatientPairingEntity(
-                pairingId = "pair_${currentTimeMillis()}",
+                pairingId = "pair_$now",
                 caregiverId = user.id,
                 patientId = user.id,
                 phoneNumber = user.phoneNumber,
                 relation = "Patient",
                 pairingCode = newCode,
                 status = "PENDING",
-                createdAt = currentTimeMillis()
+                createdAt = now,
+                expiresAt = now + 15 * 60 * 1000L
             )
 
             pairingRepo.insertPairing(pairing)

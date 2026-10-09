@@ -117,7 +117,13 @@ class PairingRepoImpl(
                 .where { "status" equalTo "PENDING" }
                 .get()
 
-            querySnapshot.documents.firstOrNull()?.data<PairingDto>()?.toEntity()
+            val pairing = querySnapshot.documents.firstOrNull()?.data<PairingDto>()?.toEntity()
+
+            if (pairing != null && pairing.expiresAt > 0L && currentTimeMillis() > pairing.expiresAt) {
+                null
+            } else {
+                pairing
+            }
         }.getOrNull()
 
         remotePairing?.let { pairing ->

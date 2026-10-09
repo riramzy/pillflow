@@ -19,7 +19,7 @@ import com.riramzy.pillfllow.data.local.entity.UserEntity
         UserEntity::class,
         CaregiverPatientPairingEntity::class
     ],
-    version = 11
+    version = 12
 )
 @ConstructedBy(PillFlowDatabaseConstructor::class)
 abstract class PillFlowDatabase: RoomDatabase() {

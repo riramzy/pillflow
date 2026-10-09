@@ -21,4 +21,5 @@ data class CaregiverPatientPairingEntity (
     val pairingCode: String,
     val status: String,
     val createdAt: Long,
+    val expiresAt: Long = 0L
 )

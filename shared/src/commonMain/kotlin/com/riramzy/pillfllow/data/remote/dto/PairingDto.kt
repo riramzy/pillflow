@@ -13,8 +13,10 @@ data class PairingDto(
     val pairingCode: String = "",
     val status: String = "PENDING",
     val createdAt: Long = 0L,
+    val expiresAt: Long = 0L,
     val updatedAt: Long? = null
 )
+
 
 fun PairingDto.toEntity(): CaregiverPatientPairingEntity = CaregiverPatientPairingEntity(
     pairingId = pairingId,
@@ -24,7 +26,8 @@ fun PairingDto.toEntity(): CaregiverPatientPairingEntity = CaregiverPatientPairi
     relation = relation,
     pairingCode = pairingCode,
     status = status,
-    createdAt = createdAt
+    createdAt = createdAt,
+    expiresAt = expiresAt
 )
 
 fun CaregiverPatientPairingEntity.toDto(updatedAt: Long? = null): PairingDto = PairingDto(
@@ -36,5 +39,6 @@ fun CaregiverPatientPairingEntity.toDto(updatedAt: Long? = null): PairingDto = P
     pairingCode = pairingCode,
     status = status,
     createdAt = createdAt,
+    expiresAt = expiresAt,
     updatedAt = updatedAt
 )
