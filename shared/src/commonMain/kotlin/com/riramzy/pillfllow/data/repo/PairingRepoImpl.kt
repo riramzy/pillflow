@@ -91,10 +91,11 @@ class PairingRepoImpl(
 
                         val localPairings = pairingDao.getPairingsForPatientOnce(patientId)
                         localPairings.forEach { local ->
-                            if (local.pairingId !in remoteIds) {
+                            if (local.pairingId !in remoteIds && local.status != "PENDING") {
                                 pairingDao.deletePairingById(local.pairingId)
                             }
                         }
+
                         remoteEntities.forEach { pairingDao.insertPairing(it) }
                     }
             }
