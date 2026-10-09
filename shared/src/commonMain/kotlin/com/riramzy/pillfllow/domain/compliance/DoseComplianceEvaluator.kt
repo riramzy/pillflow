@@ -7,6 +7,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.platform.formatDate
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
 import com.riramzy.pillfllow.utils.platform.getDaysInMonth
@@ -302,7 +303,7 @@ object DoseComplianceEvaluator {
             HistoryLogRecordUiModel(
                 id = record.id,
                 patientName = "",
-                actionTitle = "${record.name} ${record.dosage}",
+                actionTitle = "${formatDate(record.scheduledTime)}, ${record.name} ${record.dosage}",
                 actionDescription = "Scheduled ${formatTime(record.scheduledTime)}",
                 timestampText = recordTimestampText,
                 status = recordStatus,

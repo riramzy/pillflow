@@ -4,6 +4,7 @@ import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 
 expect fun currentTimeMillis(): Long
 expect fun formatTime(millis: Long): String
+expect fun formatDate(millis: Long): String
 expect fun formatMonthYear(millis: Long): String
 expect fun getDayOfMonth(millis: Long): Int
 expect fun getTodayTimeInMillis(hour: Int, minute: Int): Long

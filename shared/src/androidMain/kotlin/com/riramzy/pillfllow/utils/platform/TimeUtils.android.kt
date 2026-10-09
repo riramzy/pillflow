@@ -12,6 +12,11 @@ actual fun formatTime(millis: Long): String {
     return formatter.format(Date(millis))
 }
 
+actual fun formatDate(millis: Long): String {
+    val formatter = SimpleDateFormat("MMM d", Locale.getDefault())
+    return formatter.format(Date(millis))
+}
+
 actual fun formatMonthYear(millis: Long): String {
     val formatter = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
     return formatter.format(Date(millis))

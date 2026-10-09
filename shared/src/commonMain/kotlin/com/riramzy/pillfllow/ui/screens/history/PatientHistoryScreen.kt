@@ -43,6 +43,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PatientHistoryScreen(
+    modifier: Modifier = Modifier,
     historyViewModel: HistoryViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
@@ -50,7 +51,6 @@ fun PatientHistoryScreen(
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val state by historyViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -70,6 +70,7 @@ fun PatientHistoryScreen(
 
 @Composable
 fun PatientHistoryScreenContent(
+    modifier: Modifier = Modifier,
     state: HistoryState = HistoryState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (HistoryAction) -> Unit = {},
@@ -78,7 +79,6 @@ fun PatientHistoryScreenContent(
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = {
@@ -197,8 +197,8 @@ fun PatientHistoryScreenContent(
 
                     if (!state.hasRecords) {
                         PillFlowEmptyStateCard(
-                            title = "No History for ${state.selectedPatientName}",
-                            description = "Adherence logs for ${state.selectedPatientName} will appear here once doses are taken or missed."
+                            title = "No History Recorded",
+                            description = "Your adherence logs will appear here once doses are taken or missed."
                         )
                     } else {
                         state.logRecords.forEach { log ->

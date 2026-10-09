@@ -67,10 +67,10 @@ val defaultSampleDays = listOf(
 
 @Composable
 fun PillFlowMonthlyHeatmapCard(
+    modifier: Modifier = Modifier,
     monthDays: List<MonthDaysCompliance> = defaultSampleDays,
     monthYearText: String = "July 2026",
     firstDayOffset: Int = 0,
-    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
