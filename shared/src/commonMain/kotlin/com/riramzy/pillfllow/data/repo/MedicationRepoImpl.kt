@@ -353,7 +353,7 @@ class MedicationRepoImpl(
                         val local = medicationDao.getAllMedicationsOnce().filter { it.userId == userId }
 
                         local.filter { it.id !in remoteIds && it.isSynced }.forEach {
-                            medicationDao.deleteScheduledDosesByMedicationId(it.id)
+                            medicationDao.deletePendingDosesByMedicationId(it.id)
                             medicationDao.deleteMedicationById(it.id)
                         }
 
