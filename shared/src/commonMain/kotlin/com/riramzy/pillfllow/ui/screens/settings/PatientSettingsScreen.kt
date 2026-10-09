@@ -172,6 +172,50 @@ fun PatientSettingsScreenContent(
         }
     }
 
+    var showUnlinkDialog by remember { mutableStateOf(false) }
+
+    if (showUnlinkDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnlinkDialog = false },
+            title = {
+                Text(
+                    text = "Unlink Caregiver",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to unlink ${state.connectedCaregiverName}?",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            confirmButton = {
+                PillFlowButton(
+                    text = "Unlink",
+                    customColor = MaterialTheme.colorScheme.tertiary,
+                    customTextColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    onClick = {
+                        showUnlinkDialog = false
+                        onAction(PatientSettingsAction.UnlinkCaregiver)
+                    }
+                )
+            },
+            dismissButton = {
+                PillFlowButton(
+                    text = "Cancel",
+                    customColor = MaterialTheme.colorScheme.surface,
+                    customTextColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { showUnlinkDialog = false }
+                )
+            }
+        )
+    }
+
     if (state.pendingSensitivity != null) {
         AlertDialog(
             onDismissRequest = { onAction(PatientSettingsAction.DismissSensitivityDialog) },
@@ -301,7 +345,7 @@ fun PatientSettingsScreenContent(
                             relation = state.connectedCaregiverRelation.ifBlank { "Caregiver" },
                             status = ComplianceStatus.DEFAULT
                         ),
-                        onUnlinkClick = { onAction(PatientSettingsAction.UnlinkCaregiver) },
+                        onUnlinkClick = { showUnlinkDialog = true },
                         isCaregiver = true
                     )
                 } else {

@@ -22,13 +22,24 @@ class GetPatientPairingStatusUseCase(
             val caregiverName = caregiverUser?.let { "${it.firstName} ${it.lastName}".trim() }
                 ?: if (active != null) "Connected Caregiver" else null
 
+            val caregiverRelation = when (active?.relation?.trim()?.lowercase()) {
+                "mom", "mother" -> "Son"
+                "dad", "father" -> "Son"
+                "son" -> "Parent"
+                "daughter" -> "Parent"
+                "grandma", "grandmother" -> "Grandson"
+                "grandpa", "grandfather" -> "Grandson"
+                "patient", "", null -> if (active != null) "Caregiver" else null
+                else -> active.relation.ifBlank { "Caregiver" }
+            }
+
             PairingStatus(
                 pendingCode = pending?.pairingCode,
                 hasActivePairing = active != null,
                 activePairingId = active?.pairingId,
                 caregiverId = active?.caregiverId,
                 caregiverName = caregiverName,
-                relation = active?.relation
+                relation = caregiverRelation
             )
         }
     }
