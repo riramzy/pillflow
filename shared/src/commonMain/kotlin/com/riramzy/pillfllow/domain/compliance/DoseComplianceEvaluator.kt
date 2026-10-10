@@ -98,7 +98,7 @@ object DoseComplianceEvaluator {
         return when {
             elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> DailyStatusEvaluation(
                 ComplianceStatus.MISSED,
-                "ALERT: ${earliestDose.name} ${earliestDose.dosage} was due at $formattedTime"
+                "MISSED: ${earliestDose.name} ${earliestDose.dosage} was due at $formattedTime"
             )
 
             elapsed > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> DailyStatusEvaluation(

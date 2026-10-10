@@ -22,6 +22,7 @@ import com.riramzy.pillfllow.utils.platform.openPhoneDialer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +46,8 @@ class CaregiverDashboardViewModel(
     val state: StateFlow<CaregiverDashboardState> = _state.asStateFlow()
 
     private val _selectedPatientId = MutableStateFlow<String?>(null)
+
+    private var nudgeJob: Job? = null
 
     init {
         loadDashboardData()
@@ -159,11 +162,12 @@ class CaregiverDashboardViewModel(
                         .map { it.first }
                         .take(4)
 
+
                     _state.update {
                         it.copy(
                             selectedPatientDoses = mappedUiDoses,
-                            selectedPatientDailyStatus = dailyStatus,
-                            dailyStatusAlertText = alertText,
+                            selectedPatientDailyStatus = if (nudgeJob?.isActive == true) it.selectedPatientDailyStatus else dailyStatus,
+                            dailyStatusAlertText = if (nudgeJob?.isActive == true) it.dailyStatusAlertText else alertText,
                             weeklyCompliance = weeklyDays,
                             recentActivities = activities,
                             weeklyRatePercentage = weeklyRate,
@@ -188,14 +192,18 @@ class CaregiverDashboardViewModel(
     }
 
     fun nudgePatient(patientId: String) {
+        if (nudgeJob?.isActive == true) return
+
         val patientName = _state.value.patients.firstOrNull { it.id == patientId }?.name ?: "Patient"
         val previousAlert = _state.value.dailyStatusAlertText
+        val previousStatus = _state.value.selectedPatientDailyStatus
 
         val caregiver = _state.value.caregiver
 
-        viewModelScope.launch(Dispatchers.IO) {
+        nudgeJob = viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
+                    selectedPatientDailyStatus = ComplianceStatus.DEFAULT,
                     dailyStatusAlertText = "Nudge reminder sent to $patientName!",
                     lastUpdatedText = "Updated just now"
                 )
@@ -208,7 +216,13 @@ class CaregiverDashboardViewModel(
             )
 
             delay(3000L.milliseconds)
-            _state.update { it.copy(dailyStatusAlertText = previousAlert) }
+
+            _state.update {
+                it.copy(
+                    selectedPatientDailyStatus = previousStatus,
+                    dailyStatusAlertText = previousAlert
+                )
+            }
         }
     }
 

@@ -61,8 +61,9 @@ fun PillFlowActivityCard(
                 modifier = Modifier.size(20.dp)
             )
 
-            val timeSuffix = if (timestampText.isNotBlank()) " ,$timestampText" else ""
+            val timeSuffix = if (timestampText.isNotBlank()) ", $timestampText" else ""
             val namePrefix = if (patientName.isNotBlank()) "$patientName " else ""
+
 
             Text(
                 text = "$namePrefix$actionDescription$timeSuffix",
