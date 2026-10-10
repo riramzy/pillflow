@@ -36,15 +36,15 @@ import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
 import pillfllow.shared.generated.resources.compliance_late
 import pillfllow.shared.generated.resources.compliance_missed
+import pillfllow.shared.generated.resources.next
 import pillfllow.shared.generated.resources.nugde
-import pillfllow.shared.generated.resources.time
 
 @Composable
 fun PillFlowNotificationAlertCard(
+    modifier: Modifier = Modifier,
     alert: NotificationAlertUiModel,
     onDismiss: (String) -> Unit = {},
     onTakeDose: (String) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     var icon: DrawableResource
     var color: Color
@@ -66,11 +66,11 @@ fun PillFlowNotificationAlertCard(
             color = IndicatorColor.RED.color
             backgroundColor = IndicatorColor.RED_CONTAINER.color
             actionLabel = "Dismiss"
-            typeLabel = "Alert"
+            typeLabel = "Missed"
         }
 
         NotificationType.UPCOMING_DOSE -> {
-            icon = Res.drawable.time
+            icon = Res.drawable.next
             color = MaterialTheme.colorScheme.primary
             backgroundColor = MaterialTheme.colorScheme.primaryContainer
             actionLabel = "Dismiss"
@@ -122,7 +122,7 @@ fun PillFlowNotificationAlertCard(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .wrapContentHeight(),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -211,7 +211,7 @@ fun PillFlowNotificationAlertCardPreviewDark() {
                 title = "Bon One 1000mg",
                 description = "Dose One was due at 19:00",
                 timestampText = "Today, at 19:00",
-                type = NotificationType.CAREGIVER_NUDGE,
+                type = NotificationType.ADHERENCE_ALERT,
                 actionLabel = "Take immediately"
             ),
             modifier = Modifier.padding(15.dp)

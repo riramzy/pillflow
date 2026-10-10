@@ -14,6 +14,7 @@ import com.riramzy.pillfllow.ui.state.notifications.NotificationsAction
 import com.riramzy.pillfllow.ui.state.notifications.NotificationsState
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatDate
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.isSameDay
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -118,16 +119,30 @@ class NotificationsRepoImpl(
                 if (dismissed.contains(dose.id)) return@forEach
                 val eval = DoseComplianceEvaluator.evaluateDoseCard(dose.scheduledTime, now, isTaken = false)
                 val formattedTime = formatTime(dose.scheduledTime)
+                val formattedDate = formatDate(dose.scheduledTime)
                 val doseTitle = "${dose.name} ${dose.dosage}".trim()
 
                 when {
-                    eval.status == ComplianceStatus.MISSED || eval.status == ComplianceStatus.LATE -> {
+                    eval.status == ComplianceStatus.MISSED -> {
                         alerts.add(
                             NotificationAlertUiModel(
                                 id = dose.id,
                                 title = doseTitle,
                                 description = "Was due at $formattedTime",
-                                timestampText = formattedTime,
+                                timestampText = formattedDate,
+                                type = NotificationType.ADHERENCE_ALERT,
+                                actionLabel = "Dismiss"
+                            )
+                        )
+                    }
+
+                    eval.status == ComplianceStatus.LATE -> {
+                        alerts.add(
+                            NotificationAlertUiModel(
+                                id = dose.id,
+                                title = doseTitle,
+                                description = "Was due at $formattedTime",
+                                timestampText = formattedDate,
                                 type = NotificationType.OVERDUE_DOSE,
                                 actionLabel = "Take Dose"
                             )
@@ -140,7 +155,7 @@ class NotificationsRepoImpl(
                                 id = dose.id,
                                 title = doseTitle,
                                 description = "Due now ($formattedTime)",
-                                timestampText = formattedTime,
+                                timestampText = formattedDate,
                                 type = NotificationType.OVERDUE_DOSE,
                                 actionLabel = "Take Dose"
                             )
@@ -153,7 +168,7 @@ class NotificationsRepoImpl(
                                 id = dose.id,
                                 title = doseTitle,
                                 description = "Scheduled for $formattedTime",
-                                timestampText = formattedTime,
+                                timestampText = formattedDate,
                                 type = NotificationType.UPCOMING_DOSE
                             )
                         )

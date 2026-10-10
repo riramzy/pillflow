@@ -202,7 +202,7 @@ object DoseComplianceEvaluator {
             when {
                 elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceCardUiModel(
                     status = ComplianceStatus.MISSED,
-                    title = "Overdue: ${dose.name} ${dose.dosage}",
+                    title = "Missed: ${dose.name} ${dose.dosage}",
                     subtitle = "Scheduled time window expired",
                     badgeText = "Missed: Was Due $formattedTime"
                 )
