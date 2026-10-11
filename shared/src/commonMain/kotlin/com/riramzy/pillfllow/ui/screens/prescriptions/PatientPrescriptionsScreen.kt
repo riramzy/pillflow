@@ -13,9 +13,12 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +35,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
@@ -52,14 +56,14 @@ import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PatientPrescriptionsScreen(
+    modifier: Modifier = Modifier,
     prescriptionsViewModel: PatientPrescriptionsViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNotificationsClick: () -> Unit = {}
 ) {
     val state by prescriptionsViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -80,6 +84,7 @@ fun PatientPrescriptionsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientPrescriptionsScreenContent(
+    modifier: Modifier = Modifier,
     state: PatientPrescriptionsState = PatientPrescriptionsState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (PatientPrescriptionsAction) -> Unit = {},
@@ -87,11 +92,18 @@ fun PatientPrescriptionsScreenContent(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNotificationsClick: () -> Unit = {}
 ) {
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            onAction(PatientPrescriptionsAction.ClearMessages)
+        }
+    }
 
     if (state.isAddSheetOpen) {
         ModalBottomSheet(
@@ -101,6 +113,7 @@ fun PatientPrescriptionsScreenContent(
         ) {
             PrescriptionSheet(
                 initialMedication = editingPrescription,
+                isSaving = state.isSaving,
                 onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis ->
                     onAction(
                         PatientPrescriptionsAction.SavePrescription(
@@ -186,8 +199,16 @@ fun PatientPrescriptionsScreenContent(
                     onAction(PatientPrescriptionsAction.OpenAddSheet)
                 }
             )
-                               },
+        },
         floatingActionButtonPosition = FabPosition.Center,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { data ->
+                    PillFlowSnackbar(snackbarData = data)
+                }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
     ) {

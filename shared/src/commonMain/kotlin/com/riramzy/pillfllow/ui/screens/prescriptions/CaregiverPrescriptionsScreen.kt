@@ -13,9 +13,12 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +35,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
@@ -59,14 +63,14 @@ import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverPrescriptionsScreen(
+    modifier: Modifier = Modifier,
     caregiverPrescriptionsViewModel: CaregiverPrescriptionsViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNotificationsClick: () -> Unit = {}
 ) {
     val state by caregiverPrescriptionsViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -87,6 +91,7 @@ fun CaregiverPrescriptionsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaregiverPrescriptionsScreenContent(
+    modifier: Modifier = Modifier,
     state: CaregiverPrescriptionsState = CaregiverPrescriptionsState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (CaregiverPrescriptionsAction) -> Unit = {},
@@ -94,10 +99,17 @@ fun CaregiverPrescriptionsScreenContent(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNotificationsClick: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            onAction(CaregiverPrescriptionsAction.ClearMessages)
+        }
+    }
 
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
 
@@ -109,6 +121,7 @@ fun CaregiverPrescriptionsScreenContent(
         ) {
             PrescriptionSheet(
                 initialMedication = editingPrescription,
+                isSaving = state.isSaving,
                 onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis ->
                     onAction(
                         CaregiverPrescriptionsAction.SavePrescription(
@@ -198,6 +211,14 @@ fun CaregiverPrescriptionsScreenContent(
             )
                                },
         floatingActionButtonPosition = FabPosition.Center,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { data ->
+                    PillFlowSnackbar(snackbarData = data)
+                }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
     ) {

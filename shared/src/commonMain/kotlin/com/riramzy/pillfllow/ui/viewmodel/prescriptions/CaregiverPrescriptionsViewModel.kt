@@ -157,8 +157,15 @@ class CaregiverPrescriptionsViewModel(
         shape: String,
         scheduledTimesMillis: List<Long> = emptyList()
     ) {
+        val isEditing = _state.value.editingMedicationId != null
+        _state.update { it.copy(isSaving = true) }
+
         viewModelScope.launch(Dispatchers.IO) {
-            val patientId = _selectedPatientId.value ?: return@launch
+            val patientId = _selectedPatientId.value
+            if (patientId == null) {
+                _state.update { it.copy(isSaving = false) }
+                return@launch
+            }
 
             savePrescriptionUseCase(
                 editingMedicationId = _state.value.editingMedicationId,
@@ -173,7 +180,14 @@ class CaregiverPrescriptionsViewModel(
                 scheduledTimesMillis = scheduledTimesMillis
             )
 
-            closeAddSheet()
+            _state.update {
+                it.copy(
+                    isSaving = false,
+                    isAddSheetOpen = false,
+                    editingMedicationId = null,
+                    successMessage = if (isEditing) "Prescription updated successfully" else "Prescription added successfully"
+                )
+            }
         }
     }
 
@@ -186,6 +200,10 @@ class CaregiverPrescriptionsViewModel(
     fun selectPatient(patientId: String) {
         _selectedPatientId.value = patientId
         _state.update { it.copy(selectedPatientId = patientId) }
+    }
+
+    fun clearMessages() {
+        _state.update { it.copy(successMessage = null, errorMessage = null) }
     }
 
     fun onAction(action: CaregiverPrescriptionsAction) {
@@ -205,6 +223,7 @@ class CaregiverPrescriptionsViewModel(
                 action.scheduledTimesMillis
             )
             is CaregiverPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
+            is CaregiverPrescriptionsAction.ClearMessages -> clearMessages()
         }
     }
 }

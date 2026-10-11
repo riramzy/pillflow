@@ -8,10 +8,12 @@ data class PatientPrescriptionsState(
     val activeCount: Int = 0,
     val nextDoseTime: String = "--:--",
     val nextDoseMedication: String = "None",
-    val isLoading: Boolean = true,
     val isAddSheetOpen: Boolean = false,
     val editingMedicationId: String? = null,
-    val errorMessage: String? = null
+    val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
+    val errorMessage: String? = null,
+    val successMessage: String? = null
 ) {
     val isEmpty: Boolean get() = prescriptions.isEmpty()
 }
@@ -42,4 +44,5 @@ sealed interface PatientPrescriptionsAction {
         val scheduledTimesMillis: List<Long> = emptyList()
     ): PatientPrescriptionsAction
     data class DeletePrescription(val id: String): PatientPrescriptionsAction
+    data object ClearMessages : PatientPrescriptionsAction
 }

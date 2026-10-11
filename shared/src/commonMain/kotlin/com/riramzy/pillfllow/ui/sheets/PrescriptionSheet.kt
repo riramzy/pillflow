@@ -41,6 +41,7 @@ import com.riramzy.pillfllow.utils.platform.parseScheduleTimeToMillis
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrescriptionSheet(
+    modifier: Modifier = Modifier,
     initialMedication: PrescriptionUiModel? = null,
     onMedicationSaved: (
         name: String,
@@ -52,7 +53,7 @@ fun PrescriptionSheet(
         shape: String,
         scheduledTimesMillis: List<Long>
     ) -> Unit = { _, _, _, _, _, _, _, _ -> },
-    modifier: Modifier = Modifier
+    isSaving: Boolean = false
 ) {
     var medicationName by remember(initialMedication) {
         mutableStateOf(initialMedication?.medicationName ?: "")
@@ -176,6 +177,12 @@ fun PrescriptionSheet(
         )
     }
 
+    val buttonText = when {
+        isSaving -> if (initialMedication != null) "Updating..." else "Saving..."
+        initialMedication != null -> "Update Prescription"
+        else -> "Save Prescription"
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -278,7 +285,8 @@ fun PrescriptionSheet(
 
         PillFlowButton(
             modifier = Modifier.fillMaxWidth(),
-            text = if (initialMedication != null) "Update Prescription" else "Save Prescription",
+            text = buttonText,
+            isEnabled = !isSaving,
             onClick = {
                 val finalScheduledMillis = when {
                     accumulatedMillis.isNotEmpty() -> accumulatedMillis

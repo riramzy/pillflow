@@ -138,8 +138,15 @@ class PatientPrescriptionsViewModel(
         shape: String,
         scheduledTimesMillis: List<Long> = emptyList()
     ) {
+        val isEditing = _state.value.editingMedicationId != null
+        _state.update { it.copy(isSaving = true) }
+
         viewModelScope.launch(Dispatchers.IO) {
-            val user = observeCurrentUserUseCase.once() ?: return@launch
+            val user = observeCurrentUserUseCase.once()
+            if (user == null) {
+                _state.update { it.copy(isSaving = false) }
+                return@launch
+            }
 
             savePrescriptionUseCase(
                 editingMedicationId = _state.value.editingMedicationId,
@@ -154,7 +161,14 @@ class PatientPrescriptionsViewModel(
                 scheduledTimesMillis = scheduledTimesMillis
             )
 
-            closeAddSheet()
+            _state.update {
+                it.copy(
+                    isSaving = false,
+                    isAddSheetOpen = false,
+                    editingMedicationId = null,
+                    successMessage = if (isEditing) "Prescription updated successfully" else "Prescription added successfully"
+                )
+            }
         }
     }
 
@@ -162,6 +176,10 @@ class PatientPrescriptionsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             deletePrescriptionUseCase(id)
         }
+    }
+
+    fun clearMessages() {
+        _state.update { it.copy(successMessage = null, errorMessage = null) }
     }
 
     fun onAction(action: PatientPrescriptionsAction) {
@@ -174,6 +192,7 @@ class PatientPrescriptionsViewModel(
                 action.timeOfDay, action.colorHex, action.shape, action.scheduledTimesMillis
             )
             is PatientPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
+            is PatientPrescriptionsAction.ClearMessages -> clearMessages()
         }
     }
 }
