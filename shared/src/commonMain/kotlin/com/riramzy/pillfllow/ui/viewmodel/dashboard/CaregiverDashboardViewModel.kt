@@ -98,7 +98,12 @@ class CaregiverDashboardViewModel(
                     val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
                     val earliestDose = todayPendingDoses.minByOrNull { it.scheduledTime }
                     val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(earliestDose, now)
-                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(todayPendingDoses, now)
+
+                    val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(
+                        historyDoses = historyDoses,
+                        pendingDoses = pendingDoses,
+                        now = now
+                    )
 
                     val mappedUiDoses = todayPendingDoses.map { dose ->
                         val evalDose = DoseComplianceEvaluator.evaluateDoseCard(dose.scheduledTime, now, isTaken = false)

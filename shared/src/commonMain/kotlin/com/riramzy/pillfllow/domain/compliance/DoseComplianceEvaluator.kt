@@ -140,32 +140,54 @@ object DoseComplianceEvaluator {
     }
 
     fun evaluateWeeklyCompliance(
+        historyDoses: List<DoseHistoryEntity>,
         pendingDoses: List<PendingDoseWithMedication>,
         now: Long
     ): WeeklyComplianceEvaluation {
         val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         val currentDayIndex = (((now / 86400000L) + 3) % 7).toInt()
 
-        val overdueCount = pendingDoses.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
-        val lateCount = pendingDoses.count { (now - it.scheduledTime) in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS }
-
-        val todayStatus = when {
-            overdueCount > 0 -> ComplianceStatus.MISSED
-            lateCount > 0 -> ComplianceStatus.LATE
-            else -> ComplianceStatus.ON_TIME
-        }
-
         val days = dayNames.mapIndexed { index, name ->
+            val dayOffsetMillis = (index - currentDayIndex) * 86400000L
+            val targetDayMillis = now + dayOffsetMillis
+
             when {
-                index < currentDayIndex -> ComplianceDayUiModel(name, ComplianceStatus.ON_TIME)
-                index == currentDayIndex -> ComplianceDayUiModel(name, todayStatus)
-                else -> ComplianceDayUiModel(name, ComplianceStatus.DEFAULT)
+                index > currentDayIndex -> ComplianceDayUiModel(name, ComplianceStatus.DEFAULT)
+
+                index == currentDayIndex -> {
+                    val overdueCount = pendingDoses.count { isSameDay(it.scheduledTime, now) && (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+                    val lateCount = pendingDoses.count {
+                        isSameDay(it.scheduledTime, now) &&
+                                (now - it.scheduledTime) in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+                    }
+
+                    val todayStatus = when {
+                        overdueCount > 0 -> ComplianceStatus.MISSED
+                        lateCount > 0 -> ComplianceStatus.LATE
+                        else -> ComplianceStatus.ON_TIME
+                    }
+
+                    ComplianceDayUiModel(name, todayStatus)
+                }
+
+                else -> {
+                    val dayRecords = historyDoses.filter { isSameDay(it.scheduledTime, targetDayMillis) }
+
+                    val dayStatus = when {
+                        dayRecords.isEmpty() -> ComplianceStatus.ON_TIME
+                        dayRecords.any { !it.isTaken || it.complianceStatus == "MISSED" } -> ComplianceStatus.MISSED
+                        dayRecords.any { it.complianceStatus == "LATE" } -> ComplianceStatus.LATE
+                        else -> ComplianceStatus.ON_TIME
+                    }
+
+                    ComplianceDayUiModel(name, dayStatus)
+                }
             }
         }
 
-        val totalRecorded = currentDayIndex + 1
-        val missedDays = if (todayStatus == ComplianceStatus.MISSED) 1 else 0
-        val rate = ((totalRecorded - missedDays) * 100) / totalRecorded.coerceAtLeast(1)
+        val elapsedDays = days.take(currentDayIndex + 1)
+        val missedDaysCount = elapsedDays.count { it.status == ComplianceStatus.MISSED }
+        val rate = ((elapsedDays.size - missedDaysCount) * 100) / elapsedDays.size.coerceAtLeast(1)
 
         return WeeklyComplianceEvaluation(days, rate)
     }
