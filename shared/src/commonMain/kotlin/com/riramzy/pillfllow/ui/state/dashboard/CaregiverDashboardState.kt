@@ -51,6 +51,12 @@ data class RecentActivityUiModel(
     val status: ComplianceStatus = ComplianceStatus.ON_TIME
 )
 
+sealed interface PatientCarouselMode {
+    data object LiveDaily : PatientCarouselMode
+    data class MonthlyHistory(val scorePercentage: Int) : PatientCarouselMode
+    data class Prescriptions(val prescriptionCount: Int) : PatientCarouselMode
+}
+
 sealed interface CaregiverDashboardAction {
     data class SelectPatient(val patientId: String): CaregiverDashboardAction
     data class CallPatient(val patientId: String): CaregiverDashboardAction

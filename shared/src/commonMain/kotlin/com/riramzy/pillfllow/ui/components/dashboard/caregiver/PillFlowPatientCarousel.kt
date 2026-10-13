@@ -24,12 +24,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.PatientCarouselMode
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.medication.IndicatorColor
@@ -45,6 +47,7 @@ fun PillFlowPatientCarousel(
     modifier: Modifier = Modifier,
     patients: List<PairedPatientUiModel> = emptyList(),
     selectedPatientId: String = "",
+    mode: PatientCarouselMode = PatientCarouselMode.LiveDaily,
     onPatientSelected: (String) -> Unit = {},
 ) {
     val activePatient = patients.find { it.id == selectedPatientId } ?: patients.firstOrNull()
@@ -75,7 +78,8 @@ fun PillFlowPatientCarousel(
                     status = patient.status,
                     lateDosesCount = patient.lateDosesCount,
                     missedDosesCount = patient.missedDosesCount,
-                    compliancePercentage = patient.compliancePercentage
+                    compliancePercentage = patient.compliancePercentage,
+                    mode = mode
                 )
             }
 
@@ -103,30 +107,33 @@ fun SelectedPatientCard(
     lateDosesCount: Int = 2,
     missedDosesCount: Int = 1,
     compliancePercentage: Int = 100,
+    mode: PatientCarouselMode = PatientCarouselMode.LiveDaily,
     isCaregiver: Boolean = false
 ) {
-    var statusColor: IndicatorColor
-    var statusText: String
-
-    when (status) {
-        ComplianceStatus.DEFAULT -> {
-            statusColor = IndicatorColor.YELLOW
-            statusText = "All Good!"
+    val (statusText, statusColor: Color) = when (mode) {
+        is PatientCarouselMode.LiveDaily -> {
+            when (status) {
+                ComplianceStatus.DEFAULT -> "All Good!" to MaterialTheme.colorScheme.primary
+                ComplianceStatus.ON_TIME -> "Compliance: $compliancePercentage%" to IndicatorColor.GREEN.color
+                ComplianceStatus.LATE -> "$lateDosesCount Dose(s) Late" to IndicatorColor.YELLOW.color
+                ComplianceStatus.MISSED -> "$missedDosesCount Dose(s) Missed" to IndicatorColor.RED.color
+            }
         }
 
-        ComplianceStatus.ON_TIME -> {
-            statusColor = IndicatorColor.GREEN
-            statusText = "Compliance: $compliancePercentage%"
+        is PatientCarouselMode.MonthlyHistory -> {
+            val color = when {
+                mode.scorePercentage >= 80 -> IndicatorColor.GREEN.color
+                mode.scorePercentage >= 50 -> IndicatorColor.YELLOW.color
+                else -> IndicatorColor.RED.color
+            }
+
+            "Monthly Score: ${mode.scorePercentage}%" to color
         }
 
-        ComplianceStatus.LATE -> {
-            statusColor = IndicatorColor.YELLOW
-            statusText = "$lateDosesCount Dose(s) Taken Late"
-        }
-
-        ComplianceStatus.MISSED -> {
-            statusColor = IndicatorColor.RED
-            statusText = "$missedDosesCount Dose(s) Missed"
+        is PatientCarouselMode.Prescriptions -> {
+            val text = if (mode.prescriptionCount == 1) "1 Prescription" else "${mode.prescriptionCount} Prescriptions"
+            val color = if (mode.prescriptionCount > 0) IndicatorColor.GREEN.color else IndicatorColor.YELLOW.color
+            text to color
         }
     }
 
@@ -196,7 +203,7 @@ fun SelectedPatientCard(
                         modifier = Modifier
                             .size(12.dp)
                             .background(
-                                color = statusColor.color,
+                                color = statusColor,
                                 shape = CircleShape
                             )
                     )

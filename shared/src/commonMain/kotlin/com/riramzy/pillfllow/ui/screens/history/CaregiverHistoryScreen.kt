@@ -32,6 +32,7 @@ import com.riramzy.pillfllow.ui.components.history.PillFlowMonthSelectionCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyHeatmapCard
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthlyScoreCard
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.PatientCarouselMode
 import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryState
@@ -50,14 +51,14 @@ import pillfllow.shared.generated.resources.user_patient
 
 @Composable
 fun CaregiverHistoryScreen(
+    modifier: Modifier = Modifier,
     historyViewModel: HistoryViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHome: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNotificationsClick: () -> Unit = {}
 ) {
     val state by historyViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -77,6 +78,7 @@ fun CaregiverHistoryScreen(
 
 @Composable
 fun CaregiverHistoryScreenContent(
+    modifier: Modifier = Modifier,
     state: HistoryState = HistoryState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (HistoryAction) -> Unit = {},
@@ -85,7 +87,6 @@ fun CaregiverHistoryScreenContent(
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = {
@@ -158,6 +159,7 @@ fun CaregiverHistoryScreenContent(
                     PillFlowPatientCarousel(
                         patients = state.pairedPatients,
                         selectedPatientId = state.selectedPatientId,
+                        mode = PatientCarouselMode.MonthlyHistory(scorePercentage = state.scorePercentage),
                         onPatientSelected = { patientId ->
                             onAction(HistoryAction.SelectPatient(patientId)) },
                         modifier = Modifier.padding(horizontal = 15.dp)

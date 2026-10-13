@@ -42,6 +42,7 @@ import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCar
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.sheets.PrescriptionSheet
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.PatientCarouselMode
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
@@ -282,6 +283,7 @@ fun CaregiverPrescriptionsScreenContent(
                         patients = state.pairedPatients,
                         selectedPatientId = state.selectedPatientId
                             ?: state.pairedPatients.first().id,
+                        mode = PatientCarouselMode.Prescriptions(prescriptionCount = state.prescriptions.size),
                         onPatientSelected = { patientId ->
                             onAction(CaregiverPrescriptionsAction.SelectPatient(patientId))
                                             },
