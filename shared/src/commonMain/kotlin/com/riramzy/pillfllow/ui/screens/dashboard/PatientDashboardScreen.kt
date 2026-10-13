@@ -10,9 +10,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +34,7 @@ import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
@@ -53,14 +57,14 @@ import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PatientDashboardScreen(
+    modifier: Modifier = Modifier,
     patientDashboardViewModel: PatientDashboardViewModel = koinViewModel(),
     notificationsRepo: NotificationsRepo = koinInject(),
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPrescriptions: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNotificationsClick: () -> Unit = {}
 ) {
     val state by patientDashboardViewModel.state.collectAsStateWithLifecycle()
     val notificationState by notificationsRepo.state.collectAsStateWithLifecycle()
@@ -80,6 +84,7 @@ fun PatientDashboardScreen(
 
 @Composable
 fun PatientDashboardScreenContent(
+    modifier: Modifier = Modifier,
     state: PatientDashboardState = PatientDashboardState(),
     hasUnreadNotifications: Boolean = false,
     onAction: (PatientDashboardAction) -> Unit = {},
@@ -88,8 +93,16 @@ fun PatientDashboardScreenContent(
     onNavigateToSettings: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            onAction(PatientDashboardAction.DismissError)
+        }
+    }
+
     val sensor = remember { PlatformSensor() }
     var tiltX by remember { mutableStateOf(0f) }
     var tiltY by remember { mutableStateOf(0f) }
@@ -122,6 +135,17 @@ fun PatientDashboardScreenContent(
             )
                                },
         floatingActionButtonPosition = FabPosition.Center,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { data ->
+                    PillFlowSnackbar(
+                        snackbarData = data,
+                        isError = true
+                    )
+                }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
     ) {

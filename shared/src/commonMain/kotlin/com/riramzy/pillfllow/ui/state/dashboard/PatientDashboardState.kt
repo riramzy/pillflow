@@ -48,4 +48,5 @@ data class ComplianceCardUiModel(
 
 sealed interface PatientDashboardAction {
     data class LogDose(val doseId: String, val scheduledTime: Long? = null): PatientDashboardAction
+    data object DismissError: PatientDashboardAction
 }

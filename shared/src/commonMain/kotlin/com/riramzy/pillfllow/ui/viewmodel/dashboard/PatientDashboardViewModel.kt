@@ -13,6 +13,7 @@ import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
+import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.pill.PillShape
 import com.riramzy.pillfllow.utils.pill.PillShapeMapper
@@ -152,13 +153,26 @@ class PatientDashboardViewModel(
             ?: _state.value.scheduledDoses.firstOrNull { it.id == doseId }?.scheduledTime
 
         viewModelScope.launch(Dispatchers.IO) {
-            logDoseTakenUseCase(doseId = doseId, scheduledTime = resolvedTime)
+            when (val result = logDoseTakenUseCase(doseId = doseId, scheduledTime = resolvedTime)) {
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(errorMessage = result.message ?: "Failed to record dose. Please try again.")
+                    }
+                }
+
+                else -> Unit
+            }
         }
+    }
+
+    fun onErrorDismissed() {
+        _state.update { it.copy(errorMessage = null) }
     }
 
     fun onAction(action: PatientDashboardAction) {
         when (action) {
             is PatientDashboardAction.LogDose -> logDose(action.doseId, action.scheduledTime)
+            is PatientDashboardAction.DismissError -> onErrorDismissed()
         }
     }
 
