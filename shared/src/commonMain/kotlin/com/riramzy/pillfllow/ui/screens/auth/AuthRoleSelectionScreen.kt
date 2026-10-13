@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -49,11 +53,70 @@ fun AuthRoleSelectionScreen(
 
 @Composable
 fun AuthRoleSelectionScreenContent(
+    modifier: Modifier = Modifier,
     state: AuthState = AuthState(),
     onRoleSelected: (UserType) -> Unit = {},
     onContinueClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
+    var infoDialogRole by remember { mutableStateOf<UserType?>(null) }
+
+    if (infoDialogRole != null) {
+        val isCaregiver = infoDialogRole == UserType.CAREGIVER
+
+        AlertDialog(
+            onDismissRequest = { infoDialogRole = null },
+            shape = RoundedCornerShape(25.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    text = if (isCaregiver) "Caregiver Account" else "Patient Account",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = if (isCaregiver) {
+                        "Designed for family members or caregivers who want to:\n\n" +
+                                "• Monitor loved ones' adherence in real-time\n" +
+                                "• Receive alerts for late or missed doses\n" +
+                                "• Send gentle reminder nudges\n" +
+                                "• Manage prescriptions and review monthly history"
+                    } else {
+                        "Designed for individuals managing medications who want to:\n\n" +
+                                "• Track daily doses with interactive dish physics\n" +
+                                "• Receive exact schedule alarm notifications\n" +
+                                "• Generate pairing codes to link with family caregivers\n" +
+                                "• Review personal monthly adherence streaks"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            confirmButton = {
+                PillFlowButton(
+                    text = "Select",
+                    onClick = {
+                        onRoleSelected(infoDialogRole!!)
+                        infoDialogRole = null
+                    }
+                )
+            },
+            dismissButton = {
+                PillFlowButton(
+                    text = "Close",
+                    onClick = { infoDialogRole = null },
+                    customColor = MaterialTheme.colorScheme.surface,
+                    customTextColor = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -111,13 +174,15 @@ fun AuthRoleSelectionScreenContent(
                     PillFlowUserTypeCard(
                         type = UserType.PATIENT,
                         isSelected = state.selectedRole == UserType.PATIENT,
-                        onSelect = { onRoleSelected(UserType.PATIENT) }
+                        onSelect = { onRoleSelected(UserType.PATIENT) },
+                        onInfoClick = { infoDialogRole = UserType.PATIENT }
                     )
 
                     PillFlowUserTypeCard(
                         type = UserType.CAREGIVER,
                         isSelected = state.selectedRole == UserType.CAREGIVER,
-                        onSelect = { onRoleSelected(UserType.CAREGIVER) }
+                        onSelect = { onRoleSelected(UserType.CAREGIVER) },
+                        onInfoClick = { infoDialogRole = UserType.CAREGIVER }
                     )
                 }
 

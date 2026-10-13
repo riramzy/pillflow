@@ -45,7 +45,8 @@ fun PillFlowUserTypeCard(
     modifier: Modifier = Modifier,
     type: UserType = UserType.PATIENT,
     isSelected: Boolean = false,
-    onSelect: () -> Unit = {}
+    onSelect: () -> Unit = {},
+    onInfoClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
@@ -128,7 +129,7 @@ fun PillFlowUserTypeCard(
             }
 
             IconButton(
-                onClick = { /*TODO*/ },
+                onClick = { onInfoClick?.invoke() ?: onSelect() },
                 modifier = Modifier
                     .size(20.dp)
                     .weight(0.1f)
