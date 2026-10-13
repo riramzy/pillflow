@@ -127,7 +127,7 @@ fun SelectedPatientCard(
                 else -> IndicatorColor.RED.color
             }
 
-            "Monthly Score: ${mode.scorePercentage}%" to color
+            "Score: ${mode.scorePercentage}%" to color
         }
 
         is PatientCarouselMode.Prescriptions -> {
