@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.components.onboarding.time
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,44 +48,51 @@ fun PillFlowOnboardingTimeHeroCard(
     isActive: Boolean = true,
 ) {
     val isPreview = LocalInspectionMode.current
-    val startOffset = if (isPreview) 0f else -350f
+    val startOffset = if (isPreview) 0f else -520f
     var hasAnimated by remember { mutableStateOf(false) }
 
     val drop1 = remember { Animatable(startOffset) }
     val drop2 = remember { Animatable(startOffset) }
     val drop3 = remember { Animatable(startOffset) }
     val drop4 = remember { Animatable(startOffset) }
+    val alphaAnim = remember { Animatable(if (isPreview) 1f else 0f) }
 
     LaunchedEffect(isActive) {
         if (!isActive || hasAnimated || isPreview) return@LaunchedEffect
         hasAnimated = true
 
-        val relaxedSpring = spring<Float>(
-            dampingRatio = 0.70f,
-            stiffness = Spring.StiffnessLow
+        val fluidSpring = spring<Float>(
+            dampingRatio = 0.82f,
+            stiffness = Spring.StiffnessMediumLow
         )
 
-        launch { drop1.animateTo(0f, relaxedSpring) }
+        launch {
+            alphaAnim.animateTo(1f, tween(250))
+        }
+
+        launch {
+            drop1.animateTo(0f, fluidSpring)
+        }
+
+        launch {
+            delay(100.milliseconds)
+            drop2.animateTo(0f, fluidSpring)
+        }
 
         launch {
             delay(200.milliseconds)
-            drop2.animateTo(0f, relaxedSpring)
+            drop3.animateTo(0f, fluidSpring)
         }
 
         launch {
-            delay(400.milliseconds)
-            drop3.animateTo(0f, relaxedSpring)
-        }
-
-        launch {
-            delay(600.milliseconds)
-            drop4.animateTo(0f, relaxedSpring)
+            delay(300.milliseconds)
+            drop4.animateTo(0f, fluidSpring)
         }
     }
 
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
-        modifier = modifier
+        modifier = modifier.graphicsLayer { alpha = alphaAnim.value }
     ) {
         Card(
             modifier = Modifier
