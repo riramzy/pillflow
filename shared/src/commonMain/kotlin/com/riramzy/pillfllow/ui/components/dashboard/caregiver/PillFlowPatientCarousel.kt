@@ -132,7 +132,7 @@ fun SelectedPatientCard(
 
         is PatientCarouselMode.Prescriptions -> {
             val text = if (mode.prescriptionCount == 1) "1 Prescription" else "${mode.prescriptionCount} Prescriptions"
-            val color = if (mode.prescriptionCount > 0) IndicatorColor.GREEN.color else IndicatorColor.YELLOW.color
+            val color = if (mode.prescriptionCount > 0) MaterialTheme.colorScheme.primary else IndicatorColor.YELLOW.color
             text to color
         }
     }
