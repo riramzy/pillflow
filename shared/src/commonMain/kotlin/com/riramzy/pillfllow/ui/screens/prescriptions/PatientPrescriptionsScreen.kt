@@ -105,6 +105,13 @@ fun PatientPrescriptionsScreenContent(
         }
     }
 
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            onAction(PatientPrescriptionsAction.ClearMessages)
+        }
+    }
+
     if (state.isAddSheetOpen) {
         ModalBottomSheet(
             onDismissRequest = { onAction(PatientPrescriptionsAction.CloseAddSheet) },
@@ -205,7 +212,10 @@ fun PatientPrescriptionsScreenContent(
             SnackbarHost(
                 hostState = snackbarHostState,
                 snackbar = { data ->
-                    PillFlowSnackbar(snackbarData = data)
+                    PillFlowSnackbar(
+                        snackbarData = data,
+                        isError = state.errorMessage != null
+                    )
                 }
             )
         },

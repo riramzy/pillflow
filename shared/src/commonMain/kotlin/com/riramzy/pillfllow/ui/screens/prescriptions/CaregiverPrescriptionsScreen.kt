@@ -111,6 +111,13 @@ fun CaregiverPrescriptionsScreenContent(
         }
     }
 
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            onAction(CaregiverPrescriptionsAction.ClearMessages)
+        }
+    }
+
     val editingPrescription = state.prescriptions.find { it.id == state.editingMedicationId }
 
     if (state.isAddSheetOpen) {
@@ -215,7 +222,10 @@ fun CaregiverPrescriptionsScreenContent(
             SnackbarHost(
                 hostState = snackbarHostState,
                 snackbar = { data ->
-                    PillFlowSnackbar(snackbarData = data)
+                    PillFlowSnackbar(
+                        snackbarData = data,
+                        isError = state.errorMessage != null
+                    )
                 }
             )
         },
