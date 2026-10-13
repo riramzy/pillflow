@@ -16,7 +16,8 @@ expect class PlatformNotifier() {
         doseId: String,
         pillName: String,
         patientName: String,
-        triggerTimeMillis: Long
+        triggerTimeMillis: Long,
+        isMissed: Boolean = false
     )
 
     fun cancelReminder(context: Any? = null, doseId: String)

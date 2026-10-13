@@ -52,13 +52,20 @@ actual class PlatformNotifier {
         doseId: String,
         pillName: String,
         patientName: String,
-        triggerTimeMillis: Long
+        triggerTimeMillis: Long,
+        isMissed: Boolean
     ) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
 
+        val (title, body) = if (isMissed) {
+            "Urgent: Missed Dose Alert" to "$patientName has missed their scheduled dose of $pillName!"
+        } else {
+            "Caregiver Alert: Dose Late" to "$patientName is 30 minutes late taking $pillName."
+        }
+
         val content = UNMutableNotificationContent().apply {
-            setTitle("Urgent: Missed Dose Alert")
-            setBody("$patientName has missed their scheduled dose of $pillName!")
+            setTitle(title)
+            setBody(body)
             setSound(UNNotificationSound.defaultSound())
         }
 
@@ -67,14 +74,21 @@ actual class PlatformNotifier {
         val delaySeconds = (targetSecs - nowSecs).coerceAtLeast(1.0)
 
         val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(delaySeconds, false)
-        val request = UNNotificationRequest.requestWithIdentifier("escalation_$doseId", content, trigger)
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            "escalation_${if (isMissed) "missed" else "late"}_$doseId",
+            content,
+            trigger
+        )
 
         center.addNotificationRequest(request) { _ -> }
     }
 
     actual fun cancelReminder(context: Any?, doseId: String) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
-        val identifiers = DoseReminderStage.entries.map { "${doseId}:${it.name}" } + listOf("escalation_$doseId")
+
+        val identifiers = DoseReminderStage.entries.map { "${doseId}:${it.name}" } +
+                listOf("escalation_late_$doseId", "escalation_missed_$doseId")
 
         center.removeDeliveredNotificationsWithIdentifiers(identifiers)
         center.removePendingNotificationRequestsWithIdentifiers(identifiers)

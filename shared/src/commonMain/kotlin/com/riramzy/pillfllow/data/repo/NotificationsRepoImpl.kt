@@ -203,17 +203,35 @@ class NotificationsRepoImpl(
 
                         todayDoses.forEach { dose ->
                             val eval = DoseComplianceEvaluator.evaluateDoseCard(dose.scheduledTime, now, isTaken = false)
+                            val formattedTime = formatTime(dose.scheduledTime)
+                            val doseTitle = "${dose.name} ${dose.dosage}".trim()
 
-                            if (eval.status == ComplianceStatus.MISSED || eval.status == ComplianceStatus.LATE) {
-                                alerts.add(
-                                    NotificationAlertUiModel(
-                                        id = dose.id,
-                                        title = "Missed: ${patient.name}",
-                                        description = "${patient.name} missed ${dose.name} ${dose.dosage} due at ${formatTime(dose.scheduledTime)}",
-                                        timestampText = formatTime(dose.scheduledTime),
-                                        type = NotificationType.ADHERENCE_ALERT
+                            when (eval.status) {
+                                ComplianceStatus.LATE -> {
+                                    alerts.add(
+                                        NotificationAlertUiModel(
+                                            id = dose.id,
+                                            title = "Late: ${patient.name}",
+                                            description = "${patient.name} is late taking $doseTitle due at $formattedTime",
+                                            timestampText = formattedTime,
+                                            type = NotificationType.CAREGIVER_LATE_ALERT
+                                        )
                                     )
-                                )
+                                }
+
+                                ComplianceStatus.MISSED -> {
+                                    alerts.add(
+                                        NotificationAlertUiModel(
+                                            id = dose.id,
+                                            title = "Missed: ${patient.name}",
+                                            description = "${patient.name} missed $doseTitle due at $formattedTime",
+                                            timestampText = formattedTime,
+                                            type = NotificationType.ADHERENCE_ALERT
+                                        )
+                                    )
+                                }
+
+                                else -> {}
                             }
                         }
                     }

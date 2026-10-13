@@ -76,10 +76,13 @@ actual class PlatformNotifier {
         doseId: String,
         pillName: String,
         patientName: String,
-        triggerTimeMillis: Long
+        triggerTimeMillis: Long,
+        isMissed: Boolean
     ) {
         val androidContext = resolveContext(context) ?: return
         val alarmManager = androidContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+        val requestCode = "escalation_${if (isMissed) "missed" else "late"}_$doseId".hashCode()
 
         val intent = Intent().apply {
             action = "com.riramzy.pillfllow.CAREGIVER_DOSE_ESCALATION"
@@ -87,11 +90,12 @@ actual class PlatformNotifier {
             putExtra("DOSE_ID", doseId)
             putExtra("PILL_NAME", pillName)
             putExtra("PATIENT_NAME", patientName)
+            putExtra("IS_MISSED", isMissed)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
             androidContext,
-            "escalation_$doseId".hashCode(),
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -140,6 +144,7 @@ actual class PlatformNotifier {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+
             pendingIntent?.let {
                 alarmManager.cancel(it)
                 it.cancel()
@@ -151,16 +156,21 @@ actual class PlatformNotifier {
             `package` = androidContext.packageName
         }
 
-        val escalationPending = PendingIntent.getBroadcast(
-            androidContext,
-            "escalation_$doseId".hashCode(),
-            escalationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        listOf(
+            "escalation_late_$doseId".hashCode(),
+            "escalation_missed_$doseId".hashCode()
+        ).forEach { reqCode ->
+            val escalationPending = PendingIntent.getBroadcast(
+                androidContext,
+                reqCode,
+                escalationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        escalationPending?.let {
-            alarmManager.cancel(it)
-            it.cancel()
+            escalationPending?.let {
+                alarmManager.cancel(it)
+                it.cancel()
+            }
         }
     }
 

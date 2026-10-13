@@ -84,6 +84,14 @@ fun PillFlowNotificationAlertCard(
             actionLabel = "Dismiss"
             typeLabel = "Nudge"
         }
+
+        NotificationType.CAREGIVER_LATE_ALERT -> {
+            icon = Res.drawable.compliance_late
+            color = IndicatorColor.YELLOW.color
+            backgroundColor = IndicatorColor.YELLOW_CONTAINER.color
+            actionLabel = "Dismiss"
+            typeLabel = "Late"
+        }
     }
 
     Card(

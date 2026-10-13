@@ -36,6 +36,15 @@ class CaregiverEscalationReceiver: BroadcastReceiver() {
                 val doseId = intent.getStringExtra("DOSE_ID") ?: ""
                 val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
                 val patientName = intent.getStringExtra("PATIENT_NAME") ?: "Your patient"
+                val isMissed = intent.getBooleanExtra("IS_MISSED", false)
+
+                val title = if (isMissed) "Urgent: Missed Dose Alert" else "Caregiver Alert: Dose Late"
+
+                val body = if (isMissed) {
+                    "$patientName has missed their scheduled dose of $pillName!"
+                } else {
+                    "$patientName is 30 minutes late taking $pillName."
+                }
 
                 val dose = medicationDao.getScheduledDoseById(doseId)
                 if (dose == null || dose.isTaken) return@launch
@@ -75,8 +84,8 @@ class CaregiverEscalationReceiver: BroadcastReceiver() {
 
                 val notification = NotificationCompat.Builder(context, channelId)
                     .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                    .setContentTitle("Urgent: Missed Dose Alert")
-                    .setContentText("$patientName has missed their scheduled dose of $pillName!")
+                    .setContentTitle(title)
+                    .setContentText(body)
                     .setPriority(NotificationCompat.PRIORITY_MAX)
                     .setCategory(NotificationCompat.CATEGORY_ALARM)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

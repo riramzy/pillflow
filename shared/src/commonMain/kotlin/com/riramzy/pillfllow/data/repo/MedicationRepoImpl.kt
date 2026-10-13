@@ -131,18 +131,29 @@ class MedicationRepoImpl(
             val now = currentTimeMillis()
 
             doses.forEach { dose ->
-                val escalationTime = dose.scheduledTime + DoseStateMachine.ON_TIME_WINDOW_MILLIS + 60_000L
+                val patientName = pairings[dose.userId]?.relation?.ifBlank { null }
+                    ?: users[dose.userId]?.firstName?.ifBlank { null }
+                    ?: "Your patient"
 
-                if (escalationTime > now) {
-                    val patientName = pairings[dose.userId]?.relation?.ifBlank { null }
-                        ?: users[dose.userId]?.firstName?.ifBlank { null }
-                        ?: "Your patient"
-
+                val lateEscalationTime = dose.scheduledTime + DoseStateMachine.ON_TIME_WINDOW_MILLIS + 60_000L
+                if (lateEscalationTime > now) {
                     platformNotifier.scheduleCaregiverEscalation(
                         doseId = dose.id,
                         pillName = dose.name,
                         patientName = patientName,
-                        triggerTimeMillis = escalationTime
+                        triggerTimeMillis = lateEscalationTime,
+                        isMissed = false
+                    )
+                }
+
+                val missedEscalationTime = dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS + 60_000L
+                if (missedEscalationTime > now) {
+                    platformNotifier.scheduleCaregiverEscalation(
+                        doseId = dose.id,
+                        pillName = dose.name,
+                        patientName = patientName,
+                        triggerTimeMillis = missedEscalationTime,
+                        isMissed = true
                     )
                 }
             }
