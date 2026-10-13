@@ -25,12 +25,13 @@ import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 
 @Composable
 fun PillFlowMonthlyScoreCard(
-    monthYearText: String = "July 2026",
+    modifier: Modifier = Modifier,
+    monthYearText: String = "October 2026",
     scorePercentage: Int = 96,
     onTimeCount: Int = 28,
     lateCount: Int = 3,
     missedCount: Int = 1,
-    modifier: Modifier = Modifier
+    hasRecords: Boolean = true
 ) {
     Card(
         modifier = modifier
@@ -85,7 +86,10 @@ fun PillFlowMonthlyScoreCard(
                             )
 
                             Text(
-                                text = "On-Time Compliance overall",
+                                text = if (hasRecords)
+                                        "On-Time Compliance overall"
+                                    else
+                                        "No adherence data recorded yet",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Normal
@@ -93,7 +97,7 @@ fun PillFlowMonthlyScoreCard(
                         }
 
                         Text(
-                            text = "$scorePercentage%",
+                            text = if (hasRecords) "$scorePercentage%" else "--%",
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold
@@ -104,23 +108,31 @@ fun PillFlowMonthlyScoreCard(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    PillFlowStatusCard(
-                        modifier = Modifier.weight(1f),
-                        status = ComplianceStatus.ON_TIME,
-                        customText = "$onTimeCount On Time"
-                    )
+                    if (hasRecords) {
+                        PillFlowStatusCard(
+                            modifier = Modifier.weight(1f),
+                            status = ComplianceStatus.ON_TIME,
+                            customText = "$onTimeCount On Time"
+                        )
 
-                    PillFlowStatusCard(
-                        modifier = Modifier.weight(1f),
-                        status = ComplianceStatus.LATE,
-                        customText = "$lateCount Late"
-                    )
+                        PillFlowStatusCard(
+                            modifier = Modifier.weight(1f),
+                            status = ComplianceStatus.LATE,
+                            customText = "$lateCount Late"
+                        )
 
-                    PillFlowStatusCard(
-                        modifier = Modifier.weight(1f),
-                        status = ComplianceStatus.MISSED,
-                        customText = "$missedCount Missed"
-                    )
+                        PillFlowStatusCard(
+                            modifier = Modifier.weight(1f),
+                            status = ComplianceStatus.MISSED,
+                            customText = "$missedCount Missed"
+                        )
+                    } else {
+                        PillFlowStatusCard(
+                            modifier = Modifier.weight(1f),
+                            status = ComplianceStatus.DEFAULT,
+                            customText = "No Data Recorded"
+                        )
+                    }
                 }
             }
         }

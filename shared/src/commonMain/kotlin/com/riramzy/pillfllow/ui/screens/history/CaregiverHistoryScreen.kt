@@ -159,7 +159,10 @@ fun CaregiverHistoryScreenContent(
                     PillFlowPatientCarousel(
                         patients = state.pairedPatients,
                         selectedPatientId = state.selectedPatientId,
-                        mode = PatientCarouselMode.MonthlyHistory(scorePercentage = state.scorePercentage),
+                        mode = PatientCarouselMode.MonthlyHistory(
+                            scorePercentage = state.scorePercentage,
+                            hasRecords = state.hasRecords
+                        ),
                         onPatientSelected = { patientId ->
                             onAction(HistoryAction.SelectPatient(patientId)) },
                         modifier = Modifier.padding(horizontal = 15.dp)
@@ -182,6 +185,7 @@ fun CaregiverHistoryScreenContent(
                         onTimeCount = state.onTimeCount,
                         lateCount = state.lateCount,
                         missedCount = state.missedCount,
+                        hasRecords = state.hasRecords,
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }

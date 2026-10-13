@@ -150,6 +150,7 @@ fun PatientHistoryScreenContent(
                     onTimeCount = state.onTimeCount,
                     lateCount = state.lateCount,
                     missedCount = state.missedCount,
+                    hasRecords = state.hasRecords,
                     modifier = Modifier.padding(horizontal = 15.dp)
                 )
             }

@@ -121,13 +121,17 @@ fun SelectedPatientCard(
         }
 
         is PatientCarouselMode.MonthlyHistory -> {
-            val color = when {
-                mode.scorePercentage >= 80 -> IndicatorColor.GREEN.color
-                mode.scorePercentage >= 50 -> IndicatorColor.YELLOW.color
-                else -> IndicatorColor.RED.color
-            }
+            if (!mode.hasRecords) {
+                "No Logs This Month" to MaterialTheme.colorScheme.primary
+            } else {
+                val color = when {
+                    mode.scorePercentage >= 80 -> IndicatorColor.GREEN.color
+                    mode.scorePercentage >= 50 -> IndicatorColor.YELLOW.color
+                    else -> IndicatorColor.RED.color
+                }
 
-            "Score: ${mode.scorePercentage}%" to color
+                "Score: ${mode.scorePercentage}%" to color
+            }
         }
 
         is PatientCarouselMode.Prescriptions -> {

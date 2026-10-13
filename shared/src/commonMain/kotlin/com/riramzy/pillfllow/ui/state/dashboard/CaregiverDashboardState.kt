@@ -53,7 +53,10 @@ data class RecentActivityUiModel(
 
 sealed interface PatientCarouselMode {
     data object LiveDaily : PatientCarouselMode
-    data class MonthlyHistory(val scorePercentage: Int) : PatientCarouselMode
+    data class MonthlyHistory(
+        val scorePercentage: Int,
+        val hasRecords: Boolean = true
+    ): PatientCarouselMode
     data class Prescriptions(val prescriptionCount: Int) : PatientCarouselMode
 }
 
