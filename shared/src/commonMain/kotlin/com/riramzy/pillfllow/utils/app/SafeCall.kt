@@ -2,12 +2,15 @@ package com.riramzy.pillfllow.utils.app
 
 import kotlinx.coroutines.CancellationException
 
-inline fun <T> safeCall(block: () -> T): Result<T> {
+inline fun <T> safeCall(
+    errorMapper: (Throwable) -> String = ErrorMapper::mapGenericError,
+    block: () -> T
+): Result<T> {
     return try {
         Result.Success(block())
     } catch (e: CancellationException) {
-       throw e
+        throw e
     } catch (e: Throwable) {
-        Result.Error(e, e.message)
+        Result.Error(e, errorMapper(e))
     }
 }

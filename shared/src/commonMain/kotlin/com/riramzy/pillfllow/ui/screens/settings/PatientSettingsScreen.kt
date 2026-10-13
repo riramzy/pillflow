@@ -254,6 +254,13 @@ fun PatientSettingsScreenContent(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { success ->
+            snackbarHostState.showSnackbar(success)
+            onAction(PatientSettingsAction.DismissSuccess)
+        }
+    }
+
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(error)

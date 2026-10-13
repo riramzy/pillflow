@@ -108,17 +108,32 @@ class CaregiverSettingsViewModel(
         val code = state.value.inputCode
 
         viewModelScope.launch(Dispatchers.IO) {
-            confirmPairingUseCase(caregiverId, pendingPatient, relation, code)
+            _state.update { it.copy(isLinking = true) }
 
-            _state.update {
-                it.copy(
-                    isConfirmSheetOpen = false,
-                    pendingPatientToLink = null,
-                    relationInput = "",
-                    inputCode = "",
-                    isLinking = false,
-                    successMessage = "Patient linked successfully"
-                )
+            when (val result = confirmPairingUseCase(caregiverId, pendingPatient, relation, code)) {
+                is Result.Success -> {
+                    _state.update {
+                        it.copy(
+                            isConfirmSheetOpen = false,
+                            pendingPatientToLink = null,
+                            relationInput = "",
+                            inputCode = "",
+                            isLinking = false,
+                            successMessage = "Patient linked successfully"
+                        )
+                    }
+                }
+
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(
+                            isLinking = false,
+                            errorMessage = result.message ?: "Failed to link patient. Please try again."
+                        )
+                    }
+                }
+
+                else -> Unit
             }
         }
     }
@@ -136,13 +151,35 @@ class CaregiverSettingsViewModel(
     fun onUnpairPatient(patientId: String, pairingId: String) {
         val caregiverId = state.value.user?.id ?: return
         viewModelScope.launch(Dispatchers.IO) {
-            unlinkPatientUseCase(caregiverId, patientId, pairingId)
+            when (val result = unlinkPatientUseCase(caregiverId, patientId, pairingId)) {
+                is Result.Success -> {
+                    _state.update { it.copy(successMessage = "Patient unlinked successfully") }
+                }
+
+                is Result.Error -> {
+                    _state.update { it.copy(errorMessage = result.message ?: "Failed to unlink patient. Please try again.") }
+                }
+
+                else -> Unit
+            }
         }
     }
+
     fun onUpdateProfile(firstName: String, lastName: String, email: String, avatarRes: String) {
         val user = state.value.user ?: return
+
         viewModelScope.launch(Dispatchers.IO) {
-            updateUserProfileUseCase(user, firstName, lastName, email, avatarRes)
+            when (val result = updateUserProfileUseCase(user, firstName, lastName, email, avatarRes)) {
+                is Result.Success -> {
+                    _state.update { it.copy(successMessage = "Profile updated successfully") }
+                }
+
+                is Result.Error -> {
+                    _state.update { it.copy(errorMessage = result.message ?: "Failed to update profile. Please try again.") }
+                }
+
+                else -> Unit
+            }
         }
     }
 

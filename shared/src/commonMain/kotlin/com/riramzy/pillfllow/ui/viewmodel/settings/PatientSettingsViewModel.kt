@@ -12,6 +12,7 @@ import com.riramzy.pillfllow.domain.usecase.patient.SetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.UpdateUserProfileUseCase
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsAction
 import com.riramzy.pillfllow.ui.state.settings.PatientSettingsState
+import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.user.AvatarMapper
 import kotlinx.coroutines.Dispatchers
@@ -97,8 +98,28 @@ class PatientSettingsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val user = state.value.user ?: return@launch
             _state.update { it.copy(isRegenerating = true) }
-            generatePairingCodeUseCase(user)
-            _state.update { it.copy(isRegenerating = false) }
+
+            when (val result = generatePairingCodeUseCase(user)) {
+                is Result.Success -> {
+                    _state.update {
+                        it.copy(
+                            isRegenerating = false,
+                            successMessage = "New pairing code generated"
+                        )
+                    }
+                }
+
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(
+                            isRegenerating = false,
+                            errorMessage = result.message ?: "Failed to generate pairing code. Please try again."
+                        )
+                    }
+                }
+
+                else -> Unit
+            }
         }
     }
 
@@ -106,8 +127,24 @@ class PatientSettingsViewModel(
         val user = state.value.user ?: return
 
         viewModelScope.launch(Dispatchers.IO) {
-            updateUserProfileUseCase(user, firstName, lastName, email, avatarRes)
+            when (val result = updateUserProfileUseCase(user, firstName, lastName, email, avatarRes)) {
+                is Result.Success -> {
+                    _state.update { it.copy(successMessage = "Profile updated successfully") }
+                }
+
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(errorMessage = result.message ?: "Failed to update profile. Please try again.")
+                    }
+                }
+
+                else -> Unit
+            }
         }
+    }
+
+    fun onSuccessDismissed() {
+        _state.update { it.copy(successMessage = null) }
     }
 
     fun onErrorDismissed() {
@@ -127,11 +164,19 @@ class PatientSettingsViewModel(
         val caregiverId = state.value.connectedCaregiverId ?: return
 
         viewModelScope.launch(Dispatchers.IO) {
-            unlinkPatientUseCase(
-                caregiverId = caregiverId,
-                patientId = user.id,
-                pairingId = pairingId
-            )
+            when (val result = unlinkPatientUseCase(caregiverId, user.id, pairingId)) {
+                is Result.Success -> {
+                    _state.update { it.copy(successMessage = "Caregiver unlinked successfully") }
+                }
+
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(errorMessage = result.message ?: "Failed to unlink caregiver. Please try again.")
+                    }
+                }
+
+                else -> Unit
+            }
         }
     }
 
@@ -158,9 +203,10 @@ class PatientSettingsViewModel(
             is PatientSettingsAction.ConfirmChangeSensitivity -> onConfirmChangeSensitivity()
             is PatientSettingsAction.DismissSensitivityDialog -> onDismissSensitivityDialog()
             is PatientSettingsAction.UpdateProfile -> onUpdateProfile(action.firstName, action.lastName, action.email, action.avatarRes)
-            is PatientSettingsAction.DismissError -> onErrorDismissed()
             is PatientSettingsAction.SignOut -> onSignOut(action.onSignedOut)
             is PatientSettingsAction.UnlinkCaregiver -> onUnlinkCaregiver()
+            is PatientSettingsAction.DismissSuccess -> onSuccessDismissed()
+            is PatientSettingsAction.DismissError -> onErrorDismissed()
         }
     }
 }

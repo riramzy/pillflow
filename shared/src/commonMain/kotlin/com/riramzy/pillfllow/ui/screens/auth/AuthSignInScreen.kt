@@ -62,11 +62,11 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AuthSignInScreen(
+    modifier: Modifier = Modifier,
     authViewModel: AuthViewModel = koinViewModel(),
     selectedRole: UserType = UserType.PATIENT,
     onNavigateToSignUp: () -> Unit = {},
-    onAuthSuccess: (UserType) -> Unit = {},
-    modifier: Modifier = Modifier
+    onAuthSuccess: (UserType) -> Unit = {}
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
 
@@ -85,11 +85,11 @@ fun AuthSignInScreen(
 
 @Composable
 fun AuthSignInScreenContent(
+    modifier: Modifier = Modifier,
     state: AuthState = AuthState(),
     onAction: (AuthAction) -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
-    onAuthSuccess: (UserType) -> Unit = {},
-    modifier: Modifier = Modifier
+    onAuthSuccess: (UserType) -> Unit = {}
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 

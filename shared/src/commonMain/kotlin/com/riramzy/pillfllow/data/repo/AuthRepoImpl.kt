@@ -6,6 +6,7 @@ import com.riramzy.pillfllow.data.remote.dto.toDto
 import com.riramzy.pillfllow.data.remote.dto.toEntity
 import com.riramzy.pillfllow.domain.repo.AuthRepo
 import com.riramzy.pillfllow.domain.repo.UserRepo
+import com.riramzy.pillfllow.utils.app.ErrorMapper
 import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.app.safeCall
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
@@ -52,8 +53,9 @@ class AuthRepoImpl(
         role: UserType,
         phoneNumber: String,
         avatarRes: String
-    ): Result<UserEntity> = safeCall {
-        withContext(Dispatchers.IO) {
+    ): Result<UserEntity> =
+        safeCall(errorMapper = ErrorMapper::mapAuthError) {
+            withContext(Dispatchers.IO) {
             val now = currentTimeMillis()
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, pass)
 
@@ -98,8 +100,9 @@ class AuthRepoImpl(
     override suspend fun signIn(
         email: String,
         pass: String,
-    ): Result<UserEntity> = safeCall {
-        withContext(Dispatchers.IO) {
+    ): Result<UserEntity> =
+        safeCall(errorMapper = ErrorMapper::mapAuthError) {
+            withContext(Dispatchers.IO) {
             val authResult = firebaseAuth.signInWithEmailAndPassword(email, pass)
             val firebaseUser = authResult.user ?: throw Exception("User ID not found")
             val uid = firebaseUser.uid

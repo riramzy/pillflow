@@ -111,20 +111,23 @@ class PairingRepoImpl(
         pairingDao.getPairingsByPairingCode(pairingCode)
 
     override suspend fun getPendingPairingByCode(pairingCode: String): CaregiverPatientPairingEntity? {
+        val pairing = getPairingByCode(pairingCode) ?: return null
+        if (pairing.status != "PENDING") return null
+        if (pairing.expiresAt > 0L && currentTimeMillis() > pairing.expiresAt) return null
+        return pairing
+    }
+
+    override suspend fun getPairingsByPairingCodeOnce(pairingCode: String): CaregiverPatientPairingEntity? =
+        pairingDao.getPairingsByPairingCodeOnce(pairingCode)
+
+    override suspend fun getPairingByCode(pairingCode: String): CaregiverPatientPairingEntity? {
         val remotePairing = runCatching {
             val querySnapshot = firestore
                 .collection("pairings")
                 .where { "pairingCode" equalTo pairingCode }
-                .where { "status" equalTo "PENDING" }
                 .get()
 
-            val pairing = querySnapshot.documents.firstOrNull()?.data<PairingDto>()?.toEntity()
-
-            if (pairing != null && pairing.expiresAt > 0L && currentTimeMillis() > pairing.expiresAt) {
-                null
-            } else {
-                pairing
-            }
+            querySnapshot.documents.firstOrNull()?.data<PairingDto>()?.toEntity()
         }.getOrNull()
 
         remotePairing?.let { pairing ->
@@ -142,11 +145,8 @@ class PairingRepoImpl(
             }
         }
 
-        return remotePairing ?: pairingDao.getPendingPairingByCode(pairingCode)
+        return remotePairing ?: pairingDao.getPairingsByPairingCodeOnce(pairingCode)
     }
-
-    override suspend fun getPairingsByPairingCodeOnce(pairingCode: String): CaregiverPatientPairingEntity? =
-        pairingDao.getPairingsByPairingCodeOnce(pairingCode)
 
     override suspend fun updatePairingStatus(pairingId: String, status: String) {
         pairingDao.updatePairingStatus(pairingId, status)

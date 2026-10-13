@@ -1,6 +1,7 @@
 package com.riramzy.pillfllow.ui.sheets
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -8,11 +9,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,10 +27,13 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.riramzy.pillfllow.domain.validation.ProfileValidator
 import com.riramzy.pillfllow.ui.components.custom.PillFlowAvatarSelector
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
+import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun UpdateProfileSheet(
@@ -37,18 +44,13 @@ fun UpdateProfileSheet(
     onSaveProfile: (firstName: String, lastName: String, email: String, avatarRes: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     var firstName by remember { mutableStateOf(initialFirstName) }
     var lastName by remember { mutableStateOf(initialLastName) }
     var email by remember { mutableStateOf(initialEmail) }
     var selectedAvatar by remember { mutableStateOf(initialAvatar) }
-
-    val isFirstLetterCapital = (firstName.firstOrNull()?.isUpperCase() == true) &&
-            (lastName.firstOrNull()?.isUpperCase() == true)
-
-    val isFormValid = firstName.isNotBlank() &&
-            lastName.isNotBlank() &&
-            email.isNotBlank() &&
-            isFirstLetterCapital
 
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -92,75 +94,106 @@ fun UpdateProfileSheet(
         )
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(15.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(30.dp)
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Column {
-            Text(
-                text = "Update Profile",
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = "Customize your avatar and profile information",
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .wrapContentHeight(),
+                .wrapContentHeight()
+                .padding(15.dp),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(15.dp)
+            verticalArrangement = Arrangement.spacedBy(30.dp)
         ) {
-            PillFlowInputField(
-                label = "First Name",
-                value = firstName,
-                placeholder = "Enter First Name",
-                onValueChange = { firstName = it },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
-            )
+            Column {
+                Text(
+                    text = "Update Profile",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-            PillFlowInputField(
-                label = "Last Name",
-                value = lastName,
-                placeholder = "Enter Last Name",
-                onValueChange = { lastName = it },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
-            )
+                Text(
+                    text = "Customize your avatar and profile information",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
 
-            PillFlowInputField(
-                label = "Email",
-                placeholder = "Enter Email",
-                value = email,
-                onValueChange = { email = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(15.dp)
+            ) {
+                PillFlowInputField(
+                    label = "First Name",
+                    value = firstName,
+                    placeholder = "Enter First Name",
+                    onValueChange = { input ->
+                        firstName = input.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase() else it.toString()
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                )
 
-            PillFlowAvatarSelector(
-                selectedAvatar = selectedAvatar,
-                onAvatarSelected = { selectedAvatar = it }
+                PillFlowInputField(
+                    label = "Last Name",
+                    value = lastName,
+                    placeholder = "Enter Last Name",
+                    onValueChange = { input ->
+                        lastName = input.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase() else it.toString()
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                )
+
+                PillFlowInputField(
+                    label = "Email",
+                    placeholder = "Enter Email",
+                    value = email,
+                    onValueChange = { email = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+
+                PillFlowAvatarSelector(
+                    selectedAvatar = selectedAvatar,
+                    onAvatarSelected = { selectedAvatar = it }
+                )
+            }
+
+            PillFlowButton(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Save Changes",
+                onClick = {
+                    when (val validation = ProfileValidator.validate(firstName, lastName, email)) {
+                        is ProfileValidator.Result.Invalid -> {
+                            coroutineScope.launch { snackbarHostState.showSnackbar(validation.reason) }
+                        }
+                        is ProfileValidator.Result.Valid -> {
+                            showConfirmDialog = true
+                        }
+                    }
+                }
             )
         }
 
-        PillFlowButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = "Save Changes",
-            isEnabled = isFormValid,
-            onClick = { showConfirmDialog = true }
-        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) { data ->
+            PillFlowSnackbar(
+                snackbarData = data,
+                isError = true
+            )
+        }
     }
 }
 

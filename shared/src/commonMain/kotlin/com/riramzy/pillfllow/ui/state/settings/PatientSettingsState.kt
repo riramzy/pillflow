@@ -21,6 +21,7 @@ data class PatientSettingsState(
     val pendingSensitivity: PhysicsSensitivity? = null,
     val isLoading: Boolean = false,
     val isRegenerating: Boolean = false,
+    val successMessage: String? = null,
     val errorMessage: String? = null
 )
 
@@ -35,7 +36,8 @@ sealed interface PatientSettingsAction {
         val email: String,
         val avatarRes: String
     ): PatientSettingsAction
-    data object DismissError: PatientSettingsAction
     data class SignOut(val onSignedOut: () -> Unit = {}): PatientSettingsAction
     data object UnlinkCaregiver : PatientSettingsAction
+    data object DismissSuccess: PatientSettingsAction
+    data object DismissError: PatientSettingsAction
 }

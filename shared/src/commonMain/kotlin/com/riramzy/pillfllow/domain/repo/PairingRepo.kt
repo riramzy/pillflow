@@ -10,6 +10,7 @@ interface PairingRepo {
     fun getPairingsByPairingCode(pairingCode: String): Flow<CaregiverPatientPairingEntity?>
     suspend fun getPendingPairingByCode(pairingCode: String): CaregiverPatientPairingEntity?
     suspend fun getPairingsByPairingCodeOnce(pairingCode: String): CaregiverPatientPairingEntity?
+    suspend fun getPairingByCode(pairingCode: String): CaregiverPatientPairingEntity?
     fun getPairingsForPatient(patientId: String): Flow<List<CaregiverPatientPairingEntity>>
     suspend fun getPairingsForPatientOnce(patientId: String): List<CaregiverPatientPairingEntity>
     suspend fun updatePairingStatus(pairingId: String, status: String)
