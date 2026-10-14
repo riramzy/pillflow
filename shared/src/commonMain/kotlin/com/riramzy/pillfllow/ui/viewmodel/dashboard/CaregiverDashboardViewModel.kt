@@ -94,7 +94,7 @@ class CaregiverDashboardViewModel(
                 }
                 .collectLatest { (patientId, pendingDoses, historyDoses) ->
                     val now = currentTimeMillis()
-                    val patientName = _state.value.activePatient?.name ?: "Patient"
+                    val patientName = _state.value.patients.find { it.id == patientId }?.name ?: "Patient"
 
                     val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
                     val earliestDose = todayPendingDoses.minByOrNull { it.scheduledTime }

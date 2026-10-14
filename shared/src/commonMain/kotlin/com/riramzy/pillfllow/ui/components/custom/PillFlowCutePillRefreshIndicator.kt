@@ -63,7 +63,6 @@ fun PillFlowCutePillRefreshIndicator(
         modifier = modifier.wrapContentSize(),
         shape = RoundedCornerShape(32.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 4.dp
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
