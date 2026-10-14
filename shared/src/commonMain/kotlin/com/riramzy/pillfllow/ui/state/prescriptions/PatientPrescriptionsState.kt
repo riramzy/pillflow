@@ -12,6 +12,7 @@ data class PatientPrescriptionsState(
     val editingMedicationId: String? = null,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
+    val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null
 ) {
@@ -44,5 +45,6 @@ sealed interface PatientPrescriptionsAction {
         val scheduledTimesMillis: List<Long> = emptyList()
     ): PatientPrescriptionsAction
     data class DeletePrescription(val id: String): PatientPrescriptionsAction
-    data object ClearMessages : PatientPrescriptionsAction
+    data object ClearMessages: PatientPrescriptionsAction
+    data object Refresh: PatientPrescriptionsAction
 }

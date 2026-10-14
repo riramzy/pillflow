@@ -21,6 +21,7 @@ import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class CaregiverPrescriptionsViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
@@ -108,18 +110,21 @@ class CaregiverPrescriptionsViewModel(
                             )
                         }
 
-                        Triple(prescriptions, meds.size, earliestDose)
+                        patientId to Triple(prescriptions, meds.size, earliestDose)
                     }
-            }.collectLatest { (prescriptions, count, earliestDose) ->
-                _state.update { current ->
-                    current.copy(
-                        prescriptions = prescriptions,
-                        activeCount = count,
-                        nextDoseTime = earliestDose?.let { formatTime(it.scheduledTime) } ?: "--:--",
-                        nextDoseMedication = earliestDose?.let { "${it.name} ${it.dosage}" } ?: "None",
-                        isLoading = false
-                    )
-                }
+            }.collectLatest { (patientId, data) ->
+                    val (prescriptions, count, earliestDose) = data
+
+                    _state.update { current ->
+                        current.copy(
+                            selectedPatientId = patientId,
+                            prescriptions = prescriptions,
+                            activeCount = count,
+                            nextDoseTime = earliestDose?.let { formatTime(it.scheduledTime) } ?: "--:--",
+                            nextDoseMedication = earliestDose?.let { "${it.name} ${it.dosage}" } ?: "None",
+                            isLoading = false
+                        )
+                    }
             }
         }
     }
@@ -235,6 +240,14 @@ class CaregiverPrescriptionsViewModel(
         _state.update { it.copy(successMessage = null, errorMessage = null) }
     }
 
+    private fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isRefreshing = true) }
+            delay(700.milliseconds)
+            _state.update { it.copy(isRefreshing = false) }
+        }
+    }
+
     fun onAction(action: CaregiverPrescriptionsAction) {
         when (action) {
             is CaregiverPrescriptionsAction.SelectPatient -> selectPatient(action.patientId)
@@ -253,6 +266,7 @@ class CaregiverPrescriptionsViewModel(
             )
             is CaregiverPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
             is CaregiverPrescriptionsAction.ClearMessages -> clearMessages()
+            is CaregiverPrescriptionsAction.Refresh -> refresh()
         }
     }
 }

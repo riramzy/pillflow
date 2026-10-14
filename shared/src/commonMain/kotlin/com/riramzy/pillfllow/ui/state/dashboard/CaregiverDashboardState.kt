@@ -19,6 +19,7 @@ data class CaregiverDashboardState(
     val weeklyCompliance: List<ComplianceDayUiModel> = defaultSampleDays,
     val weeklyRatePercentage: Int = 95,
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 ) {
     val activePatient: PairedPatientUiModel?
@@ -64,4 +65,5 @@ sealed interface CaregiverDashboardAction {
     data class SelectPatient(val patientId: String): CaregiverDashboardAction
     data class CallPatient(val patientId: String): CaregiverDashboardAction
     data class NudgePatient(val patientId: String): CaregiverDashboardAction
+    data object Refresh : CaregiverDashboardAction
 }

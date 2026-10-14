@@ -89,10 +89,10 @@ class CaregiverDashboardViewModel(
                         getPendingDosesForUserUseCase(patientId),
                         getDoseHistoryForUserUseCase(patientId)
                     ) { pendingDoses, historyDoses ->
-                        Pair(pendingDoses, historyDoses)
+                        Triple(patientId, pendingDoses, historyDoses)
                     }
                 }
-                .collectLatest { (pendingDoses, historyDoses) ->
+                .collectLatest { (patientId, pendingDoses, historyDoses) ->
                     val now = currentTimeMillis()
                     val patientName = _state.value.activePatient?.name ?: "Patient"
 
@@ -168,12 +168,30 @@ class CaregiverDashboardViewModel(
                         .map { it.first }
                         .take(4)
 
+                    _state.update { current ->
+                        val updatedPatients = current.patients.map { p ->
+                            if (p.id == patientId) {
+                                val missed = todayPendingDoses.count { d -> (now - d.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+                                val late = todayPendingDoses.count { d ->
+                                    val diff = now - d.scheduledTime
+                                    diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+                                }
 
-                    _state.update {
-                        it.copy(
+                                p.copy(
+                                    status = dailyStatus,
+                                    lateDosesCount = late,
+                                    missedDosesCount = missed,
+                                    compliancePercentage = weeklyRate
+                                )
+                            } else p
+                        }
+
+                        current.copy(
+                            patients = updatedPatients,
+                            selectedPatientId = patientId,
                             selectedPatientDoses = mappedUiDoses,
-                            selectedPatientDailyStatus = if (nudgeJob?.isActive == true) it.selectedPatientDailyStatus else dailyStatus,
-                            dailyStatusAlertText = if (nudgeJob?.isActive == true) it.dailyStatusAlertText else alertText,
+                            selectedPatientDailyStatus = if (nudgeJob?.isActive == true) current.selectedPatientDailyStatus else dailyStatus,
+                            dailyStatusAlertText = if (nudgeJob?.isActive == true) current.dailyStatusAlertText else alertText,
                             weeklyCompliance = weeklyDays,
                             recentActivities = activities,
                             weeklyRatePercentage = weeklyRate,
@@ -186,7 +204,6 @@ class CaregiverDashboardViewModel(
 
     fun selectPatient(patientId: String) {
         sessionManager.setSelectedPatientId(patientId)
-        _state.update { it.copy(selectedPatientId = patientId) }
     }
 
     fun callPatient(patientId: String) {
@@ -232,11 +249,20 @@ class CaregiverDashboardViewModel(
         }
     }
 
+    private fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isRefreshing = true) }
+            delay(700.milliseconds)
+            _state.update { it.copy(isRefreshing = false) }
+        }
+    }
+
     fun onAction(action: CaregiverDashboardAction) {
         when (action) {
             is CaregiverDashboardAction.SelectPatient -> selectPatient(action.patientId)
             is CaregiverDashboardAction.CallPatient -> callPatient(action.patientId)
             is CaregiverDashboardAction.NudgePatient -> nudgePatient(action.patientId)
+            is CaregiverDashboardAction.Refresh -> refresh()
         }
     }
 }

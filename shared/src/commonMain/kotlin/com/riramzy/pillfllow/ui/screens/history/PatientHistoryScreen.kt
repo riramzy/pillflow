@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.screens.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,6 +26,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthSelectionCard
@@ -101,114 +103,120 @@ fun PatientHistoryScreenContent(
         floatingActionButtonPosition = FabPosition.Center,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
-    ) {
-        LazyColumn(
-            modifier = Modifier.padding(it),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(bottom = 100.dp),
+    ) { innerPadding ->
+        PillFlowPullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onAction(HistoryAction.Refresh) },
+            modifier = Modifier.padding(innerPadding)
         ) {
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Adherence History",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Text(
-                        text = "Monthly compliance tracking & log history",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            item {
-                PillFlowMonthSelectionCard(
-                    currentMonthTitle = state.monthYearTitle,
-                    onPreviousMonthClick = { onAction(HistoryAction.PreviousMonth) },
-                    onNextMonthClick = { onAction(HistoryAction.NextMonth) },
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                PillFlowMonthlyScoreCard(
-                    monthYearText = state.monthYearTitle,
-                    scorePercentage = state.scorePercentage,
-                    onTimeCount = state.onTimeCount,
-                    lateCount = state.lateCount,
-                    missedCount = state.missedCount,
-                    hasRecords = state.hasRecords,
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Monthly Heatmap",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    PillFlowMonthlyHeatmapCard(
-                        monthDays = state.monthlyComplianceDays,
-                        monthYearText = state.monthYearTitle,
-                        firstDayOffset = getFirstDayOfWeekOfMonth(state.selectedMonthMillis)
-                    )
-                }
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Log Records",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-
-                    if (!state.hasRecords) {
-                        PillFlowEmptyStateCard(
-                            title = "No History Recorded",
-                            description = "Your adherence logs will appear here once doses are taken or missed."
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 100.dp),
+            ) {
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Adherence History",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                    } else {
-                        state.logRecords.forEach { log ->
-                            PillFlowLogCard(
-                                actionTitle = log.actionTitle,
-                                actionDescription = log.actionDescription,
-                                timestampText = log.timestampText,
-                                status = log.status
+
+                        Text(
+                            text = "Monthly compliance tracking & log history",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                item {
+                    PillFlowMonthSelectionCard(
+                        currentMonthTitle = state.monthYearTitle,
+                        onPreviousMonthClick = { onAction(HistoryAction.PreviousMonth) },
+                        onNextMonthClick = { onAction(HistoryAction.NextMonth) },
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
+
+                item {
+                    PillFlowMonthlyScoreCard(
+                        monthYearText = state.monthYearTitle,
+                        scorePercentage = state.scorePercentage,
+                        onTimeCount = state.onTimeCount,
+                        lateCount = state.lateCount,
+                        missedCount = state.missedCount,
+                        hasRecords = state.hasRecords,
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Monthly Heatmap",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        PillFlowMonthlyHeatmapCard(
+                            monthDays = state.monthlyComplianceDays,
+                            monthYearText = state.monthYearTitle,
+                            firstDayOffset = getFirstDayOfWeekOfMonth(state.selectedMonthMillis)
+                        )
+                    }
+                }
+
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Log Records",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+
+                        if (!state.hasRecords) {
+                            PillFlowEmptyStateCard(
+                                title = "No History Recorded",
+                                description = "Your adherence logs will appear here once doses are taken or missed."
                             )
+                        } else {
+                            state.logRecords.forEach { log ->
+                                PillFlowLogCard(
+                                    actionTitle = log.actionTitle,
+                                    actionDescription = log.actionDescription,
+                                    timestampText = log.timestampText,
+                                    status = log.status
+                                )
+                            }
                         }
                     }
                 }

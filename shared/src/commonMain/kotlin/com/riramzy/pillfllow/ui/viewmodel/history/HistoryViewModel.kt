@@ -15,6 +15,7 @@ import com.riramzy.pillfllow.utils.platform.shiftMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class HistoryViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
@@ -80,9 +82,10 @@ class HistoryViewModel(
                 patientId to selectedMonth
             }.flatMapLatest { (patientId, selectedMonth) ->
                 getDoseHistoryForUserUseCase(patientId).map { historyDoses ->
-                    Triple(historyDoses, selectedMonth, currentTimeMillis())
+                    patientId to Triple(historyDoses, selectedMonth, currentTimeMillis())
                 }
-            }.collectLatest { (historyDoses, selectedMonth, now) ->
+            }.collectLatest { (patientId, data) ->
+                val (historyDoses, selectedMonth, now) = data
                 val monthTitle = formatMonthYear(selectedMonth)
 
                 val analytics = DoseComplianceEvaluator.evaluateHistoryAnalytics(
@@ -93,6 +96,7 @@ class HistoryViewModel(
 
                 _state.update {
                     it.copy(
+                        selectedPatientId = patientId,
                         selectedMonthMillis = selectedMonth,
                         monthYearTitle = monthTitle,
                         scorePercentage = analytics.scorePercentage,
@@ -113,11 +117,20 @@ class HistoryViewModel(
         _state.update { it.copy(selectedPatientId = patientId) }
     }
 
+    private fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isRefreshing = true) }
+            delay(700.milliseconds)
+            _state.update { it.copy(isRefreshing = false) }
+        }
+    }
+
     fun onAction(action: HistoryAction) {
         when (action) {
             is HistoryAction.SelectPatient -> selectPatient(action.patientId)
             is HistoryAction.PreviousMonth -> _selectedMonthMillis.update { shiftMonth(it, -1) }
             is HistoryAction.NextMonth -> _selectedMonthMillis.update { shiftMonth(it, 1) }
+            is HistoryAction.Refresh -> refresh()
         }
     }
 }

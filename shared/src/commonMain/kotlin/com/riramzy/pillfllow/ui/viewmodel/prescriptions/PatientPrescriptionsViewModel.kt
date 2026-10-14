@@ -19,6 +19,7 @@ import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class PatientPrescriptionsViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
@@ -208,6 +210,14 @@ class PatientPrescriptionsViewModel(
         _state.update { it.copy(successMessage = null, errorMessage = null) }
     }
 
+    private fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isRefreshing = true) }
+            delay(700.milliseconds)
+            _state.update { it.copy(isRefreshing = false) }
+        }
+    }
+
     fun onAction(action: PatientPrescriptionsAction) {
         when (action) {
             is PatientPrescriptionsAction.OpenAddSheet -> openAddSheet()
@@ -219,6 +229,7 @@ class PatientPrescriptionsViewModel(
             )
             is PatientPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
             is PatientPrescriptionsAction.ClearMessages -> clearMessages()
+            is PatientPrescriptionsAction.Refresh -> refresh()
         }
     }
 }

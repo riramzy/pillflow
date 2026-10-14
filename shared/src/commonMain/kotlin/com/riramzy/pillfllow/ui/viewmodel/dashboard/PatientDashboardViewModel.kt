@@ -176,10 +176,19 @@ class PatientDashboardViewModel(
         _state.update { it.copy(errorMessage = null) }
     }
 
+    private fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isRefreshing = true) }
+            delay(700.milliseconds)
+            _state.update { it.copy(isRefreshing = false) }
+        }
+    }
+
     fun onAction(action: PatientDashboardAction) {
         when (action) {
             is PatientDashboardAction.LogDose -> logDose(action.doseId, action.scheduledTime)
             is PatientDashboardAction.DismissError -> onErrorDismissed()
+            is PatientDashboardAction.Refresh -> refresh()
         }
     }
 

@@ -23,6 +23,7 @@ data class PatientDashboardState(
     val missedDosesCount: Int = 0,
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 ) {
     val isNewUserWithoutPrescriptions: Boolean
@@ -59,4 +60,5 @@ data class ComplianceCardUiModel(
 sealed interface PatientDashboardAction {
     data class LogDose(val doseId: String, val scheduledTime: Long? = null): PatientDashboardAction
     data object DismissError: PatientDashboardAction
+    data object Refresh : PatientDashboardAction
 }

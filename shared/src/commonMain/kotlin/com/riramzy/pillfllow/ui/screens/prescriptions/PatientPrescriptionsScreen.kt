@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.screens.prescriptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -35,6 +36,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
@@ -221,93 +223,99 @@ fun PatientPrescriptionsScreenContent(
         },
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
-    ) {
-        LazyColumn(
-            modifier = Modifier.padding(it),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(bottom = 100.dp),
+    ) { innerPadding ->
+        PillFlowPullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onAction(PatientPrescriptionsAction.Refresh) },
+            modifier = Modifier.padding(innerPadding)
         ) {
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Prescriptions",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Text(
-                        text = "Manage medications, dosages & schedules",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            if (state.isEmpty) {
-                item {
-                    PillFlowEmptyStateCard(
-                        title = "No Prescriptions Yet",
-                        description = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
-                        icon = Res.drawable.pills,
-                        buttonText = "Add First Prescription",
-                        buttonIcon = Res.drawable.add,
-                        onButtonClick = {
-                            onAction(PatientPrescriptionsAction.OpenAddSheet)
-                        },
-                        modifier = Modifier.padding(horizontal = 15.dp)
-                    )
-                }
-            } else {
-                item {
-                    PillFlowPrescriptionsSummaryCard(
-                        activeCount = state.activeCount,
-                        nextDoseTime = state.nextDoseTime,
-                        nextDoseMedication = state.nextDoseMedication,
-                        modifier = Modifier.padding(horizontal = 15.dp)
-                    )
-                }
-
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 100.dp),
+            ) {
                 item {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                         horizontalAlignment = Alignment.Start,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 15.dp)
                     ) {
                         Text(
-                            text = "Active Prescriptions",
+                            text = "Prescriptions",
                             style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
 
-                        state.prescriptions.forEach { prescription ->
-                            PillFlowPrescriptionCard(
-                                medicationName = prescription.medicationName,
-                                dosage = prescription.dosage,
-                                pillShape = prescription.pillShape,
-                                pillColor = prescription.pillColor,
-                                scheduleText = prescription.scheduleText,
-                                instructionsText = prescription.instructionsText,
-                                nextDoseText = prescription.nextDoseText,
-                                onEditClick = {
-                                    onAction(PatientPrescriptionsAction.OpenEditSheet(prescription.id))
-                                },
-                                onDeleteClick = { prescriptionToDelete = prescription }
+                        Text(
+                            text = "Manage medications, dosages & schedules",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                if (state.isEmpty) {
+                    item {
+                        PillFlowEmptyStateCard(
+                            title = "No Prescriptions Yet",
+                            description = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
+                            icon = Res.drawable.pills,
+                            buttonText = "Add First Prescription",
+                            buttonIcon = Res.drawable.add,
+                            onButtonClick = {
+                                onAction(PatientPrescriptionsAction.OpenAddSheet)
+                            },
+                            modifier = Modifier.padding(horizontal = 15.dp)
+                        )
+                    }
+                } else {
+                    item {
+                        PillFlowPrescriptionsSummaryCard(
+                            activeCount = state.activeCount,
+                            nextDoseTime = state.nextDoseTime,
+                            nextDoseMedication = state.nextDoseMedication,
+                            modifier = Modifier.padding(horizontal = 15.dp)
+                        )
+                    }
+
+                    item {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(20.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Active Prescriptions",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
+
+                            state.prescriptions.forEach { prescription ->
+                                PillFlowPrescriptionCard(
+                                    medicationName = prescription.medicationName,
+                                    dosage = prescription.dosage,
+                                    pillShape = prescription.pillShape,
+                                    pillColor = prescription.pillColor,
+                                    scheduleText = prescription.scheduleText,
+                                    instructionsText = prescription.instructionsText,
+                                    nextDoseText = prescription.nextDoseText,
+                                    onEditClick = {
+                                        onAction(PatientPrescriptionsAction.OpenEditSheet(prescription.id))
+                                    },
+                                    onDeleteClick = { prescriptionToDelete = prescription }
+                                )
+                            }
                         }
                     }
                 }
