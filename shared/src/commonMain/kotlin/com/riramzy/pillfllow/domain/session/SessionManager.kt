@@ -13,6 +13,9 @@ class SessionManager(
     private val _currentUser = MutableStateFlow<UserEntity?>(null)
     val currentUser: StateFlow<UserEntity?> = _currentUser.asStateFlow()
 
+    private val _selectedPatientId = MutableStateFlow<String?>(null)
+    val selectedPatientId: StateFlow<String?> = _selectedPatientId.asStateFlow()
+
     private val initialSensitivity = runCatching {
         PhysicsSensitivity.valueOf(
             appPreferences.getString("physics_sensitivity", PhysicsSensitivity.NORMAL.name)
@@ -30,12 +33,17 @@ class SessionManager(
         appPreferences.setString("onboarding_completed", completed.toString())
     }
 
+    fun setSelectedPatientId(patientId: String?) {
+        _selectedPatientId.value = patientId
+    }
+
     fun setUser(user: UserEntity) {
         _currentUser.value = user
     }
 
     fun clearUser() {
         _currentUser.value = null
+        _selectedPatientId.value = null
     }
 
     fun setPhysicsSensitivity(sensitivity: PhysicsSensitivity) {

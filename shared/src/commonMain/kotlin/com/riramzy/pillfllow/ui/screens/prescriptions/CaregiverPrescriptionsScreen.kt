@@ -1,5 +1,11 @@
 package com.riramzy.pillfllow.ui.screens.prescriptions
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -232,9 +238,9 @@ fun CaregiverPrescriptionsScreenContent(
         },
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
-    ) {
+    ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.padding(it),
+            modifier = Modifier.padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(bottom = 100.dp),
@@ -286,7 +292,7 @@ fun CaregiverPrescriptionsScreenContent(
                         mode = PatientCarouselMode.Prescriptions(prescriptionCount = state.prescriptions.size),
                         onPatientSelected = { patientId ->
                             onAction(CaregiverPrescriptionsAction.SelectPatient(patientId))
-                                            },
+                        },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
@@ -305,42 +311,64 @@ fun CaregiverPrescriptionsScreenContent(
                     }
                 } else {
                     item {
-                        PillFlowPrescriptionsSummaryCard(
-                            activeCount = state.activeCount,
-                            nextDoseTime = state.nextDoseTime,
-                            nextDoseMedication = state.nextDoseMedication,
-                            modifier = Modifier.padding(horizontal = 15.dp)
-                        )
+                        AnimatedContent(
+                            targetState = state.selectedPatientId,
+                            transitionSpec = {
+                                (
+                                        fadeIn(animationSpec = tween(250)) +
+                                                slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                        ).togetherWith(fadeOut(animationSpec = tween(150)))
+                            },
+                            label = "CaregiverBodyTransition"
+                        ) {
+                            PillFlowPrescriptionsSummaryCard(
+                                activeCount = state.activeCount,
+                                nextDoseTime = state.nextDoseTime,
+                                nextDoseMedication = state.nextDoseMedication,
+                                modifier = Modifier.padding(horizontal = 15.dp)
+                            )
+                        }
                     }
 
                     item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(20.dp),
-                            horizontalAlignment = Alignment.Start,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 15.dp)
+                        AnimatedContent(
+                            targetState = state.selectedPatientId,
+                            transitionSpec = {
+                                (
+                                        fadeIn(animationSpec = tween(250)) +
+                                                slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                        ).togetherWith(fadeOut(animationSpec = tween(150)))
+                            },
+                            label = "CaregiverBodyTransition"
                         ) {
-                            Text(
-                                text = "Active Prescriptions",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            state.prescriptions.forEach { prescription ->
-                                PillFlowPrescriptionCard(
-                                    medicationName = prescription.medicationName,
-                                    dosage = prescription.dosage,
-                                    pillShape = prescription.pillShape,
-                                    pillColor = prescription.pillColor,
-                                    scheduleText = prescription.scheduleText,
-                                    instructionsText = prescription.instructionsText,
-                                    nextDoseText = prescription.nextDoseText,
-                                    onEditClick = { onAction(CaregiverPrescriptionsAction.OpenEditSheet(prescription.id)) },
-                                    onDeleteClick = { prescriptionToDelete = prescription }
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                                horizontalAlignment = Alignment.Start,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 15.dp)
+                            ) {
+                                Text(
+                                    text = "Active Prescriptions",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
+
+                                state.prescriptions.forEach { prescription ->
+                                    PillFlowPrescriptionCard(
+                                        medicationName = prescription.medicationName,
+                                        dosage = prescription.dosage,
+                                        pillShape = prescription.pillShape,
+                                        pillColor = prescription.pillColor,
+                                        scheduleText = prescription.scheduleText,
+                                        instructionsText = prescription.instructionsText,
+                                        nextDoseText = prescription.nextDoseText,
+                                        onEditClick = { onAction(CaregiverPrescriptionsAction.OpenEditSheet(prescription.id)) },
+                                        onDeleteClick = { prescriptionToDelete = prescription }
+                                    )
+                                }
                             }
                         }
                     }

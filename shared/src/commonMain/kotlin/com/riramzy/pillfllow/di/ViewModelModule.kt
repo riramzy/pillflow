@@ -67,7 +67,8 @@ val viewModelModule: Module = module {
             getCaregiverPatientsUseCase = get(),
             getPendingDosesForUserUseCase = get(),
             nudgePatientUseCase = get(),
-            getDoseHistoryForUserUseCase = get()
+            getDoseHistoryForUserUseCase = get(),
+            sessionManager = get()
         )
     }
 
@@ -78,7 +79,8 @@ val viewModelModule: Module = module {
             getPendingDosesForUserUseCase = get(),
             getMedicationsForUserUseCase = get(),
             savePrescriptionUseCase = get(),
-            deletePrescriptionUseCase = get()
+            deletePrescriptionUseCase = get(),
+            sessionManager = get()
         )
     }
 
@@ -98,7 +100,8 @@ val viewModelModule: Module = module {
         HistoryViewModel(
             observeCurrentUserUseCase = get(),
             getCaregiverPatientsUseCase = get(),
-            getDoseHistoryForUserUseCase = get()
+            getDoseHistoryForUserUseCase = get(),
+            sessionManager = get()
         )
     }
 

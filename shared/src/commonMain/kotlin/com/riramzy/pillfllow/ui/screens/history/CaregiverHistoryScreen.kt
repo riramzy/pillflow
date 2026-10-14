@@ -1,5 +1,11 @@
 package com.riramzy.pillfllow.ui.screens.history
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -109,9 +115,9 @@ fun CaregiverHistoryScreenContent(
         floatingActionButtonPosition = FabPosition.Center,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
-    ) {
+    ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.padding(it),
+            modifier = Modifier.padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(bottom = 100.dp),
@@ -179,70 +185,103 @@ fun CaregiverHistoryScreenContent(
                 }
 
                 item {
-                    PillFlowMonthlyScoreCard(
-                        monthYearText = state.monthYearTitle,
-                        scorePercentage = state.scorePercentage,
-                        onTimeCount = state.onTimeCount,
-                        lateCount = state.lateCount,
-                        missedCount = state.missedCount,
-                        hasRecords = state.hasRecords,
-                        modifier = Modifier.padding(horizontal = 15.dp)
-                    )
-                }
-
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
+                    AnimatedContent(
+                        targetState = state.selectedPatientId,
+                        transitionSpec = {
+                            (
+                                    fadeIn(animationSpec = tween(250)) +
+                                            slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                    ).togetherWith(fadeOut(animationSpec = tween(150)))
+                        },
+                        label = "CaregiverBodyTransition"
                     ) {
-                        Text(
-                            text = "Monthly Heatmap",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        PillFlowMonthlyHeatmapCard(
-                            monthDays = state.monthlyComplianceDays,
+                        PillFlowMonthlyScoreCard(
                             monthYearText = state.monthYearTitle,
-                            firstDayOffset = getFirstDayOfWeekOfMonth(state.selectedMonthMillis)
+                            scorePercentage = state.scorePercentage,
+                            onTimeCount = state.onTimeCount,
+                            lateCount = state.lateCount,
+                            missedCount = state.missedCount,
+                            hasRecords = state.hasRecords,
+                            modifier = Modifier.padding(horizontal = 15.dp)
                         )
                     }
                 }
 
                 item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
+                    AnimatedContent(
+                        targetState = state.selectedPatientId,
+                        transitionSpec = {
+                            (
+                                    fadeIn(animationSpec = tween(250)) +
+                                            slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                    ).togetherWith(fadeOut(animationSpec = tween(150)))
+                        },
+                        label = "CaregiverBodyTransition"
                     ) {
-                        Text(
-                            text = "Log Records",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        if (state.logRecords.isEmpty()) {
-                            PillFlowEmptyStateCard(
-                                title = "No History for ${state.selectedPatientName}",
-                                description = "Adherence logs for ${state.selectedPatientName} will appear here once doses are taken or missed."
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(20.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Monthly Heatmap",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                        } else {
-                            state.logRecords.forEach { log ->
-                                PillFlowLogCard(
-                                    actionTitle = log.actionTitle,
-                                    actionDescription = log.actionDescription,
-                                    timestampText = log.timestampText,
-                                    status = log.status
+
+                            PillFlowMonthlyHeatmapCard(
+                                monthDays = state.monthlyComplianceDays,
+                                monthYearText = state.monthYearTitle,
+                                firstDayOffset = getFirstDayOfWeekOfMonth(state.selectedMonthMillis)
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    AnimatedContent(
+                        targetState = state.selectedPatientId,
+                        transitionSpec = {
+                            (
+                                    fadeIn(animationSpec = tween(250)) +
+                                            slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                    ).togetherWith(fadeOut(animationSpec = tween(150)))
+                        },
+                        label = "CaregiverBodyTransition"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(20.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Log Records",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            if (state.logRecords.isEmpty()) {
+                                PillFlowEmptyStateCard(
+                                    title = "No History for ${state.selectedPatientName}",
+                                    description = "Adherence logs for ${state.selectedPatientName} will appear here once doses are taken or missed."
                                 )
+                            } else {
+                                state.logRecords.forEach { log ->
+                                    PillFlowLogCard(
+                                        actionTitle = log.actionTitle,
+                                        actionDescription = log.actionDescription,
+                                        timestampText = log.timestampText,
+                                        status = log.status
+                                    )
+                                }
                             }
                         }
                     }

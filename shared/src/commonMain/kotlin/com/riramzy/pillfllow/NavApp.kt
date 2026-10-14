@@ -65,6 +65,16 @@ fun NavApp(
         }
     }
 
+    val navigateToTab: (String) -> Unit = { route ->
+        navController.navigate(route) {
+            popUpTo(Screen.Home.route) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route
@@ -132,17 +142,17 @@ fun NavApp(
         composable(Screen.Home.route) {
             if (isCaregiver) {
                 CaregiverDashboardScreen(
-                    onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToHistory = { navigateToTab(Screen.History.route) },
+                    onNavigateToPrescriptions = { navigateToTab(Screen.Prescriptions.route) },
+                    onNavigateToSettings = { navigateToTab(Screen.Settings.route) },
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
             } else {
                 PatientDashboardScreen(
-                    onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToHistory = { navigateToTab(Screen.History.route) },
+                    onNavigateToPrescriptions = { navigateToTab(Screen.Prescriptions.route) },
+                    onNavigateToSettings = { navigateToTab(Screen.Settings.route) },
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
@@ -152,17 +162,17 @@ fun NavApp(
         composable(Screen.History.route) {
             if (isCaregiver) {
                 CaregiverHistoryScreen(
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToHome = { navigateToTab(Screen.Home.route) },
+                    onNavigateToPrescriptions = { navigateToTab(Screen.Prescriptions.route) },
+                    onNavigateToSettings = { navigateToTab(Screen.Settings.route) },
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
             } else {
                 PatientHistoryScreen(
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToHome = { navigateToTab(Screen.Home.route) },
+                    onNavigateToPrescriptions = { navigateToTab(Screen.Prescriptions.route) },
+                    onNavigateToSettings = { navigateToTab(Screen.Settings.route) },
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
@@ -172,17 +182,17 @@ fun NavApp(
         composable(Screen.Prescriptions.route) {
             if (isCaregiver) {
                 CaregiverPrescriptionsScreen(
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToHome = { navigateToTab(Screen.Home.route) },
+                    onNavigateToHistory = { navigateToTab(Screen.History.route) },
+                    onNavigateToSettings = { navigateToTab(Screen.Settings.route) },
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
             } else {
                 PatientPrescriptionsScreen(
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToHome = { navigateToTab(Screen.Home.route) },
+                    onNavigateToHistory = { navigateToTab(Screen.History.route) },
+                    onNavigateToSettings = { navigateToTab(Screen.Settings.route) },
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
@@ -200,18 +210,18 @@ fun NavApp(
 
             if (isCaregiver) {
                 CaregiverSettingsScreen(
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
+                    onNavigateToHome = { navigateToTab(Screen.Home.route) },
+                    onNavigateToHistory = { navigateToTab(Screen.History.route) },
+                    onNavigateToPrescriptions = { navigateToTab(Screen.Prescriptions.route) },
                     onSignOutSuccess = onLogoutSuccess,
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications
                 )
             } else {
                 PatientSettingsScreen(
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                    onNavigateToPrescriptions = { navController.navigate(Screen.Prescriptions.route) },
+                    onNavigateToHome = { navigateToTab(Screen.Home.route) },
+                    onNavigateToHistory = { navigateToTab(Screen.History.route) },
+                    onNavigateToPrescriptions = { navigateToTab(Screen.Prescriptions.route) },
                     onSignOutSuccess = onLogoutSuccess,
                     onProfileClick = openProfile,
                     onNotificationsClick = openNotifications

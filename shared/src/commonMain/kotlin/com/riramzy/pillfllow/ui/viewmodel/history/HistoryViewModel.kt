@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.viewmodel.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
@@ -28,12 +29,13 @@ import kotlinx.coroutines.launch
 class HistoryViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
-    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase
+    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
+    private val sessionManager: SessionManager
 ): ViewModel() {
     private val _state = MutableStateFlow(HistoryState())
     val state: StateFlow<HistoryState> = _state.asStateFlow()
 
-    private val _selectedPatientId = MutableStateFlow<String?>(null)
+    val selectedPatientId: StateFlow<String?> = sessionManager.selectedPatientId
     private val _selectedMonthMillis = MutableStateFlow(currentTimeMillis())
 
     init {
@@ -48,20 +50,20 @@ class HistoryViewModel(
                     getCaregiverPatientsUseCase(user.id).collectLatest { patientModels ->
                         val validIds = patientModels.map { it.id }
 
-                        if (patientModels.isNotEmpty() && (_selectedPatientId.value == null || !validIds.contains(_selectedPatientId.value))) {
-                            _selectedPatientId.value = patientModels.first().id
+                        if (patientModels.isNotEmpty() && (selectedPatientId.value == null || !validIds.contains(selectedPatientId.value))) {
+                            sessionManager.setSelectedPatientId(patientModels.first().id)
                         }
 
                         _state.update {
                             it.copy(
                                 isCaregiver = true,
                                 pairedPatients = patientModels,
-                                selectedPatientId = _selectedPatientId.value ?: ""
+                                selectedPatientId = selectedPatientId.value ?: ""
                             )
                         }
                     }
                 } else if (user != null) {
-                    _selectedPatientId.value = user.id
+                    sessionManager.setSelectedPatientId(user.id)
                     _state.update { it.copy(selectedPatientId = user.id, isCaregiver = false) }
                 }
             }
@@ -72,7 +74,7 @@ class HistoryViewModel(
     private fun observeDoseHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             combine(
-                _selectedPatientId.filterNotNull(),
+                selectedPatientId.filterNotNull(),
                 _selectedMonthMillis
             ) { patientId, selectedMonth ->
                 patientId to selectedMonth
@@ -107,7 +109,7 @@ class HistoryViewModel(
     }
 
     fun selectPatient(patientId: String) {
-        _selectedPatientId.value = patientId
+        sessionManager.setSelectedPatientId(patientId)
         _state.update { it.copy(selectedPatientId = patientId) }
     }
 

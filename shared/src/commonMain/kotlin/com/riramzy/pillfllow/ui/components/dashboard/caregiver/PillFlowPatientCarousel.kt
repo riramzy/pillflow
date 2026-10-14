@@ -1,5 +1,16 @@
 package com.riramzy.pillfllow.ui.components.dashboard.caregiver
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,7 +67,8 @@ fun PillFlowPatientCarousel(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
+            .wrapContentHeight()
+            .animateContentSize(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -84,13 +96,32 @@ fun PillFlowPatientCarousel(
             }
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(unselectedPatients) { patient ->
-                    PatientCard(
-                        avatar = patient.avatar,
-                        onClick = { onPatientSelected(patient.id) }
-                    )
+                items(unselectedPatients, key = { it.id }) { patient ->
+                    AnimatedVisibility(
+                        visible = true,
+                        modifier = Modifier.animateItem(),
+                        enter = slideInHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            ),
+                            initialOffsetX = { -it * 4 }
+                        ) + fadeIn(),
+                        exit = slideOutHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            ),
+                            targetOffsetX = { -it * 4 }
+                        ) + fadeOut(),
+                    ) {
+                        PatientCard(
+                            avatar = patient.avatar,
+                            onClick = { onPatientSelected(patient.id) },
+                        )
+                    }
                 }
             }
         }
@@ -147,77 +178,110 @@ fun SelectedPatientCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(50.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = CircleShape
+        AnimatedContent(
+            targetState = avatar,
+            transitionSpec = {
+                (
+                        slideInHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            ),
+                            initialOffsetX = { it * 4 }
+                ) + fadeIn(
+                            animationSpec = tween(180))
+                ).togetherWith(
+                        slideOutHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            ),
+                            targetOffsetX = { it * 4 }
+                        ) + fadeOut(animationSpec = tween(150))
+                    )
+            },
+            label = "AvatarSpringSwap"
+        ) { currentAvatar ->
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(currentAvatar),
+                    contentDescription = "null",
+                    modifier = Modifier.size(35.dp)
                 )
-                .border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(avatar),
-                contentDescription = "null",
-                modifier = Modifier.size(35.dp)
-            )
+            }
         }
 
-        Column(
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        AnimatedContent(
+            targetState = "$name - $relation",
+            transitionSpec = {
+                fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(140))
+            },
+            label = "PatientNameFade"
         ) {
-            if (!isCaregiver) {
-                Text(
-                    text = "$name - $relation",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            } else {
-                Column {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (!isCaregiver) {
                     Text(
-                        text = name,
+                        text = "$name - $relation",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
+                } else {
+                    Column {
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
 
-                    Text(
-                        text = relation,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Light
-                    )
+                        Text(
+                            text = relation,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Light
+                        )
+                    }
                 }
-            }
 
 
-            if (!isCaregiver) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                color = statusColor,
-                                shape = CircleShape
-                            )
-                    )
+                if (!isCaregiver) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = statusColor,
+                                    shape = CircleShape
+                                )
+                        )
 
-                    Text(
-                        text = statusText,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                        Text(
+                            text = statusText,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

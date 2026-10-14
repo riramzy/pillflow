@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.prescriptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.DeletePrescriptionUseCase
@@ -36,13 +37,13 @@ class CaregiverPrescriptionsViewModel(
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val getMedicationsForUserUseCase: GetMedicationsForUserUseCase,
     private val savePrescriptionUseCase: SavePrescriptionUseCase,
-    private val deletePrescriptionUseCase: DeletePrescriptionUseCase
+    private val deletePrescriptionUseCase: DeletePrescriptionUseCase,
+    private val sessionManager: SessionManager
 ): ViewModel() {
     private val _state = MutableStateFlow(CaregiverPrescriptionsState())
     val state: StateFlow<CaregiverPrescriptionsState> = _state.asStateFlow()
 
-    private val _selectedPatientId = MutableStateFlow<String?>(null)
-    val selectedPatientId: StateFlow<String?> = _selectedPatientId.asStateFlow()
+    val selectedPatientId: StateFlow<String?> = sessionManager.selectedPatientId
 
     init {
         observePatients()
@@ -55,14 +56,14 @@ class CaregiverPrescriptionsViewModel(
                 caregiver?.let { user ->
                     getCaregiverPatientsUseCase(user.id).collectLatest { patients ->
                         val validIds = patients.map { it.id }
-                        if (patients.isNotEmpty() && (_selectedPatientId.value == null || !validIds.contains(_selectedPatientId.value))) {
-                            _selectedPatientId.value = patients.first().id
+                        if (patients.isNotEmpty() && (selectedPatientId.value == null || !validIds.contains(selectedPatientId.value))) {
+                            sessionManager.setSelectedPatientId(patients.first().id)
                         }
 
                         _state.update {
                             it.copy(
                                 pairedPatients = patients,
-                                selectedPatientId = _selectedPatientId.value,
+                                selectedPatientId = selectedPatientId.value,
                                 isLoading = false
                             )
                         }
@@ -75,38 +76,40 @@ class CaregiverPrescriptionsViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observePrescriptionsForSelectedPatient() {
         viewModelScope.launch(Dispatchers.IO) {
-            _selectedPatientId.filterNotNull().flatMapLatest { patientId ->
-                combine(
+            selectedPatientId
+                .filterNotNull()
+                .flatMapLatest { patientId ->
+                    combine(
                     getPendingDosesForUserUseCase(patientId),
                     getMedicationsForUserUseCase(patientId)
-                ) { pendingDoses, meds ->
-                    val now = currentTimeMillis()
+                    ) { pendingDoses, meds ->
+                        val now = currentTimeMillis()
 
-                    val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
+                        val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
 
-                    val prescriptions = meds.map { med ->
-                        val nextDose = pendingDoses
-                            .filter { it.name.equals(med.name, ignoreCase = true) }
-                            .minByOrNull { it.scheduledTime }
+                        val prescriptions = meds.map { med ->
+                            val nextDose = pendingDoses
+                                .filter { it.name.equals(med.name, ignoreCase = true) }
+                                .minByOrNull { it.scheduledTime }
 
-                        val pillShape = PillShapeMapper.fromRaw(med.shape)
+                            val pillShape = PillShapeMapper.fromRaw(med.shape)
 
-                        val pillColor = PillColorMapper.fromRaw(med.colorHex)
+                            val pillColor = PillColorMapper.fromRaw(med.colorHex)
 
-                        PrescriptionUiModel(
-                            id = med.id,
-                            medicationName = med.name,
-                            dosage = med.dosage,
-                            pillColor = pillColor,
-                            pillShape = pillShape,
-                            scheduleText = "${med.frequency}, ${med.timeOfDay}",
-                            instructionsText = med.instructions.ifBlank { "Take as prescribed" },
-                            nextDoseText = formatRelativeNextDose(nextDose?.scheduledTime, now)
-                        )
+                            PrescriptionUiModel(
+                                id = med.id,
+                                medicationName = med.name,
+                                dosage = med.dosage,
+                                pillColor = pillColor,
+                                pillShape = pillShape,
+                                scheduleText = "${med.frequency}, ${med.timeOfDay}",
+                                instructionsText = med.instructions.ifBlank { "Take as prescribed" },
+                                nextDoseText = formatRelativeNextDose(nextDose?.scheduledTime, now)
+                            )
+                        }
+
+                        Triple(prescriptions, meds.size, earliestDose)
                     }
-
-                    Triple(prescriptions, meds.size, earliestDose)
-                }
             }.collectLatest { (prescriptions, count, earliestDose) ->
                 _state.update { current ->
                     current.copy(
@@ -162,7 +165,7 @@ class CaregiverPrescriptionsViewModel(
         _state.update { it.copy(isSaving = true) }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val patientId = _selectedPatientId.value
+            val patientId = selectedPatientId.value
             if (patientId == null) {
                 _state.update { it.copy(isSaving = false) }
                 return@launch
@@ -224,7 +227,7 @@ class CaregiverPrescriptionsViewModel(
     }
 
     fun selectPatient(patientId: String) {
-        _selectedPatientId.value = patientId
+        sessionManager.setSelectedPatientId(patientId)
         _state.update { it.copy(selectedPatientId = patientId) }
     }
 

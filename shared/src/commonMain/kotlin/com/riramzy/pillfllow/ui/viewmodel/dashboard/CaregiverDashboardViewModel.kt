@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
+import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
@@ -40,13 +41,13 @@ class CaregiverDashboardViewModel(
     private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
-    private val nudgePatientUseCase: NudgePatientUseCase
+    private val nudgePatientUseCase: NudgePatientUseCase,
+    private val sessionManager: SessionManager
 ): ViewModel() {
     private val _state = MutableStateFlow(CaregiverDashboardState())
     val state: StateFlow<CaregiverDashboardState> = _state.asStateFlow()
 
-    private val _selectedPatientId = MutableStateFlow<String?>(null)
-
+    val selectedPatientId: StateFlow<String?> = sessionManager.selectedPatientId
     private var nudgeJob: Job? = null
 
     init {
@@ -61,14 +62,14 @@ class CaregiverDashboardViewModel(
                 caregiver?.let { user ->
                     getCaregiverPatientsUseCase(user.id).collectLatest { patientModels ->
                         val validIds = patientModels.map { it.id }
-                        if (patientModels.isNotEmpty() && (_selectedPatientId.value == null || !validIds.contains(_selectedPatientId.value))) {
-                            _selectedPatientId.value = patientModels.first().id
+                        if (patientModels.isNotEmpty() && (selectedPatientId.value == null || !validIds.contains(selectedPatientId.value))) {
+                            sessionManager.setSelectedPatientId(patientModels.first().id)
                         }
 
                         _state.update {
                             it.copy(
                                 patients = patientModels,
-                                selectedPatientId = _selectedPatientId.value ?: "",
+                                selectedPatientId = selectedPatientId.value ?: "",
                                 isLoading = false
                             )
                         }
@@ -81,7 +82,7 @@ class CaregiverDashboardViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeSelectedPatientDoses() {
         viewModelScope.launch(Dispatchers.IO) {
-            _selectedPatientId
+            selectedPatientId
                 .filterNotNull()
                 .flatMapLatest { patientId ->
                     combine(
@@ -184,7 +185,7 @@ class CaregiverDashboardViewModel(
     }
 
     fun selectPatient(patientId: String) {
-        _selectedPatientId.value = patientId
+        sessionManager.setSelectedPatientId(patientId)
         _state.update { it.copy(selectedPatientId = patientId) }
     }
 
