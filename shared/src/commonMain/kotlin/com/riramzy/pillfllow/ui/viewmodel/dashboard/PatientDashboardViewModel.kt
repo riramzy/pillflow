@@ -14,6 +14,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.pill.PillShape
 import com.riramzy.pillfllow.utils.pill.PillShapeMapper
@@ -133,9 +134,15 @@ class PatientDashboardViewModel(
                             now
                         )
 
+                        val remainingCount = mappedUiDoses.count { it.status != ComplianceStatus.MISSED }
+                        val missedCount = mappedUiDoses.count { it.status == ComplianceStatus.MISSED }
+
+
                         _state.update {
                             it.copy(
                                 scheduledDoses = mappedUiDoses,
+                                remainingDosesCount = remainingCount,
+                                missedDosesCount = missedCount,
                                 pills = mappedPills,
                                 totalDoses = sortedDishDoses.size,
                                 complianceCards = complianceCards,

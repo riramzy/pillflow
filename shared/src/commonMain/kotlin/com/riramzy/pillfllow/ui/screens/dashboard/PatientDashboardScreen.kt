@@ -171,7 +171,7 @@ fun PatientDashboardScreenContent(
                     )
 
                     Text(
-                        text = "You have ${state.scheduledDoses.size} doses remaining today",
+                        text = state.headerDosesSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal
