@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -66,7 +67,8 @@ fun PillFlowBottomNavBar(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
-            shape = RoundedCornerShape(50.dp)
+            shape = RoundedCornerShape(50.dp),
+            modifier = Modifier.wrapContentHeight()
         ) {
             when (selectedPage) {
                 Screen.Home.route -> {
@@ -142,7 +144,8 @@ fun PillFlowBottomNavBar(
                 TextButton(
                     onClick = { onActionButtonClick() },
                     modifier = Modifier
-                        .padding(start = 8.dp),
+                        .padding(start = 8.dp)
+                        .height(56.dp),
                     colors = buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
@@ -163,7 +166,7 @@ fun PillFlowBottomNavBar(
                     onClick = { onActionButtonClick() },
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .size(45.dp),
+                        .size(56.dp),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     ),
@@ -172,7 +175,7 @@ fun PillFlowBottomNavBar(
                     Icon(
                         painter = painterResource(actionButtonIcon),
                         modifier = Modifier
-                            .padding(8.dp),
+                            .size(24.dp),
                         tint = MaterialTheme.colorScheme.primaryContainer,
                         contentDescription = null,
                     )
@@ -188,7 +191,7 @@ fun PillFlowNavItem(icon: DrawableResource, onNavItemClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(36.dp)
+            .size(44.dp)
             .background(
                 color = MaterialTheme.colorScheme.primary.copy(0.3f),
                 shape = CircleShape
@@ -198,7 +201,7 @@ fun PillFlowNavItem(icon: DrawableResource, onNavItemClick: () -> Unit) {
         Icon(
             imageVector = vectorResource(icon),
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -211,7 +214,7 @@ fun PillFlowNavItemExpanded(icon: DrawableResource, name: String) {
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(50.dp)
             )
-            .height(36.dp),
+            .height(44.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -223,7 +226,7 @@ fun PillFlowNavItemExpanded(icon: DrawableResource, name: String) {
                 imageVector = vectorResource(icon),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(24.dp),
             )
 
             Text(

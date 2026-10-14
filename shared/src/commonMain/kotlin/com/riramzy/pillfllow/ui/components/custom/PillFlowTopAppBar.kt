@@ -54,7 +54,7 @@ fun PillFlowTopAppBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -71,7 +71,7 @@ fun PillFlowTopAppBar(
                 Text(
                     text = "PillFlow",
                     style = MaterialTheme.typography.titleMedium,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp)
@@ -82,12 +82,12 @@ fun PillFlowTopAppBar(
                 modifier = Modifier
                     .wrapContentSize(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(44.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primary.copy(0.3f),
                             shape = CircleShape
@@ -96,17 +96,16 @@ fun PillFlowTopAppBar(
                 ) {
                     Image(
                         imageVector = vectorResource(Res.drawable.notification),
-                        modifier = Modifier.size(24.dp),
-                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.size(22.dp),
+                        contentScale = ContentScale.Fit,
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
                         contentDescription = "Notifications"
                     )
 
-
                     if (hasUnreadNotifications) {
                         Box(
                             modifier = Modifier
-                                .size(10.dp)
+                                .size(14.dp)
                                 .align(Alignment.TopEnd)
                                 .background(MaterialTheme.colorScheme.error, CircleShape)
                         )
@@ -116,7 +115,7 @@ fun PillFlowTopAppBar(
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(44.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primary.copy(0.3f),
                             shape = CircleShape
@@ -125,8 +124,8 @@ fun PillFlowTopAppBar(
                 ) {
                     Image(
                         painter = painterResource(Res.drawable.profile),
-                        modifier = Modifier.size(18.dp),
-                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.size(22.dp),
+                        contentScale = ContentScale.Fit,
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
                         contentDescription = "Profile"
                     )
