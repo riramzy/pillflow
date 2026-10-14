@@ -1,7 +1,6 @@
 package com.riramzy.pillfllow.ui.components.dashboard.caregiver
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -98,30 +97,11 @@ fun PillFlowPatientCarousel(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(unselectedPatients, key = { it.id }) { patient ->
-                    AnimatedVisibility(
-                        visible = true,
-                        modifier = Modifier.animateItem(),
-                        enter = slideInHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            ),
-                            initialOffsetX = { -it * 4 }
-                        ) + fadeIn(),
-                        exit = slideOutHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            ),
-                            targetOffsetX = { -it * 4 }
-                        ) + fadeOut(),
-                    ) {
-                        PatientCard(
-                            avatar = patient.avatar,
-                            onClick = { onPatientSelected(patient.id) },
-                        )
-                    }
+                items(unselectedPatients) { patient ->
+                    PatientCard(
+                        avatar = patient.avatar,
+                        onClick = { onPatientSelected(patient.id) }
+                    )
                 }
             }
         }
@@ -294,21 +274,45 @@ fun PatientCard(
     avatar: DrawableResource = Res.drawable.avatar1,
     onClick: () -> Unit = {}
 ) {
-    Box(
-        modifier = modifier
-            .size(50.dp)
-            .background(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = CircleShape
+    AnimatedContent(
+        targetState = avatar,
+        transitionSpec = {
+            (
+                    slideInHorizontally(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        initialOffsetX = { -it * 2 }
+                    ) + fadeIn(animationSpec = tween(180))
+                    ).togetherWith(
+                    slideOutHorizontally(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        targetOffsetX = { it * 2 }
+                    ) + fadeOut(animationSpec = tween(150))
+                )
+        },
+        label = "PatientCardAvatarSwap"
+    ) { currentAvatar ->
+        Box(
+            modifier = modifier
+                .size(50.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = CircleShape
+                )
+                .clickable { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(currentAvatar),
+                contentDescription = "null",
+                modifier = Modifier.size(35.dp)
             )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(avatar),
-            contentDescription = "null",
-            modifier = Modifier.size(35.dp)
-        )
+        }
     }
 }
 
