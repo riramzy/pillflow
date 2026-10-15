@@ -36,6 +36,7 @@ import pillfllow.shared.generated.resources.compliance_late
 import pillfllow.shared.generated.resources.compliance_missed
 import pillfllow.shared.generated.resources.compliance_ontime
 import pillfllow.shared.generated.resources.next
+import pillfllow.shared.generated.resources.pills
 
 @Composable
 fun PillFlowComplianceCard(
@@ -51,9 +52,15 @@ fun PillFlowComplianceCard(
 
     when (status) {
         ComplianceStatus.DEFAULT -> {
-            icon = Res.drawable.next
-            color = MaterialTheme.colorScheme.onPrimary
-            backgroundColor = MaterialTheme.colorScheme.primary
+            if (badgeText == "No Schedule") {
+                icon = Res.drawable.pills
+                color = MaterialTheme.colorScheme.onPrimary
+                backgroundColor = MaterialTheme.colorScheme.primary
+            } else {
+                icon = Res.drawable.next
+                color = MaterialTheme.colorScheme.onPrimary
+                backgroundColor = MaterialTheme.colorScheme.primary
+            }
         }
 
         ComplianceStatus.ON_TIME -> {
@@ -188,7 +195,7 @@ fun PilFlowComplianceCardPreviewDark() {
             PillFlowComplianceCard(
                 title = "All Set For Today!",
                 subtitle = "All 3 scheduled doses completed",
-                badgeText = "100% On-Time",
+                badgeText = "No Schedule",
                 status = ComplianceStatus.DEFAULT
             )
 

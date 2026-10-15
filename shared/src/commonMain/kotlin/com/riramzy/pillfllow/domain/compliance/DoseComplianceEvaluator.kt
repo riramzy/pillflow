@@ -84,40 +84,47 @@ object DoseComplianceEvaluator {
     }
 
     fun evaluateDailyStatus(
-        earliestDose: PendingDoseWithMedication?,
+        todayPendingDoses: List<PendingDoseWithMedication>,
+        todayHistoryDoses: List<DoseHistoryEntity>,
         now: Long
     ): DailyStatusEvaluation {
-        if (earliestDose == null) {
-            return DailyStatusEvaluation(
-                ComplianceStatus.DEFAULT,
-                "All Set For Today!"
-            )
+        val totalToday = todayPendingDoses.size + todayHistoryDoses.size
+        if (totalToday == 0) {
+            return DailyStatusEvaluation(ComplianceStatus.DEFAULT, "No Doses Scheduled Today")
         }
 
-        val elapsed = now - earliestDose.scheduledTime
-        val formattedTime = formatTime(earliestDose.scheduledTime)
+        val overdue = todayPendingDoses.filter { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+        if (overdue.isNotEmpty()) {
+            val d = overdue.minByOrNull { it.scheduledTime }!!
+            return DailyStatusEvaluation(ComplianceStatus.MISSED, "MISSED: ${d.name} ${d.dosage} was due at ${formatTime(d.scheduledTime)}")
+        }
 
+        val late = todayPendingDoses.filter {
+            val diff = now - it.scheduledTime
+            diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+        }
+        if (late.isNotEmpty()) {
+            val d = late.minByOrNull { it.scheduledTime }!!
+            return DailyStatusEvaluation(ComplianceStatus.LATE, "LATE: ${d.name} ${d.dosage} was due at ${formatTime(d.scheduledTime)}")
+        }
 
-        return when {
-            elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> DailyStatusEvaluation(
-                ComplianceStatus.MISSED,
-                "MISSED: ${earliestDose.name} ${earliestDose.dosage} was due at $formattedTime"
-            )
+        val dueNow = todayPendingDoses.filter { now >= it.scheduledTime && (now - it.scheduledTime) <= DoseStateMachine.ON_TIME_WINDOW_MILLIS }
+        if (dueNow.isNotEmpty()) {
+            val d = dueNow.minByOrNull { it.scheduledTime }!!
+            return DailyStatusEvaluation(ComplianceStatus.DEFAULT, "DUE NOW: ${d.name} ${d.dosage} is scheduled for ${formatTime(d.scheduledTime)}")
+        }
 
-            elapsed > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> DailyStatusEvaluation(
-                ComplianceStatus.LATE,
-                "LATE: ${earliestDose.name} ${earliestDose.dosage} was due at $formattedTime"
-            )
+        val upcoming = todayPendingDoses.filter { now < it.scheduledTime }
+        if (upcoming.isNotEmpty()) {
+            val d = upcoming.minByOrNull { it.scheduledTime }!!
+            return DailyStatusEvaluation(ComplianceStatus.DEFAULT, "Next: ${d.name} ${d.dosage} is scheduled for ${formatTime(d.scheduledTime)}")
+        }
 
-            now >= earliestDose.scheduledTime -> DailyStatusEvaluation(
-                ComplianceStatus.DEFAULT,
-                "DUE NOW: ${earliestDose.name} ${earliestDose.dosage} is scheduled for $formattedTime"
-            )
-
-            else -> DailyStatusEvaluation(
-                ComplianceStatus.DEFAULT,
-                "Next: ${earliestDose.name} ${earliestDose.dosage} is scheduled for $formattedTime"
-            )
+        val hasLate = todayHistoryDoses.any { it.complianceStatus == "LATE" }
+        return if (hasLate) {
+            DailyStatusEvaluation(ComplianceStatus.LATE, "All Doses Taken (With Late Doses)")
+        } else {
+            DailyStatusEvaluation(ComplianceStatus.ON_TIME, "All Set For Today! 100% On-Time")
         }
     }
 
@@ -198,71 +205,111 @@ object DoseComplianceEvaluator {
 
         val elapsedDays = days.take(currentDayIndex + 1)
         val activeDays = elapsedDays.filter { it.status != ComplianceStatus.DEFAULT }
-        val compliantDays = activeDays.count { it.status == ComplianceStatus.ON_TIME }
-        val rate = if (activeDays.isEmpty()) 100 else ((compliantDays * 100) / activeDays.size)
+        val totalScore = activeDays.sumOf { day ->
+            when (day.status) {
+                ComplianceStatus.ON_TIME -> 100
+                ComplianceStatus.LATE -> 80
+                else -> 0
+            }
+        }
+        val rate = if (activeDays.isEmpty()) 100 else (totalScore / activeDays.size)
 
         return WeeklyComplianceEvaluation(days, rate)
     }
 
     fun evaluatePatientComplianceCards(
-        pendingDoses: List<PendingDoseWithMedication>,
+        todayPendingDoses: List<PendingDoseWithMedication>,
+        todayHistoryDoses: List<DoseHistoryEntity>,
         now: Long
     ): List<ComplianceCardUiModel> {
-        val sortedDoses = pendingDoses.sortedWith(
-            compareBy<PendingDoseWithMedication> { it.scheduledTime }
-                .thenBy { it.name }
-                .thenBy { it.id }
-        )
-
-        if (sortedDoses.isEmpty()) {
+        val totalToday = todayPendingDoses.size + todayHistoryDoses.size
+        if (totalToday == 0) {
             return listOf(
                 ComplianceCardUiModel(
                     status = ComplianceStatus.DEFAULT,
-                    title = "All Set For Today!",
-                    subtitle = "No pending doses scheduled",
-                    badgeText = "All Good"
+                    title = "No Prescriptions Today",
+                    subtitle = "You have no doses scheduled for today",
+                    badgeText = "No Schedule"
                 )
             )
         }
 
-        val activeDoses = sortedDoses.filter { now <= it.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS }
-        val targetDose = activeDoses.firstOrNull() ?: sortedDoses.first()
-        val sameTimeDoses = sortedDoses.filter { it.scheduledTime == targetDose.scheduledTime }
-
-
-        return sameTimeDoses.map { dose ->
-            val elapsed = now - dose.scheduledTime
-            val formattedTime = formatTime(dose.scheduledTime)
-
-            when {
-                elapsed > DoseStateMachine.LATE_WINDOW_MILLIS -> ComplianceCardUiModel(
+        val overduePending = todayPendingDoses.filter { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+        if (overduePending.isNotEmpty()) {
+            val target = overduePending.minByOrNull { it.scheduledTime }!!
+            return listOf(
+                ComplianceCardUiModel(
                     status = ComplianceStatus.MISSED,
-                    title = "Missed: ${dose.name} ${dose.dosage}",
+                    title = "Missed: ${target.name} ${target.dosage}",
                     subtitle = "Scheduled time window expired",
-                    badgeText = "Missed: Was Due $formattedTime"
+                    badgeText = "Missed: Was Due ${formatTime(target.scheduledTime)}"
                 )
+            )
+        }
 
-                elapsed > DoseStateMachine.ON_TIME_WINDOW_MILLIS -> ComplianceCardUiModel(
+        val latePending = todayPendingDoses.filter {
+            val diff = now - it.scheduledTime
+            diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+        }
+        if (latePending.isNotEmpty()) {
+            val target = latePending.minByOrNull { it.scheduledTime }!!
+            return listOf(
+                ComplianceCardUiModel(
                     status = ComplianceStatus.LATE,
-                    title = "Late: ${dose.name} ${dose.dosage}",
+                    title = "Late: ${target.name} ${target.dosage}",
                     subtitle = "Take as soon as possible",
-                    badgeText = "Late: Was Due $formattedTime"
+                    badgeText = "Late: Was Due ${formatTime(target.scheduledTime)}"
                 )
+            )
+        }
 
-                now >= dose.scheduledTime -> ComplianceCardUiModel(
+        val dueNowPending = todayPendingDoses.filter {
+            now >= it.scheduledTime && (now - it.scheduledTime) <= DoseStateMachine.ON_TIME_WINDOW_MILLIS
+        }
+        if (dueNowPending.isNotEmpty()) {
+            val target = dueNowPending.minByOrNull { it.scheduledTime }!!
+            return listOf(
+                ComplianceCardUiModel(
                     status = ComplianceStatus.DEFAULT,
-                    title = "Due Now: ${dose.name} ${dose.dosage}",
+                    title = "Due Now: ${target.name} ${target.dosage}",
                     subtitle = "Scheduled for today",
-                    badgeText = "Due Now: $formattedTime"
+                    badgeText = "Due Now: ${formatTime(target.scheduledTime)}"
                 )
+            )
+        }
 
-                else -> ComplianceCardUiModel(
+        val upcomingPending = todayPendingDoses.filter { now < it.scheduledTime }
+        if (upcomingPending.isNotEmpty()) {
+            val target = upcomingPending.minByOrNull { it.scheduledTime }!!
+            return listOf(
+                ComplianceCardUiModel(
                     status = ComplianceStatus.DEFAULT,
-                    title = "Next: ${dose.name} ${dose.dosage}",
+                    title = "Next: ${target.name} ${target.dosage}",
                     subtitle = "Scheduled for today",
-                    badgeText = "Upcoming: $formattedTime"
+                    badgeText = "Upcoming: ${formatTime(target.scheduledTime)}"
                 )
-            }
+            )
+        }
+
+        val hasLateHistory = todayHistoryDoses.any { it.complianceStatus == "LATE" }
+        return if (hasLateHistory) {
+            listOf(
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.LATE,
+                    title = "All Doses Taken For Today",
+                    subtitle = "Completed with late doses",
+                    badgeText = "Completed Late"
+                )
+            )
+        } else {
+            listOf(
+                ComplianceCardUiModel(
+                    status = ComplianceStatus.ON_TIME,
+                    title = "All Set For Today!",
+                    subtitle = "All ${todayHistoryDoses.size} scheduled doses completed on time",
+                    badgeText = "100% On-Time"
+                )
+            )
         }
     }
 
@@ -293,7 +340,9 @@ object DoseComplianceEvaluator {
         }
 
         val totalEvaluated = onTime + late + missed
-        val score = if (totalEvaluated > 0) ((onTime * 100) / totalEvaluated) else 100
+        val score = if (totalEvaluated > 0) {
+            ((onTime * 100) + (late * 80)) / totalEvaluated
+        } else 100
 
         val daysInMonth = getDaysInMonth(targetMonthMillis)
 
@@ -356,35 +405,41 @@ object DoseComplianceEvaluator {
     }
 
     fun evaluatePatientSummary(
-        patientDoses: List<PendingDoseWithMedication>,
+        todayPendingDoses: List<PendingDoseWithMedication>,
+        todayHistoryDoses: List<DoseHistoryEntity>,
         now: Long
     ): PatientSummaryEvaluation {
-        if (patientDoses.isEmpty()) {
-            return PatientSummaryEvaluation(
-                status = ComplianceStatus.DEFAULT,
-                lateDosesCount = 0,
-                missedDosesCount = 0,
-                compliancePercentage = 100
-            )
+        val totalDoses = todayPendingDoses.size + todayHistoryDoses.size
+        if (totalDoses == 0) {
+            return PatientSummaryEvaluation(ComplianceStatus.DEFAULT, 0, 0, 100)
         }
 
-        val missedCount = patientDoses.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+        val missedCount = todayPendingDoses.count {
+            (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS
+        }
 
-        val lateCount = patientDoses.count {
+        val pendingLate = todayPendingDoses.count {
             val diff = now - it.scheduledTime
             diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
         }
+        val historyLate = todayHistoryDoses.count { it.complianceStatus == "LATE" }
+        val lateCount = pendingLate + historyLate
 
-        val allUpcoming = patientDoses.all { now < it.scheduledTime }
+        val onTimeCount = todayHistoryDoses.count { it.isTaken && it.complianceStatus == "ON_TIME" }
 
         val status = when {
             missedCount > 0 -> ComplianceStatus.MISSED
             lateCount > 0 -> ComplianceStatus.LATE
-            allUpcoming -> ComplianceStatus.DEFAULT
+            todayPendingDoses.any { now >= it.scheduledTime } -> ComplianceStatus.DEFAULT
+            todayPendingDoses.isNotEmpty() && onTimeCount == 0 -> ComplianceStatus.DEFAULT
             else -> ComplianceStatus.ON_TIME
         }
 
-        val score = 100 - ((missedCount * 100) / patientDoses.size)
+        val evaluatedCount = onTimeCount + lateCount + missedCount
+
+        val score = if (evaluatedCount > 0) {
+            ((onTimeCount * 100) + (lateCount * 80)) / evaluatedCount
+        } else 100
 
         return PatientSummaryEvaluation(
             status = status,

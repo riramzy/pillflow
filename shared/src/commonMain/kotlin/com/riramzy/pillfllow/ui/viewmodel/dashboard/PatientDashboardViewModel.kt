@@ -7,6 +7,7 @@ import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
@@ -40,7 +41,8 @@ class PatientDashboardViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val logDoseTakenUseCase: LogDoseTakenUseCase,
-    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase
+    private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
+    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
@@ -66,9 +68,13 @@ class PatientDashboardViewModel(
                 currentUser?.let { user ->
                     combine(
                         getPendingDosesForUserUseCase(user.id),
+                        getDoseHistoryForUserUseCase(user.id),
                         tickerFlow()
-                    ) { pendingDoses, now ->
+                    ) { pendingDoses, historyDoses, now ->
                         val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
+                        val todayHistoryDoses = historyDoses.filter {
+                            it.isTaken && isSameDay(it.scheduledTime, now)
+                        }
 
                         val eligibleDishDoses = todayPendingDoses.filter { dose ->
                             DoseComplianceEvaluator.evaluateDoseCard(
@@ -130,16 +136,17 @@ class PatientDashboardViewModel(
                         }
 
                         val complianceCards = DoseComplianceEvaluator.evaluatePatientComplianceCards(
-                            todayPendingDoses,
-                            now
+                            todayPendingDoses = todayPendingDoses,
+                            todayHistoryDoses = todayHistoryDoses,
+                            now = now
                         )
 
                         val remainingCount = mappedUiDoses.count { it.status != ComplianceStatus.MISSED }
                         val missedCount = mappedUiDoses.count { it.status == ComplianceStatus.MISSED }
 
-
                         _state.update {
                             it.copy(
+                                hasPrescriptions = pendingDoses.isNotEmpty() || historyDoses.isNotEmpty(),
                                 scheduledDoses = mappedUiDoses,
                                 remainingDosesCount = remainingCount,
                                 missedDosesCount = missedCount,

@@ -34,7 +34,8 @@ val viewModelModule: Module = module {
             observeCurrentUserUseCase = get(),
             getPendingDosesForUserUseCase = get(),
             logDoseTakenUseCase = get(),
-            getPhysicsSensitivityUseCase = get()
+            getPhysicsSensitivityUseCase = get(),
+            getDoseHistoryForUserUseCase = get()
         )
     }
 

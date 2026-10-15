@@ -118,8 +118,15 @@ class CaregiverDashboardViewModel(
                     val now = currentTimeMillis()
 
                     val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
-                    val earliestDose = todayPendingDoses.minByOrNull { it.scheduledTime }
-                    val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(earliestDose, now)
+                    val todayTakenDoses = historyDoses.filter {
+                        it.isTaken && isSameDay(it.takenTime ?: it.scheduledTime, now)
+                    }
+
+                    val (dailyStatus, alertText) = DoseComplianceEvaluator.evaluateDailyStatus(
+                        todayPendingDoses = todayPendingDoses,
+                        todayHistoryDoses = todayTakenDoses,
+                        now = now
+                    )
 
                     val (weeklyDays, weeklyRate) = DoseComplianceEvaluator.evaluateWeeklyCompliance(
                         historyDoses = historyDoses,
@@ -141,10 +148,6 @@ class CaregiverDashboardViewModel(
                             badgeText = evalDose.badgeText,
                             scheduledTime = dose.scheduledTime
                         )
-                    }
-
-                    val todayTakenDoses = historyDoses.filter {
-                        it.isTaken && isSameDay(it.takenTime ?: it.scheduledTime, now)
                     }
 
                     val takenActivities = todayTakenDoses.map { dose ->
@@ -192,11 +195,16 @@ class CaregiverDashboardViewModel(
                     _state.update { current ->
                         val updatedPatients = current.patients.map { patient ->
                             if (patient.id == patientId) {
-                                val missed = todayPendingDoses.count { d -> (now - d.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
-                                val late = todayPendingDoses.count { d ->
+                                val missed = todayPendingDoses.count { d ->
+                                    (now - d.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS
+                                }
+
+                                val pendingLate = todayPendingDoses.count { d ->
                                     val diff = now - d.scheduledTime
                                     diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
                                 }
+                                val historyLate = todayTakenDoses.count { it.complianceStatus == "LATE" }
+                                val late = pendingLate + historyLate
 
                                 patient.copy(
                                     status = dailyStatus,

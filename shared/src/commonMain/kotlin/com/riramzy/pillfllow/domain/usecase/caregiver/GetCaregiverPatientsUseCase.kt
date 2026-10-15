@@ -31,10 +31,20 @@ class GetCaregiverPatientsUseCase(
                 val patient = userRepo.getUserByIdOnce(patientId)
                 val relation = pairing?.relation?.ifBlank { "Patient" } ?: "Patient"
                 val patientName = patient?.firstName?.ifBlank { null } ?: relation
-                val patientDoses = medicationRepo.getPendingDosesForUser(patientId).firstOrNull() ?: emptyList()
-                val todayPatientDoses = patientDoses.filter { isSameDay(it.scheduledTime, now) }
 
-                val summary = DoseComplianceEvaluator.evaluatePatientSummary(todayPatientDoses, now)
+                val patientDoses = medicationRepo.getPendingDosesForUser(patientId).firstOrNull() ?: emptyList()
+                val patientHistory = medicationRepo.getDoseHistoryForUser(patientId).firstOrNull() ?: emptyList()
+
+                val todayPatientDoses = patientDoses.filter { isSameDay(it.scheduledTime, now) }
+                val todayPatientHistory = patientHistory.filter {
+                    it.isTaken && isSameDay(it.scheduledTime, now)
+                }
+
+                val summary = DoseComplianceEvaluator.evaluatePatientSummary(
+                    todayPendingDoses = todayPatientDoses,
+                    todayHistoryDoses = todayPatientHistory,
+                    now = now
+                )
 
                 PairedPatientUiModel(
                     id = patientId,
