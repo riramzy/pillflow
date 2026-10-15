@@ -3,14 +3,16 @@ package com.riramzy.pillfllow.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.riramzy.pillfllow.utils.platform.randomUUID
 
 @Entity(
     tableName = "scheduled_doses",
-    indices = [Index("medicationId")]
+    indices = [
+        Index("medicationId"),
+        Index(value = ["medicationId", "scheduledTime"], unique = true)
+    ]
 )
 data class ScheduledDoseEntity(
-    @PrimaryKey val id: String = randomUUID(),
+    @PrimaryKey val id: String,
     val medicationId: String,
     val takenTime: Long? = null,
     val scheduledTime: Long,

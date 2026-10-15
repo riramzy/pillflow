@@ -21,6 +21,7 @@ object MedicationScheduler {
                     null
                 } else {
                     ScheduledDoseEntity(
+                        id = "${medicationId}_${targetTime}",
                         medicationId = medicationId,
                         scheduledTime = targetTime,
                         complianceStatus = "PENDING",

@@ -15,11 +15,9 @@ import com.riramzy.pillfllow.data.remote.dto.toEntity
 import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
-import com.riramzy.pillfllow.domain.scheduler.MedicationScheduler
 import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.utils.medication.DoseReminderStage
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
-import com.riramzy.pillfllow.utils.platform.parseScheduleTimeToMillis
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,51 +52,7 @@ class MedicationRepoImpl(
     }
 
     override fun getMedicationForUser(userId: String): Flow<List<MedicationEntity>> = channelFlow {
-        launch(Dispatchers.IO) {
-            runCatching {
-                firestore
-                    .collection("medications")
-                    .where { "userId" equalTo userId }
-                    .snapshots
-                    .collect { querySnapshot ->
-                        val remoteEntities = querySnapshot.documents.map { doc ->
-                            doc.data<MedicationDto>().toEntity(isSynced = true)
-                        }
-
-                        val remoteIds = remoteEntities.map { it.id }.toSet()
-                        val localMeds = medicationDao.getAllMedicationsOnce().filter { it.userId == userId }
-
-                        val orphanedMeds = localMeds.filter { it.id !in remoteIds && it.isSynced }
-                        orphanedMeds.forEach { med ->
-                            medicationDao.deletePendingDosesByMedicationId(med.id)
-                            medicationDao.deleteMedicationById(med.id)
-                        }
-
-                        if (remoteEntities.isNotEmpty()) {
-                            medicationDao.insertMedications(remoteEntities)
-
-                            remoteEntities.forEach { med ->
-                                val baseTimes = parseScheduleTimeToMillis(med.timeOfDay)
-                                val existingTimes = medicationDao.getAllScheduledDosesOnce()
-                                    .filter { it.medicationId == med.id }
-                                    .map { it.scheduledTime }
-                                    .toSet()
-
-                                val newDoses = MedicationScheduler.generateRollingDoses(
-                                    medicationId = med.id,
-                                    baseTimesToday = baseTimes,
-                                    existingTimes = existingTimes
-                                )
-
-                                if (newDoses.isNotEmpty()) {
-                                    insertScheduledDoses(newDoses)
-                                }
-                            }
-                        }
-                    }
-            }
-        }
-
+        syncMedicationsForUser(userId)
         medicationDao.getMedicationForUser(userId).distinctUntilChanged().collect { send(it) }
     }
 
