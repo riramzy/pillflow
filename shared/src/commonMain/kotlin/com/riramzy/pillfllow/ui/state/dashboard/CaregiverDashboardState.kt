@@ -38,7 +38,7 @@ data class PairedPatientUiModel(
     val relation: String = "Mom",
     val phoneNumber: String = "",
     val avatar: DrawableResource = Res.drawable.avatar1,
-    val status: ComplianceStatus = ComplianceStatus.ON_TIME,
+    val status: ComplianceStatus = ComplianceStatus.DEFAULT,
     val lateDosesCount: Int = 0,
     val missedDosesCount: Int = 0,
     val compliancePercentage: Int = 100

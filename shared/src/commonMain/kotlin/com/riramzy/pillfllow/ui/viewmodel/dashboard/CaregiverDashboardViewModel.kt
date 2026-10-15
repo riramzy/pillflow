@@ -70,7 +70,7 @@ class CaregiverDashboardViewModel(
                             it.copy(
                                 patients = patientModels,
                                 selectedPatientId = selectedPatientId.value ?: "",
-                                isLoading = false
+                                isLoading = patientModels.isNotEmpty() && it.isLoading
                             )
                         }
                     }
@@ -169,21 +169,21 @@ class CaregiverDashboardViewModel(
                         .take(4)
 
                     _state.update { current ->
-                        val updatedPatients = current.patients.map { p ->
-                            if (p.id == patientId) {
+                        val updatedPatients = current.patients.map { patient ->
+                            if (patient.id == patientId) {
                                 val missed = todayPendingDoses.count { d -> (now - d.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
                                 val late = todayPendingDoses.count { d ->
                                     val diff = now - d.scheduledTime
                                     diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
                                 }
 
-                                p.copy(
+                                patient.copy(
                                     status = dailyStatus,
                                     lateDosesCount = late,
                                     missedDosesCount = missed,
                                     compliancePercentage = weeklyRate
                                 )
-                            } else p
+                            } else patient
                         }
 
                         current.copy(
@@ -195,7 +195,8 @@ class CaregiverDashboardViewModel(
                             weeklyCompliance = weeklyDays,
                             recentActivities = activities,
                             weeklyRatePercentage = weeklyRate,
-                            lastUpdatedText = "Updated at ${formatTime(now)}"
+                            lastUpdatedText = "Updated at ${formatTime(now)}",
+                            isLoading = false
                         )
                     }
                 }

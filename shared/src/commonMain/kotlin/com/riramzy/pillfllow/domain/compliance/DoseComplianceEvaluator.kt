@@ -346,6 +346,15 @@ object DoseComplianceEvaluator {
         patientDoses: List<PendingDoseWithMedication>,
         now: Long
     ): PatientSummaryEvaluation {
+        if (patientDoses.isEmpty()) {
+            return PatientSummaryEvaluation(
+                status = ComplianceStatus.DEFAULT,
+                lateDosesCount = 0,
+                missedDosesCount = 0,
+                compliancePercentage = 100
+            )
+        }
+
         val missedCount = patientDoses.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
 
         val lateCount = patientDoses.count {
@@ -353,13 +362,16 @@ object DoseComplianceEvaluator {
             diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
         }
 
+        val allUpcoming = patientDoses.all { now < it.scheduledTime }
+
         val status = when {
             missedCount > 0 -> ComplianceStatus.MISSED
             lateCount > 0 -> ComplianceStatus.LATE
+            allUpcoming -> ComplianceStatus.DEFAULT
             else -> ComplianceStatus.ON_TIME
         }
 
-        val score = if (patientDoses.isEmpty()) 100 else (100 - ((missedCount * 100) / patientDoses.size))
+        val score = 100 - ((missedCount * 100) / patientDoses.size)
 
         return PatientSummaryEvaluation(
             status = status,
