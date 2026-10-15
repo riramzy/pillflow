@@ -16,7 +16,8 @@ data class MedicationDto(
     val instructions: String = "",
     val scheduleTimesMillis: List<Long> = emptyList(),
     val createdAt: Long = 0L,
-    val updatedAt: Long = 0L
+    val updatedAt: Long = 0L,
+    val isArchived: Boolean = false
 )
 
 fun MedicationDto.toEntity(isSynced: Boolean = false): MedicationEntity = MedicationEntity(
@@ -29,7 +30,8 @@ fun MedicationDto.toEntity(isSynced: Boolean = false): MedicationEntity = Medica
     colorHex = colorHex,
     shape = shape,
     instructions = instructions,
-    isSynced = isSynced
+    isSynced = isSynced,
+    isArchived = isArchived
 )
 
 fun MedicationEntity.toDto(
@@ -48,5 +50,6 @@ fun MedicationEntity.toDto(
     instructions = instructions,
     scheduleTimesMillis = scheduleTimesMillis,
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    isArchived = isArchived
 )

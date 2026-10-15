@@ -19,5 +19,6 @@ data class MedicationEntity(
     val colorHex: String,
     val shape: String = "CAPSULE",
     val instructions: String = "",
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val isArchived: Boolean = false
 )

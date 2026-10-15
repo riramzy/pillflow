@@ -19,7 +19,7 @@ import com.riramzy.pillfllow.data.local.entity.UserEntity
         UserEntity::class,
         CaregiverPatientPairingEntity::class
     ],
-    version = 13
+    version = 14
 )
 @ConstructedBy(PillFlowDatabaseConstructor::class)
 abstract class PillFlowDatabase: RoomDatabase() {
@@ -35,7 +35,11 @@ abstract class PillFlowDatabase: RoomDatabase() {
     }
 }
 
-@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+@Suppress(
+    "NO_ACTUAL_FOR_EXPECT",
+    "KotlinNoActualForExpect",
+    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING"
+)
 expect object PillFlowDatabaseConstructor: RoomDatabaseConstructor<PillFlowDatabase> {
     override fun initialize(): PillFlowDatabase
 }

@@ -39,7 +39,7 @@ interface MedicationDao {
     @Query("SELECT * FROM scheduled_doses WHERE medicationId = :medicationId")
     fun getScheduledDosesForMedication(medicationId: String): Flow<List<ScheduledDoseEntity>>
 
-    @Query("SELECT * FROM medications WHERE userId = :userId")
+    @Query("SELECT * FROM medications WHERE userId = :userId AND isArchived = 0")
     fun getMedicationForUser(userId: String): Flow<List<MedicationEntity>>
 
     @Query("""
@@ -53,7 +53,9 @@ interface MedicationDao {
             medications.userId AS userId
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
-        WHERE scheduled_doses.isTaken = 0 AND medications.userId = :userId
+        WHERE scheduled_doses.isTaken = 0 
+            AND medications.userId = :userId 
+            AND medications.isArchived = 0
         ORDER BY scheduled_doses.scheduledTime ASC
     """)
     fun getPendingDosesForUser(userId: String): Flow<List<PendingDoseWithMedication>>
@@ -69,7 +71,9 @@ interface MedicationDao {
             medications.userId AS userId
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
-        WHERE scheduled_doses.isTaken = 0 AND medications.userId IN (:patientIds)
+        WHERE scheduled_doses.isTaken = 0
+            AND medications.userId IN (:patientIds)
+            AND medications.isArchived = 0        
         ORDER BY scheduled_doses.scheduledTime ASC
     """)
     fun getPendingDosesForPatients(patientIds: List<String>): Flow<List<PendingDoseWithMedication>>
@@ -85,7 +89,7 @@ interface MedicationDao {
             medications.userId AS userId
         FROM scheduled_doses
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
-        WHERE scheduled_doses.isTaken = 0
+        WHERE scheduled_doses.isTaken = 0 AND medications.isArchived = 0
         ORDER BY scheduled_doses.scheduledTime ASC
     """)
     fun getPendingDosesWithMedication(): Flow<List<PendingDoseWithMedication>>
@@ -166,6 +170,9 @@ interface MedicationDao {
 
     @Query("DELETE FROM scheduled_doses WHERE id IN (:ids)")
     suspend fun deleteScheduledDosesByIds(ids: List<String>)
+
+    @Query("UPDATE medications SET isArchived = 1, isSynced = 0 WHERE id = :id")
+    suspend fun archiveMedicationById(id: String)
 
     @Query("""
         SELECT scheduled_doses.id 

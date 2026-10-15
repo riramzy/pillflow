@@ -239,10 +239,14 @@ class MedicationRepoImpl(
         }
 
         medicationDao.deletePendingDosesByMedicationId(id)
-        medicationDao.deleteMedicationById(id)
+
+        medicationDao.archiveMedicationById(id)
 
         runCatching {
-            firestore.collection("medications").document(id).delete()
+            firestore
+                .collection("medications")
+                .document(id)
+                .update("isArchived" to true)
         }
     }
 

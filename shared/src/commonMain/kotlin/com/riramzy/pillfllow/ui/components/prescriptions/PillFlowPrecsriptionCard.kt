@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,7 @@ import pillfllow.shared.generated.resources.time
 
 @Composable
 fun PillFlowPrescriptionCard(
+    modifier: Modifier = Modifier,
     medicationName: String = "Metformin",
     dosage: String = "500mg",
     pillShape: PillShape = PillShape.CAPSULE,
@@ -52,7 +54,6 @@ fun PillFlowPrescriptionCard(
     nextDoseText: String = "Next dose in 2 hours",
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
@@ -79,7 +80,8 @@ fun PillFlowPrescriptionCard(
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(2f)
                 ) {
                     PillFlowPillColor(
                         customColor = pillColor.color,
@@ -93,13 +95,15 @@ fun PillFlowPrescriptionCard(
                         text = "$medicationName, $dosage",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
                     )
                 }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     IconButton(
                         onClick = { onEditClick() },
@@ -165,9 +169,9 @@ fun PillFlowPrescriptionCard(
 
 @Composable
 fun PrescriptionMetadataRow(
+    modifier: Modifier = Modifier,
     icon: DrawableResource = Res.drawable.time,
     title: String = "Twice Daily, 08:00 AM, 08:00 PM",
-    modifier: Modifier = Modifier
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
