@@ -88,7 +88,10 @@ object DoseComplianceEvaluator {
         now: Long
     ): DailyStatusEvaluation {
         if (earliestDose == null) {
-            return DailyStatusEvaluation(ComplianceStatus.ON_TIME, "All Set For Today!")
+            return DailyStatusEvaluation(
+                ComplianceStatus.DEFAULT,
+                "All Set For Today!"
+            )
         }
 
         val elapsed = now - earliestDose.scheduledTime
@@ -155,15 +158,23 @@ object DoseComplianceEvaluator {
                 index > currentDayIndex -> ComplianceDayUiModel(name, ComplianceStatus.DEFAULT)
 
                 index == currentDayIndex -> {
-                    val overdueCount = pendingDoses.count { isSameDay(it.scheduledTime, now) && (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
-                    val lateCount = pendingDoses.count {
-                        isSameDay(it.scheduledTime, now) &&
-                                (now - it.scheduledTime) in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
+                    val todayPending = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
+                    val todayHistory = historyDoses.filter { isSameDay(it.scheduledTime, now) }
+
+                    val overdueCount = todayPending.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
+
+                    val lateCount = todayPending.count {
+                        val diff = now - it.scheduledTime
+                        diff in (DoseStateMachine.ON_TIME_WINDOW_MILLIS + 1)..DoseStateMachine.LATE_WINDOW_MILLIS
                     }
 
+                    val hasMissedHistory = todayHistory.any { !it.isTaken || it.complianceStatus == "MISSED" }
+                    val hasLateHistory = todayHistory.any { it.complianceStatus == "LATE" }
+
                     val todayStatus = when {
-                        overdueCount > 0 -> ComplianceStatus.MISSED
-                        lateCount > 0 -> ComplianceStatus.LATE
+                        overdueCount > 0 || hasMissedHistory -> ComplianceStatus.MISSED
+                        lateCount > 0 || hasLateHistory -> ComplianceStatus.LATE
+                        todayHistory.isEmpty() && (todayPending.isEmpty() || todayPending.all { now < it.scheduledTime }) -> ComplianceStatus.DEFAULT
                         else -> ComplianceStatus.ON_TIME
                     }
 
@@ -174,7 +185,7 @@ object DoseComplianceEvaluator {
                     val dayRecords = historyDoses.filter { isSameDay(it.scheduledTime, targetDayMillis) }
 
                     val dayStatus = when {
-                        dayRecords.isEmpty() -> ComplianceStatus.ON_TIME
+                        dayRecords.isEmpty() -> ComplianceStatus.DEFAULT
                         dayRecords.any { !it.isTaken || it.complianceStatus == "MISSED" } -> ComplianceStatus.MISSED
                         dayRecords.any { it.complianceStatus == "LATE" } -> ComplianceStatus.LATE
                         else -> ComplianceStatus.ON_TIME
@@ -186,8 +197,9 @@ object DoseComplianceEvaluator {
         }
 
         val elapsedDays = days.take(currentDayIndex + 1)
-        val missedDaysCount = elapsedDays.count { it.status == ComplianceStatus.MISSED }
-        val rate = ((elapsedDays.size - missedDaysCount) * 100) / elapsedDays.size.coerceAtLeast(1)
+        val activeDays = elapsedDays.filter { it.status != ComplianceStatus.DEFAULT }
+        val compliantDays = activeDays.count { it.status == ComplianceStatus.ON_TIME }
+        val rate = if (activeDays.isEmpty()) 100 else ((compliantDays * 100) / activeDays.size)
 
         return WeeklyComplianceEvaluation(days, rate)
     }
@@ -201,13 +213,14 @@ object DoseComplianceEvaluator {
                 .thenBy { it.name }
                 .thenBy { it.id }
         )
+
         if (sortedDoses.isEmpty()) {
             return listOf(
                 ComplianceCardUiModel(
-                    status = ComplianceStatus.ON_TIME,
+                    status = ComplianceStatus.DEFAULT,
                     title = "All Set For Today!",
-                    subtitle = "All scheduled doses completed",
-                    badgeText = "100% On-Time"
+                    subtitle = "No pending doses scheduled",
+                    badgeText = "All Good"
                 )
             )
         }

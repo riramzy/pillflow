@@ -2,6 +2,8 @@ package com.riramzy.pillfllow.ui.viewmodel.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
+import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.session.SessionManager
@@ -30,8 +32,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -85,16 +89,33 @@ class CaregiverDashboardViewModel(
             selectedPatientId
                 .filterNotNull()
                 .flatMapLatest { patientId ->
+                    val patientNameFlow = _state
+                        .map { state -> state.patients.find { it.id == patientId }?.name }
+                        .distinctUntilChanged()
+
                     combine(
                         getPendingDosesForUserUseCase(patientId),
-                        getDoseHistoryForUserUseCase(patientId)
-                    ) { pendingDoses, historyDoses ->
-                        Triple(patientId, pendingDoses, historyDoses)
+                        getDoseHistoryForUserUseCase(patientId),
+                        patientNameFlow
+                    ) { pendingDoses, historyDoses, resolvedName ->
+                        data class CombinedDoseData(
+                            val patientId: String,
+                            val pendingDoses: List<PendingDoseWithMedication>,
+                            val historyDoses: List<DoseHistoryEntity>,
+                            val patientName: String
+                        )
+
+                        CombinedDoseData(
+                            patientId = patientId,
+                            pendingDoses = pendingDoses,
+                            historyDoses = historyDoses,
+                            patientName = resolvedName ?: "Patient"
+                        )
                     }
                 }
-                .collectLatest { (patientId, pendingDoses, historyDoses) ->
+                .collectLatest { data ->
+                    val (patientId, pendingDoses, historyDoses, patientName) = data
                     val now = currentTimeMillis()
-                    val patientName = _state.value.patients.find { it.id == patientId }?.name ?: "Patient"
 
                     val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
                     val earliestDose = todayPendingDoses.minByOrNull { it.scheduledTime }
