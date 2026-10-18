@@ -35,6 +35,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowUserCard
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCarousel
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientDailyStatusCard
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientWeeklyOverviewCard
@@ -131,27 +132,12 @@ fun CaregiverDashboardScreenContent(
                 contentPadding = PaddingValues(bottom = 100.dp),
             ) {
                 item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.Start,
+                    PillFlowUserCard(
+                        userName = state.caregiver?.firstName ?: "User",
+                        headerDosesSubtitle = "Monitoring ${state.patients.size} family members",
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Hello, ${state.caregiver?.firstName ?: "User"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            text = "Monitoring ${state.patients.size} family members",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
+                    )
                 }
 
                 if (state.isLoading) {

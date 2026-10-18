@@ -38,6 +38,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowUserCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
@@ -163,27 +164,12 @@ fun PatientDashboardScreenContent(
                 contentPadding = PaddingValues(bottom = 100.dp),
             ) {
                 item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.Start,
+                    PillFlowUserCard(
+                        userName = state.user?.firstName ?: "User",
+                        headerDosesSubtitle = state.headerDosesSubtitle,
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Hello, ${state.user?.firstName ?: "User"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            text = state.headerDosesSubtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
+                    )
                 }
 
                 item {
