@@ -59,6 +59,8 @@ fun PillFlowCutePillRefreshIndicator(
         label = "PillHop"
     )
 
+    val isAnimating = isRefreshing || pullProgress >= 1f
+
     Surface(
         modifier = modifier.wrapContentSize(),
         shape = RoundedCornerShape(32.dp),
@@ -74,10 +76,10 @@ fun PillFlowCutePillRefreshIndicator(
                 modifier = Modifier
                     .size(width = 44.dp, height = 22.dp)
                     .graphicsLayer {
-                        rotationZ = if (isRefreshing) rotation else (sin(pullProgress * 3.14f * 2.5f) * 14f)
-                        translationY = if (isRefreshing) hopOffset else 0f
-                        scaleX = if (isRefreshing) 1f else (1f + (pullProgress * 0.08f).coerceAtMost(0.15f))
-                        scaleY = if (isRefreshing) 1f else (1f - (pullProgress * 0.05f).coerceAtMost(0.12f))
+                        rotationZ = if (isAnimating) rotation else (sin(pullProgress * 3.14f * 2.5f) * 25f)
+                        translationY = if (isAnimating) hopOffset else 0f
+                        scaleX = if (isAnimating) 1f else (1f + (pullProgress * 0.08f).coerceAtMost(0.15f))
+                        scaleY = if (isAnimating) 1f else (1f - (pullProgress * 0.05f).coerceAtMost(0.12f))
                     }
                     .background(
                         color = MaterialTheme.colorScheme.primary,
@@ -101,7 +103,7 @@ fun PillFlowCutePillRefreshIndicator(
                     .padding(top = 6.dp)
                     .size(width = 28.dp, height = 3.dp)
                     .graphicsLayer {
-                        val shadowScale = if (isRefreshing) {
+                        val shadowScale = if (isAnimating) {
                             (1f - (-hopOffset / 15f)).coerceIn(0.4f, 1.1f)
                         } else {
                             pullProgress.coerceIn(0.3f, 1f)

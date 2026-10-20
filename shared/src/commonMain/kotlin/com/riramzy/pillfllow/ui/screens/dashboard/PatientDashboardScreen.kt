@@ -1,6 +1,12 @@
 package com.riramzy.pillfllow.ui.screens.dashboard
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +34,7 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.domain.hardware.PlatformSensor
 import com.riramzy.pillfllow.domain.physics.PillEntity
@@ -40,6 +47,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowUserCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceCard
+import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowFloatingNudgeBanner
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
@@ -152,108 +160,133 @@ fun PatientDashboardScreenContent(
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
     ) { innerPadding ->
-        PillFlowPullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onAction(PatientDashboardAction.Refresh) },
-            modifier = Modifier.padding(innerPadding)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(bottom = 100.dp),
+            PillFlowPullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { onAction(PatientDashboardAction.Refresh) },
+                modifier = Modifier.fillMaxSize()
             ) {
-                item {
-                    PillFlowUserCard(
-                        userName = state.user?.firstName ?: "User",
-                        headerDosesSubtitle = state.headerDosesSubtitle,
-                        modifier = Modifier
-                            .padding(horizontal = 15.dp)
-                    )
-                }
-
-                item {
-                    PillFlowPillJarSandbox(
-                        pillsState = state.pills,
-                        totalRemainingDoses = state.totalDoses,
-                        tiltX = tiltX,
-                        tiltY = tiltY,
-                        onLogMedication = { pillId ->
-                            val scheduledTime = state.scheduledDoses.firstOrNull { dose ->
-                                dose.id == pillId
-                            }?.scheduledTime
-
-                            onAction(PatientDashboardAction.LogDose(doseId = pillId, scheduledTime = scheduledTime))
-                        },
-                        modifier = Modifier.padding(horizontal = 15.dp)
-                    )
-                }
-
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(15.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Daily Compliance",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(bottom = 100.dp),
+                ) {
+                    item {
+                        PillFlowUserCard(
+                            userName = state.user?.firstName ?: "User",
+                            headerDosesSubtitle = state.headerDosesSubtitle,
+                            modifier = Modifier
+                                .padding(horizontal = 15.dp)
                         )
-
-                        state.complianceCards.forEach { card ->
-                            PillFlowComplianceCard(
-                                title = card.title,
-                                subtitle = card.subtitle,
-                                badgeText = card.badgeText,
-                                status = card.status
-                            )
-                        }
                     }
-                }
 
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(15.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Daily Schedule",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                    item {
+                        PillFlowPillJarSandbox(
+                            pillsState = state.pills,
+                            totalRemainingDoses = state.totalDoses,
+                            tiltX = tiltX,
+                            tiltY = tiltY,
+                            onLogMedication = { pillId ->
+                                val scheduledTime = state.scheduledDoses.firstOrNull { dose ->
+                                    dose.id == pillId
+                                }?.scheduledTime
+
+                                onAction(PatientDashboardAction.LogDose(doseId = pillId, scheduledTime = scheduledTime))
+                            },
+                            modifier = Modifier.padding(horizontal = 15.dp)
                         )
+                    }
 
-                        if (state.scheduledDoses.isEmpty()) {
-                            PillFlowEmptyStateCard(
-                                title = if (state.isNewUserWithoutPrescriptions) "No Medications Scheduled" else "All Caught Up!",
-                                description = if (state.isNewUserWithoutPrescriptions) "Add your medications to schedule doses." else "Great job! All daily doses completed",
-                                icon = if (state.isNewUserWithoutPrescriptions) Res.drawable.pills else Res.drawable.compliance_ontime,
-                                buttonText = if (state.isNewUserWithoutPrescriptions) "Add Prescription" else null,
-                                buttonIcon = if (state.isNewUserWithoutPrescriptions) Res.drawable.add else null,
-                                onButtonClick = onNavigateToPrescriptions
+                    item {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(15.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Daily Compliance",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                        } else {
-                            state.scheduledDoses.forEach { scheduledDose ->
-                                PillFlowScheduledDoseCard(
-                                    name = scheduledDose.name,
-                                    dose = scheduledDose.dosage,
-                                    time = scheduledDose.timeFormatted,
-                                    color = scheduledDose.color,
-                                    status = scheduledDose.status,
-                                    badgeText = scheduledDose.badgeText,
+
+                            state.complianceCards.forEach { card ->
+                                PillFlowComplianceCard(
+                                    title = card.title,
+                                    subtitle = card.subtitle,
+                                    badgeText = card.badgeText,
+                                    status = card.status
                                 )
                             }
                         }
                     }
+
+                    item {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(15.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Daily Schedule",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            if (state.scheduledDoses.isEmpty()) {
+                                PillFlowEmptyStateCard(
+                                    title = if (state.isNewUserWithoutPrescriptions) "No Medications Scheduled" else "All Caught Up!",
+                                    description = if (state.isNewUserWithoutPrescriptions) "Add your medications to schedule doses." else "Great job! All daily doses completed",
+                                    icon = if (state.isNewUserWithoutPrescriptions) Res.drawable.pills else Res.drawable.compliance_ontime,
+                                    buttonText = if (state.isNewUserWithoutPrescriptions) "Add Prescription" else null,
+                                    buttonIcon = if (state.isNewUserWithoutPrescriptions) Res.drawable.add else null,
+                                    onButtonClick = onNavigateToPrescriptions
+                                )
+                            } else {
+                                state.scheduledDoses.forEach { scheduledDose ->
+                                    PillFlowScheduledDoseCard(
+                                        name = scheduledDose.name,
+                                        dose = scheduledDose.dosage,
+                                        time = scheduledDose.timeFormatted,
+                                        color = scheduledDose.color,
+                                        status = scheduledDose.status,
+                                        badgeText = scheduledDose.badgeText,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = state.activeNudges.isNotEmpty(),
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .zIndex(10f)
+            ) {
+                val nudge = state.activeNudges.firstOrNull()
+                if (nudge != null) {
+                    PillFlowFloatingNudgeBanner(
+                        title = nudge.title,
+                        message = nudge.description,
+                        onDismiss = { onAction(PatientDashboardAction.DismissNudge(nudge.id)) }
+                    )
                 }
             }
         }

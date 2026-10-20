@@ -21,10 +21,8 @@ class GetCaregiverPatientsUseCase(
         return pairingRepo.getPairingsForCaregiver(caregiverId).map { pairings ->
             val now = currentTimeMillis()
 
-            val caregiver = userRepo.getUserByIdOnce(caregiverId)
             val activePairings = pairings.filter { it.status == "ACTIVE" }
-            val activePatientIds = activePairings.map { it.patientId }
-            val allPatientIds = ((caregiver?.pairedPatientIds ?: emptyList()) + activePatientIds).distinct()
+            val allPatientIds = activePairings.map { it.patientId }.distinct()
 
             allPatientIds.map { patientId ->
                 val pairing = pairings.find { it.patientId == patientId }

@@ -47,12 +47,12 @@ import kotlinx.coroutines.isActive
 
 @Composable
 fun PillFlowPillJarSandbox(
+    modifier: Modifier = Modifier,
     pillsState: List<PillEntity>,
     totalRemainingDoses: Int = pillsState.size,
     tiltX: Float,
     tiltY: Float,
     onLogMedication: (String) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val loggedPillIds = remember { mutableSetOf<String>() }
 
@@ -78,13 +78,18 @@ fun PillFlowPillJarSandbox(
             val handleWidth = 110f
 
             val activePills = remember { mutableStateListOf<PillEntity>().apply { addAll(pillsState) } }
+            val targetPillIds = remember(pillsState) { pillsState.map { it.id }.toSet() }
             var triggerRedraw by remember { mutableStateOf(0) }
             val jarCenterOffset = Offset(center.x, center.y)
 
-            LaunchedEffect(pillsState) {
-                loggedPillIds.clear()
-                activePills.clear()
-                activePills.addAll(pillsState)
+            LaunchedEffect(targetPillIds) {
+                val currentIds = activePills.map { it.id }.toSet()
+                if (currentIds != targetPillIds) {
+                    activePills.removeAll { it.id !in targetPillIds }
+                    val toAdd = pillsState.filter { it.id !in currentIds }
+                    activePills.addAll(toAdd)
+                    loggedPillIds.retainAll(targetPillIds)
+                }
             }
 
             val haptics = remember { PlatformHaptics() }

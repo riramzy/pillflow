@@ -2,6 +2,7 @@ import SwiftUI
 import Shared
 import FirebaseCore
 import UserNotifications
+import BackgroundTasks
 
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(
@@ -21,14 +22,14 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 struct iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
     private let notificationDelegate = NotificationDelegate()
-    private let refreshTaskId = "com.riramzy.pillflow.refresh"
+    private static let refreshTaskId = "com.riramzy.pillflow.refresh"
 
     init() {
         FirebaseApp.configure()
         InitKoinIosKt.doInitKoinForIos()
-
         let center = UNUserNotificationCenter.current()
         center.delegate = notificationDelegate
+
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if granted {
                 print("PillFlow iOS: Notification permission granted")
@@ -37,12 +38,12 @@ struct iOSApp: App {
             }
         }
 
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: refreshTaskId, using: nil) { task in guard let refreshTask = task as? BGAppRefreshTask else { return }
-            scheduleBackgroundRefresh()
-
-            InitKoinIosKt.triggerAppSyncAndSchedule {
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: iOSApp.refreshTaskId, using: nil) { task in
+            guard let refreshTask = task as? BGAppRefreshTask else { return }
+            iOSApp.scheduleBackgroundRefresh()
+            InitKoinIosKt.triggerAppSyncAndSchedule(onComplete: {
                 refreshTask.setTaskCompleted(success: true)
-            }
+            })
         }
     }
 
@@ -53,13 +54,13 @@ struct iOSApp: App {
             if newPhase == .active {
                 InitKoinIosKt.triggerAppSyncAndSchedule(onComplete: nil)
             } else if newPhase == .background {
-                scheduleBackgroundRefresh()
+                iOSApp.scheduleBackgroundRefresh()
             }
         }
     }
 
     private static func scheduleBackgroundRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: refreshTaskId)
+        let request = BGAppRefreshTaskRequest(identifier: iOSApp.refreshTaskId)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 12 * 3600)
         try? BGTaskScheduler.shared.submit(request)
     }

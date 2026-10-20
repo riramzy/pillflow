@@ -9,6 +9,7 @@ import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
+import com.riramzy.pillfllow.domain.usecase.caregiver.GetPendingDosesForPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
@@ -34,8 +35,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -48,6 +52,7 @@ class CaregiverDashboardViewModel(
     private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
     private val nudgePatientUseCase: NudgePatientUseCase,
     private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase,
+    private val getPendingDosesForPatientsUseCase: GetPendingDosesForPatientsUseCase,
     private val sessionManager: SessionManager
 ): ViewModel() {
     private val _state = MutableStateFlow(CaregiverDashboardState())
@@ -59,6 +64,7 @@ class CaregiverDashboardViewModel(
     init {
         loadDashboardData()
         observeSelectedPatientDoses()
+        observeCaregiverEscalations()
     }
 
     private fun loadDashboardData() {
@@ -232,6 +238,19 @@ class CaregiverDashboardViewModel(
                     }
                 }
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeCaregiverEscalations() {
+        _state
+            .map { state -> state.patients.map { it.id }.sorted() }
+            .distinctUntilChanged()
+            .flatMapLatest { patientIds ->
+                if (patientIds.isEmpty()) emptyFlow()
+                else getPendingDosesForPatientsUseCase(patientIds)
+            }
+            .flowOn(Dispatchers.IO)
+            .launchIn(viewModelScope)
     }
 
     fun selectPatient(patientId: String) {

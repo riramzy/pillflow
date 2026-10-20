@@ -36,7 +36,8 @@ val viewModelModule: Module = module {
             logDoseTakenUseCase = get(),
             getPhysicsSensitivityUseCase = get(),
             getDoseHistoryForUserUseCase = get(),
-            syncAndMaintainScheduleUseCase = get()
+            syncAndMaintainScheduleUseCase = get(),
+            notificationsRepo = get()
         )
     }
 
@@ -72,7 +73,8 @@ val viewModelModule: Module = module {
             nudgePatientUseCase = get(),
             getDoseHistoryForUserUseCase = get(),
             sessionManager = get(),
-            syncAndMaintainScheduleUseCase = get()
+            syncAndMaintainScheduleUseCase = get(),
+            getPendingDosesForPatientsUseCase = get()
         )
     }
 

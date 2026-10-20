@@ -1,15 +1,21 @@
 package com.riramzy.pillfllow.ui.components.custom
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -24,54 +30,63 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun PillFlowPullToRefreshBox(
     modifier: Modifier = Modifier,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    refreshThreshold: Dp = 80.dp,
+    refreshThreshold: Dp = 90.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
     val density = LocalDensity.current
     val thresholdPx = with(density) { refreshThreshold.toPx() }
-    val pullOffset = remember { Animatable(0f) }
+    var currentOffset by remember { mutableFloatStateOf(0f) }
+    var animationJob by remember { mutableStateOf<Job?>(null) }
+    var isHoldingRefresh by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(isRefreshing) {
+    val effectiveRefreshing = isRefreshing || isHoldingRefresh
+    val currentEffectiveRefreshing by rememberUpdatedState(effectiveRefreshing)
+    val currentOnRefresh by rememberUpdatedState(onRefresh)
+
+    LaunchedEffect(isHoldingRefresh, isRefreshing) {
         if (isRefreshing) {
-            pullOffset.animateTo(
-                targetValue = thresholdPx,
-                animationSpec = spring(
-                    stiffness = Spring.StiffnessMediumLow,
-                    dampingRatio = Spring.DampingRatioMediumBouncy
-                )
-            )
-        } else {
-            pullOffset.animateTo(
-                targetValue = 0f,
-                animationSpec = spring(
-                    stiffness = Spring.StiffnessMediumLow,
-                    dampingRatio = Spring.DampingRatioMediumBouncy
-                )
-            )
+            isHoldingRefresh = true
+        } else if (isHoldingRefresh) {
+            delay(900.milliseconds)
+            isHoldingRefresh = false
         }
     }
 
-    val nestedScrollConnection = remember(thresholdPx, isRefreshing) {
+    LaunchedEffect(effectiveRefreshing) {
+        animationJob?.cancel()
+        val target = if (effectiveRefreshing) thresholdPx else 0f
+        animate(
+            initialValue = currentOffset,
+            targetValue = target,
+            animationSpec = spring(
+                stiffness = Spring.StiffnessMediumLow,
+                dampingRatio = if (effectiveRefreshing) Spring.DampingRatioMediumBouncy else Spring.DampingRatioNoBouncy
+            )
+        ) { value, _ ->
+            currentOffset = value
+        }
+    }
+
+    val nestedScrollConnection = remember(thresholdPx) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (source == NestedScrollSource.UserInput && available.y < 0 && pullOffset.value > 0) {
-                    val consumed = available.y.coerceAtLeast(-pullOffset.value)
-
-                    coroutineScope.launch {
-                        pullOffset.snapTo(pullOffset.value + consumed)
-                    }
-
+                if (source == NestedScrollSource.UserInput && available.y < 0f && currentOffset > 0f && !currentEffectiveRefreshing) {
+                    animationJob?.cancel()
+                    val consumed = available.y.coerceAtLeast(-currentOffset)
+                    currentOffset += consumed
                     return Offset(0f, consumed)
                 }
-
                 return Offset.Zero
             }
 
@@ -80,34 +95,37 @@ fun PillFlowPullToRefreshBox(
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                if (source == NestedScrollSource.UserInput && available.y > 0 && !isRefreshing) {
-                    val dragResistance = 0.5f
-                    val newOffset = (pullOffset.value + available.y * dragResistance)
-                        .coerceAtMost(thresholdPx * 1.6f)
-
-                    coroutineScope.launch {
-                        pullOffset.snapTo(newOffset)
-                    }
-
+                if (source == NestedScrollSource.UserInput && available.y > 0f && !currentEffectiveRefreshing) {
+                    animationJob?.cancel()
+                    // Progressive rubber-band resistance so it never hits a sudden wall mid-pull
+                    val overPull = (currentOffset / thresholdPx).coerceAtLeast(0f)
+                    val dynamicResistance = 0.55f / (1f + overPull * 0.45f)
+                    currentOffset = (currentOffset + available.y * dynamicResistance)
+                        .coerceAtMost(thresholdPx * 3.0f)
                     return Offset(0f, available.y)
                 }
-
                 return Offset.Zero
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                if (pullOffset.value >= thresholdPx && !isRefreshing) {
-                    onRefresh()
-                } else if (!isRefreshing) {
-                    pullOffset.animateTo(
-                        targetValue = 0f,
-                        animationSpec = spring(
-                            stiffness = Spring.StiffnessMediumLow,
-                            dampingRatio = Spring.DampingRatioMediumBouncy
-                        )
-                    )
+                if (currentOffset >= thresholdPx && !currentEffectiveRefreshing) {
+                    isHoldingRefresh = true
+                    currentOnRefresh()
+                } else if (!currentEffectiveRefreshing && currentOffset > 0f) {
+                    animationJob?.cancel()
+                    animationJob = coroutineScope.launch {
+                        animate(
+                            initialValue = currentOffset,
+                            targetValue = 0f,
+                            animationSpec = spring(
+                                stiffness = Spring.StiffnessMediumLow,
+                                dampingRatio = Spring.DampingRatioNoBouncy
+                            )
+                        ) { value, _ ->
+                            currentOffset = value
+                        }
+                    }
                 }
-
                 return Velocity.Zero
             }
         }
@@ -117,19 +135,27 @@ fun PillFlowPullToRefreshBox(
         modifier = modifier.nestedScroll(nestedScrollConnection),
         contentAlignment = Alignment.TopCenter
     ) {
-        content()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationY = currentOffset * 0.35f
+                }
+        ) {
+            content()
+        }
 
-        if (pullOffset.value > 0f || isRefreshing) {
-            val progress = (pullOffset.value / thresholdPx).coerceIn(0f, 1.5f)
+        if (currentOffset > 0.5f || effectiveRefreshing) {
+            val progress = (currentOffset / thresholdPx).coerceIn(0f, 2.5f)
             val indicatorTopOffset = with(density) { 54.dp.toPx() }
 
             PillFlowCutePillRefreshIndicator(
-                isRefreshing = isRefreshing,
+                isRefreshing = effectiveRefreshing,
                 pullProgress = progress,
                 modifier = Modifier
                     .graphicsLayer {
-                        translationY = pullOffset.value - indicatorTopOffset
-                        alpha = progress.coerceIn(0f, 1f)
+                        translationY = currentOffset - indicatorTopOffset
+                        alpha = (currentOffset / (thresholdPx * 0.6f)).coerceIn(0f, 1f)
                     }
                     .padding(top = 20.dp)
             )

@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.state.dashboard
 
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.physics.PillEntity
+import com.riramzy.pillfllow.ui.state.notifications.NotificationAlertUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.pill.PillColor
@@ -22,6 +23,7 @@ data class PatientDashboardState(
     val remainingDosesCount: Int = 0,
     val missedDosesCount: Int = 0,
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
+    val activeNudges: List<NotificationAlertUiModel> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
@@ -60,5 +62,6 @@ data class ComplianceCardUiModel(
 sealed interface PatientDashboardAction {
     data class LogDose(val doseId: String, val scheduledTime: Long? = null): PatientDashboardAction
     data object DismissError: PatientDashboardAction
+    data class DismissNudge(val nudgeId: String) : PatientDashboardAction
     data object Refresh : PatientDashboardAction
 }

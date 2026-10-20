@@ -6,6 +6,7 @@ import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.domain.compliance.DoseComplianceEvaluator
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
+import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
@@ -15,6 +16,8 @@ import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
+import com.riramzy.pillfllow.ui.state.notifications.NotificationType
+import com.riramzy.pillfllow.ui.state.notifications.NotificationsAction
 import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
@@ -44,7 +47,8 @@ class PatientDashboardViewModel(
     private val logDoseTakenUseCase: LogDoseTakenUseCase,
     private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
     private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
-    private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase
+    private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase,
+    private val notificationsRepo: NotificationsRepo
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
@@ -52,6 +56,7 @@ class PatientDashboardViewModel(
     init {
         loadDashboardData()
         observePhysicsSensitivity()
+        observeNudges()
     }
 
     private fun observePhysicsSensitivity() {
@@ -185,6 +190,19 @@ class PatientDashboardViewModel(
         _state.update { it.copy(errorMessage = null) }
     }
 
+    private fun observeNudges() {
+        viewModelScope.launch(Dispatchers.IO) {
+            notificationsRepo.state.collectLatest { notifState ->
+                val nudges = notifState.alerts.filter { it.type == NotificationType.CAREGIVER_NUDGE }
+                _state.update { it.copy(activeNudges = nudges) }
+            }
+        }
+    }
+
+    private fun dismissNudge(nudgeId: String) {
+        notificationsRepo.onAction(NotificationsAction.DismissAlert(nudgeId))
+    }
+
     private fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isRefreshing = true) }
@@ -200,6 +218,7 @@ class PatientDashboardViewModel(
         when (action) {
             is PatientDashboardAction.LogDose -> logDose(action.doseId, action.scheduledTime)
             is PatientDashboardAction.DismissError -> onErrorDismissed()
+            is PatientDashboardAction.DismissNudge -> dismissNudge(action.nudgeId)
             is PatientDashboardAction.Refresh -> refresh()
         }
     }

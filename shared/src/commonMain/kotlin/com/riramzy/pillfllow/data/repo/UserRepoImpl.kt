@@ -42,8 +42,6 @@ class UserRepoImpl(
     }
 
     override suspend fun getUserByIdOnce(id: String): UserEntity? {
-        val localUser = userDao.getUserByIdOnce(id)
-        if (localUser != null) return localUser
         val remoteUser = runCatching {
             val doc = firestore
                 .collection("users")
@@ -52,8 +50,13 @@ class UserRepoImpl(
 
             if (doc.exists) doc.data<UserDto>().toEntity() else null
         }.getOrNull()
-        remoteUser?.let { userDao.insertUser(it) }
-        return remoteUser
+
+        if (remoteUser != null) {
+            userDao.insertUser(remoteUser)
+            return remoteUser
+        }
+
+        return userDao.getUserByIdOnce(id)
     }
 
     override suspend fun insertUser(user: UserEntity) {
@@ -108,6 +111,7 @@ class UserRepoImpl(
         if (caregiver != null) {
             val updatedIds = caregiver.pairedPatientIds.filter { it != patientId }
             userDao.insertUser(caregiver.copy(pairedPatientIdsString = updatedIds.joinToString(",")))
+
             runCatching {
                 firestore
                     .collection("users")
@@ -118,9 +122,19 @@ class UserRepoImpl(
                     )
             }
         }
+
         val patient = getUserByIdOnce(patientId)
         if (patient != null) {
             userDao.insertUser(patient.copy(pairedCaregiverId = null))
+            runCatching {
+                firestore
+                    .collection("users")
+                    .document(patientId)
+                    .update(
+                        "pairedCaregiverId" to null,
+                        "updatedAt" to currentTimeMillis()
+                    )
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.ConfirmPairingUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
+import com.riramzy.pillfllow.domain.usecase.caregiver.GetPendingDosesForPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.InitiatePairingUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.NudgePatientUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.UnlinkPatientUseCase
@@ -49,4 +50,5 @@ val useCaseModule: Module = module {
     factory { LogDoseTakenUseCase(medicationRepo = get(), platformNotifier = get()) }
     factory { GetDoseHistoryForUserUseCase(medicationRepo = get()) }
     factory { SyncAndMaintainScheduleUseCase(medicationRepo = get(), medicationDao = get()) }
+    factory { GetPendingDosesForPatientsUseCase(medicationRepo = get()) }
 }
