@@ -10,6 +10,7 @@ import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
@@ -42,7 +43,8 @@ class PatientDashboardViewModel(
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val logDoseTakenUseCase: LogDoseTakenUseCase,
     private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
-    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase
+    private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
+    private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
@@ -186,8 +188,11 @@ class PatientDashboardViewModel(
     private fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isRefreshing = true) }
-            delay(700.milliseconds)
-            _state.update { it.copy(isRefreshing = false) }
+            try {
+                syncAndMaintainScheduleUseCase()
+            } finally {
+                _state.update { it.copy(isRefreshing = false) }
+            }
         }
     }
 

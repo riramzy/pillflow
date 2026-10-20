@@ -7,6 +7,7 @@ import com.riramzy.pillfllow.domain.usecase.medication.DeletePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
@@ -19,7 +20,6 @@ import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,14 +29,14 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 class PatientPrescriptionsViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getMedicationsForUserUseCase: GetMedicationsForUserUseCase,
     private val getPendingDosesForUserUseCase: GetPendingDosesForUserUseCase,
     private val savePrescriptionUseCase: SavePrescriptionUseCase,
-    private val deletePrescriptionUseCase: DeletePrescriptionUseCase
+    private val deletePrescriptionUseCase: DeletePrescriptionUseCase,
+    private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(PatientPrescriptionsState())
     val state: StateFlow<PatientPrescriptionsState> = _state.asStateFlow()
@@ -213,8 +213,11 @@ class PatientPrescriptionsViewModel(
     private fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isRefreshing = true) }
-            delay(700.milliseconds)
-            _state.update { it.copy(isRefreshing = false) }
+            try {
+                syncAndMaintainScheduleUseCase()
+            } finally {
+                _state.update { it.copy(isRefreshing = false) }
+            }
         }
     }
 

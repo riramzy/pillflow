@@ -19,7 +19,9 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 
 @main
 struct iOSApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     private let notificationDelegate = NotificationDelegate()
+    private let refreshTaskId = "com.riramzy.pillflow.refresh"
 
     init() {
         FirebaseApp.configure()
@@ -34,11 +36,31 @@ struct iOSApp: App {
                 print("PillFlow iOS: Notification permission error: \(error.localizedDescription)")
             }
         }
+
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: refreshTaskId, using: nil) { task in guard let refreshTask = task as? BGAppRefreshTask else { return }
+            scheduleBackgroundRefresh()
+
+            InitKoinIosKt.triggerAppSyncAndSchedule {
+                refreshTask.setTaskCompleted(success: true)
+            }
+        }
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+        }.onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                InitKoinIosKt.triggerAppSyncAndSchedule(onComplete: nil)
+            } else if newPhase == .background {
+                scheduleBackgroundRefresh()
+            }
         }
+    }
+
+    private static func scheduleBackgroundRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: refreshTaskId)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 12 * 3600)
+        try? BGTaskScheduler.shared.submit(request)
     }
 }

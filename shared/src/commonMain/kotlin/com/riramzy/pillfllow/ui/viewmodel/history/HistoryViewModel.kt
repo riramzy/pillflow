@@ -7,6 +7,7 @@ import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.ui.state.history.HistoryAction
 import com.riramzy.pillfllow.ui.state.history.HistoryState
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
@@ -15,7 +16,6 @@ import com.riramzy.pillfllow.utils.platform.shiftMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,12 +26,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 class HistoryViewModel(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getCaregiverPatientsUseCase: GetCaregiverPatientsUseCase,
     private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
+    private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase,
     private val sessionManager: SessionManager
 ): ViewModel() {
     private val _state = MutableStateFlow(HistoryState())
@@ -120,8 +120,11 @@ class HistoryViewModel(
     private fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isRefreshing = true) }
-            delay(700.milliseconds)
-            _state.update { it.copy(isRefreshing = false) }
+            try {
+                syncAndMaintainScheduleUseCase()
+            } finally {
+                _state.update { it.copy(isRefreshing = false) }
+            }
         }
     }
 

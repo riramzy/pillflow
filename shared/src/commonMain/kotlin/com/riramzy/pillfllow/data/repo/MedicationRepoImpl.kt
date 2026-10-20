@@ -283,6 +283,9 @@ class MedicationRepoImpl(
     override suspend fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity> =
         medicationDao.getDoseHistoryForUserOnce(userId)
 
+    override suspend fun getTakenDoseTimesForMedication(medicationId: String): Set<Long> =
+        medicationDao.getTakenDoseTimesForMedication(medicationId).toSet()
+
     override suspend fun deletePendingDosesForMedication(medicationId: String) {
         val pendingIds = medicationDao.getPendingDoseIdsForMedication(medicationId)
         pendingIds.forEach { platformNotifier.cancelReminder(doseId = it) }
@@ -305,6 +308,54 @@ class MedicationRepoImpl(
         }
     }
 
+    override suspend fun syncUnsyncedData() {
+        runCatching {
+            val unsyncedMeds = medicationDao.getUnsyncedMedications()
+            unsyncedMeds.forEach { med ->
+                runCatching {
+                    firestore
+                        .collection("medications")
+                        .document(med.id)
+                        .set(med.toDto())
+
+                    medicationDao.markMedicationSynced(med.id)
+                }
+            }
+
+            val unsyncedDoses = medicationDao.getUnsyncedScheduledDosesOnce()
+            val allMeds = medicationDao.getAllMedicationsOnce().associateBy { it.id }
+            val now = currentTimeMillis()
+
+            unsyncedDoses.forEach { dose ->
+                runCatching {
+                    if (dose.isTaken) {
+                        markScheduledDoseTaken(
+                            id = dose.id,
+                            takenTime = dose.takenTime ?: now,
+                            isTaken = true,
+                            complianceStatus = dose.complianceStatus
+                        )
+                    } else {
+                        val med = allMeds[dose.medicationId]
+                        val dto = dose.toDto(
+                            userId = med?.userId ?: "",
+                            medicationName = med?.name ?: "",
+                            dosage = med?.dosage ?: "",
+                            updatedAt = now
+                        )
+
+                        firestore
+                            .collection("scheduled_doses")
+                            .document(dose.id)
+                            .set(dto)
+
+                        medicationDao.markScheduledDoseSynced(dose.id)
+                    }
+                }
+            }
+        }
+    }
+
     private fun CoroutineScope.syncMedicationsForUser(userId: String) {
         launch(Dispatchers.IO) {
             runCatching {
@@ -321,9 +372,16 @@ class MedicationRepoImpl(
 
                         val local = medicationDao.getAllMedicationsOnce().filter { it.userId == userId }
 
-                        local.filter { it.id !in remoteIds && it.isSynced }.forEach {
-                            medicationDao.deletePendingDosesByMedicationId(it.id)
-                            medicationDao.deleteMedicationById(it.id)
+                        local.filter {
+                            it.id !in remoteIds &&
+                                    it.isSynced
+                        }.forEach { med ->
+                            val pendingDosesIds = medicationDao.getPendingDoseIdsForMedication(med.id)
+                            pendingDosesIds.forEach { doseId ->
+                                platformNotifier.cancelReminder(doseId = doseId)
+                                medicationDao.deletePendingDosesByMedicationId(med.id)
+                                medicationDao.deleteMedicationById(med.id)
+                            }
                         }
 
                         if (remote.isNotEmpty()) medicationDao.insertMedications(remote)
@@ -359,6 +417,15 @@ class MedicationRepoImpl(
                             val reconciledEntities = doses.map { remote ->
                                 val local = localDosesMap[remote.id]
                                 if (local != null && local.isTaken && !remote.isTaken) {
+                                    this@runCatching.launch(Dispatchers.IO) {
+                                        markScheduledDoseTaken(
+                                            id = remote.id,
+                                            takenTime = remote.takenTime ?: currentTimeMillis(),
+                                            isTaken = true,
+                                            complianceStatus = remote.complianceStatus
+                                        )
+                                    }
+
                                     local
                                 } else {
                                     remote

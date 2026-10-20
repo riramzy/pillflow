@@ -97,6 +97,9 @@ interface MedicationDao {
     @Query("SELECT * FROM scheduled_doses WHERE isSynced = 0")
     fun getUnsyncedScheduledDoses(): Flow<List<ScheduledDoseEntity>>
 
+    @Query("SELECT * FROM scheduled_doses WHERE isSynced = 0")
+    suspend fun getUnsyncedScheduledDosesOnce(): List<ScheduledDoseEntity>
+
     @Query("UPDATE scheduled_doses SET isSynced = 1 WHERE id = :id")
     suspend fun markScheduledDoseSynced(id: String)
 
@@ -143,6 +146,9 @@ interface MedicationDao {
     ORDER BY scheduled_doses.scheduledTime DESC
 """)
     suspend fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity>
+
+    @Query("SELECT scheduledTime FROM scheduled_doses WHERE medicationId = :medicationId AND isTaken = 1")
+    suspend fun getTakenDoseTimesForMedication(medicationId: String): List<Long>
 
     @Query("DELETE FROM medications")
     suspend fun clearAllMedications()

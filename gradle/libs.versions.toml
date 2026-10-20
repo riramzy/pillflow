@@ -14,6 +14,7 @@ google-services = "4.4.2"
 serialization = "1.7.3"
 material3 = "1.11.0-alpha07"
 navigation = "2.9.2"
+work = "2.10.0"
 
 # Android compile parameters (keep your SDK 36 settings)
 android-compileSdk = "36"
@@ -77,6 +78,9 @@ firebase-android-firestore = { module = "com.google.firebase:firebase-firestore"
 
 # Serialization
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+# WorkManager
+androidx-work = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
 [plugins]
 # Android & Multiplatform Core Plugins

@@ -15,6 +15,7 @@ import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseC
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GeneratePairingCodeUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPatientPairingStatusUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
@@ -47,4 +48,5 @@ val useCaseModule: Module = module {
     factory { GetPendingDosesForUserUseCase(medicationRepo = get()) }
     factory { LogDoseTakenUseCase(medicationRepo = get(), platformNotifier = get()) }
     factory { GetDoseHistoryForUserUseCase(medicationRepo = get()) }
+    factory { SyncAndMaintainScheduleUseCase(medicationRepo = get(), medicationDao = get()) }
 }

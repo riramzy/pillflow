@@ -24,5 +24,7 @@ interface MedicationRepo {
     suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<String>
     fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>>
     suspend fun getDoseHistoryForUserOnce(userId: String): List<DoseHistoryEntity>
+    suspend fun getTakenDoseTimesForMedication(medicationId: String): Set<Long>
     suspend fun deletePendingDosesForMedication(medicationId: String)
+    suspend fun syncUnsyncedData()
 }

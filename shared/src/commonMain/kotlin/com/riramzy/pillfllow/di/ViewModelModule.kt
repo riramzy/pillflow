@@ -35,7 +35,8 @@ val viewModelModule: Module = module {
             getPendingDosesForUserUseCase = get(),
             logDoseTakenUseCase = get(),
             getPhysicsSensitivityUseCase = get(),
-            getDoseHistoryForUserUseCase = get()
+            getDoseHistoryForUserUseCase = get(),
+            syncAndMaintainScheduleUseCase = get()
         )
     }
 
@@ -45,7 +46,8 @@ val viewModelModule: Module = module {
             getMedicationsForUserUseCase = get(),
             getPendingDosesForUserUseCase = get(),
             savePrescriptionUseCase = get(),
-            deletePrescriptionUseCase = get()
+            deletePrescriptionUseCase = get(),
+            syncAndMaintainScheduleUseCase = get()
         )
     }
 
@@ -69,7 +71,8 @@ val viewModelModule: Module = module {
             getPendingDosesForUserUseCase = get(),
             nudgePatientUseCase = get(),
             getDoseHistoryForUserUseCase = get(),
-            sessionManager = get()
+            sessionManager = get(),
+            syncAndMaintainScheduleUseCase = get()
         )
     }
 
@@ -81,7 +84,8 @@ val viewModelModule: Module = module {
             getMedicationsForUserUseCase = get(),
             savePrescriptionUseCase = get(),
             deletePrescriptionUseCase = get(),
-            sessionManager = get()
+            sessionManager = get(),
+            syncAndMaintainScheduleUseCase = get()
         )
     }
 
@@ -102,7 +106,8 @@ val viewModelModule: Module = module {
             observeCurrentUserUseCase = get(),
             getCaregiverPatientsUseCase = get(),
             getDoseHistoryForUserUseCase = get(),
-            sessionManager = get()
+            sessionManager = get(),
+            syncAndMaintainScheduleUseCase = get()
         )
     }
 

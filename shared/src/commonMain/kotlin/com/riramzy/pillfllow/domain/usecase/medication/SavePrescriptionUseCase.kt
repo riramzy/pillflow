@@ -40,13 +40,19 @@ class SavePrescriptionUseCase(
         medicationRepo.insertMedication(medication)
 
         if (scheduledTimesMillis.isNotEmpty()) {
-            if (editingMedicationId != null) {
+            val existingTakenTimes = if (editingMedicationId != null) {
                 medicationRepo.deletePendingDosesForMedication(editingMedicationId)
+                medicationRepo.getTakenDoseTimesForMedication(editingMedicationId)
+            } else {
+                emptySet()
             }
+
             val scheduledDoses = MedicationScheduler.generateRollingDoses(
-                medicationId = medication.id,
-                baseTimesToday = scheduledTimesMillis
+                medicationId = medicationId,
+                baseTimesToday = scheduledTimesMillis,
+                existingTimes = existingTakenTimes
             )
+
             medicationRepo.insertScheduledDoses(scheduledDoses)
         }
 
