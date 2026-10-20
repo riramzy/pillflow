@@ -1,19 +1,20 @@
 package com.riramzy.pillfllow
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
-
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -43,14 +44,24 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        checkAndRequestExactAlarmPermission()
         setContent {
             App()
         }
     }
-}
 
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
+    private fun checkAndRequestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(ALARM_SERVICE) as? AlarmManager
+            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
+                runCatching {
+                    val intent = Intent(
+                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                        "package:$packageName".toUri()
+                    )
+                    startActivity(intent)
+                }
+            }
+        }
+    }
 }

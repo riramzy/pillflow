@@ -9,16 +9,23 @@ import org.koin.mp.KoinPlatformTools
 import java.util.Locale
 
 actual fun openPhoneDialer(phoneNumber: String) {
+    val sanitized = phoneNumber.filter { it.isDigit() || it == '+' }
+    if (sanitized.isBlank()) return
+
     val context = KoinPlatformTools.defaultContext().get().get<Context>()
 
     val intent = Intent(
         Intent.ACTION_DIAL,
-        "tel:$phoneNumber".toUri()
+        "tel:$sanitized".toUri()
     ).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
-    context.startActivity(intent)
+    runCatching {
+        context.startActivity(intent)
+    }.onFailure {
+        copyToClipboard(sanitized)
+    }
 }
 
 actual fun copyToClipboard(text: String) {

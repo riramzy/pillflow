@@ -25,8 +25,8 @@ class DoseReminderReceiver: BroadcastReceiver() {
     @SuppressLint("FullScreenIntentPolicy")
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != "com.riramzy.pillfllow.DOSE_REMINDER") return
-
         val pendingResult = goAsync()
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
@@ -94,6 +94,36 @@ class DoseReminderReceiver: BroadcastReceiver() {
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
+
+                if (!isAdvance) {
+                    val takeIntent = Intent(context, DoseActionReceiver::class.java).apply {
+                        action = DoseActionReceiver.ACTION_TAKE_DOSE
+                        putExtra("DOSE_ID", doseId)
+                    }
+
+                    val takePendingIntent = PendingIntent.getBroadcast(
+                        context,
+                        "take_$doseId".hashCode(),
+                        takeIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    val snoozeIntent = Intent(context, DoseActionReceiver::class.java).apply {
+                        action = DoseActionReceiver.ACTION_SNOOZE_DOSE
+                        putExtra("DOSE_ID", doseId)
+                        putExtra("PILL_NAME", pillName)
+                    }
+
+                    val snoozePendingIntent = PendingIntent.getBroadcast(
+                        context,
+                        "snooze_$doseId".hashCode(),
+                        snoozeIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    builder.addAction(0, "Take Now", takePendingIntent)
+                    builder.addAction(0, "Snooze 15m", snoozePendingIntent)
+                }
 
                 if (isDueNow) {
                     builder.setFullScreenIntent(pendingIntent, true)
