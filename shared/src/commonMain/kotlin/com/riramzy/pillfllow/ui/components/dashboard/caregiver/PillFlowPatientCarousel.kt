@@ -128,6 +128,7 @@ fun SelectedPatientCard(
                 ComplianceStatus.ON_TIME -> "Compliance: $compliancePercentage%" to IndicatorColor.GREEN.color
                 ComplianceStatus.LATE -> "$lateDosesCount Dose(s) Late" to IndicatorColor.YELLOW.color
                 ComplianceStatus.MISSED -> "$missedDosesCount Dose(s) Missed" to IndicatorColor.RED.color
+                ComplianceStatus.SKIPPED -> "Dose Skipped" to IndicatorColor.BLUE.color
             }
         }
 

@@ -16,9 +16,7 @@ class LogDoseTakenUseCase(
         scheduledTime: Long? = null
     ): Result<Unit> = safeCall {
         val now = currentTimeMillis()
-
         val dose = medicationRepo.getScheduledDoseById(doseId)
-
         val targetTime = scheduledTime ?: dose?.scheduledTime ?: now
 
         val compliance = DoseStateMachine.evaluateCompliance(
@@ -34,5 +32,17 @@ class LogDoseTakenUseCase(
         )
 
         platformNotifier.cancelReminder(doseId = doseId)
+
+        dose?.medicationId?.let { medId ->
+            val med = medicationRepo.getMedicationByIdOnce(medId)
+            if (med?.remainingPills != null && med.remainingPills > 0) {
+                val updated = med.copy(
+                    remainingPills = (med.remainingPills - 1).coerceAtLeast(0),
+                    isSynced = false
+                )
+
+                medicationRepo.insertMedication(updated)
+            }
+        }
     }
 }

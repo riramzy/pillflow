@@ -77,6 +77,7 @@ fun PillFlowPatientWeeklyOverviewCard(
                             ComplianceStatus.ON_TIME -> IndicatorColor.GREEN.color
                             ComplianceStatus.LATE -> IndicatorColor.YELLOW.color
                             ComplianceStatus.MISSED -> IndicatorColor.RED.color
+                            ComplianceStatus.SKIPPED -> IndicatorColor.BLUE.color
                         }
 
                         PillFlowPillColor(

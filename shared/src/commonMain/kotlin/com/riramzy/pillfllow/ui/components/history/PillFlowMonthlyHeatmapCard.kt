@@ -147,6 +147,7 @@ fun PillFlowMonthlyHeatmapCard(
                                         ComplianceStatus.LATE -> IndicatorColor.YELLOW.color
                                         ComplianceStatus.MISSED -> IndicatorColor.RED.color
                                         ComplianceStatus.DEFAULT -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                                        ComplianceStatus.SKIPPED -> IndicatorColor.BLUE.color
                                     }
 
                                     PillFlowPillColor(

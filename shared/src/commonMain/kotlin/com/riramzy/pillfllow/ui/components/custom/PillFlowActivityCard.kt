@@ -37,6 +37,7 @@ fun PillFlowActivityCard(
         ComplianceStatus.ON_TIME -> IndicatorColor.GREEN_CONTAINER.color to IndicatorColor.GREEN.color
         ComplianceStatus.LATE -> IndicatorColor.YELLOW_CONTAINER.color to IndicatorColor.YELLOW.color
         ComplianceStatus.MISSED -> IndicatorColor.RED_CONTAINER.color to IndicatorColor.RED.color
+        ComplianceStatus.SKIPPED -> IndicatorColor.BLUE_CONTAINER.color to IndicatorColor.BLUE.color
     }
 
     Card(
@@ -107,6 +108,12 @@ fun PillFlowActivityCardPreview() {
                 timestampText = "Today at 08:02 AM",
                 status = ComplianceStatus.MISSED,
             )
+            PillFlowActivityCard(
+                patientName = "Mary",
+                actionDescription = "skipped Aspirin 500mg",
+                timestampText = "Today at 08:02 AM",
+                status = ComplianceStatus.SKIPPED,
+            )
         }
     }
 }
@@ -142,6 +149,12 @@ fun PillFlowActivityCardPreviewDark() {
                 actionDescription = "took Aspirin 500mg",
                 timestampText = "Today at 08:02 AM",
                 status = ComplianceStatus.MISSED,
+            )
+            PillFlowActivityCard(
+                patientName = "Mary",
+                actionDescription = "skipped Aspirin 500mg",
+                timestampText = "Today at 08:02 AM",
+                status = ComplianceStatus.SKIPPED,
             )
         }
     }

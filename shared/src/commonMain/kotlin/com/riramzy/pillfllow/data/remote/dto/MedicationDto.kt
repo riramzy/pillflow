@@ -17,6 +17,10 @@ data class MedicationDto(
     val scheduleTimesMillis: List<Long> = emptyList(),
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
+    val remainingPills: Int? = null,
+    val refillThreshold: Int = 5,
+    val isPaused: Boolean = false,
+    val isPrn: Boolean = false,
     val isArchived: Boolean = false
 )
 
@@ -30,6 +34,10 @@ fun MedicationDto.toEntity(isSynced: Boolean = false): MedicationEntity = Medica
     colorHex = colorHex,
     shape = shape,
     instructions = instructions,
+    remainingPills = remainingPills,
+    refillThreshold = refillThreshold,
+    isPaused = isPaused,
+    isPrn = isPrn,
     isSynced = isSynced,
     isArchived = isArchived
 )
@@ -51,5 +59,9 @@ fun MedicationEntity.toDto(
     scheduleTimesMillis = scheduleTimesMillis,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    remainingPills = remainingPills,
+    refillThreshold = refillThreshold,
+    isPaused = isPaused,
+    isPrn = isPrn,
     isArchived = isArchived
 )

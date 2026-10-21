@@ -1,6 +1,8 @@
 package com.riramzy.pillfllow.utils.medication
 
 import androidx.compose.ui.graphics.Color
+import com.riramzy.pillfllow.ui.theme.indicatorBlue
+import com.riramzy.pillfllow.ui.theme.indicatorBlueContainer
 import com.riramzy.pillfllow.ui.theme.indicatorGreen
 import com.riramzy.pillfllow.ui.theme.indicatorGreenContainer
 import com.riramzy.pillfllow.ui.theme.indicatorRed
@@ -14,5 +16,7 @@ enum class IndicatorColor(val color: Color) {
     YELLOW(indicatorYellow),
     YELLOW_CONTAINER(indicatorYellowContainer),
     RED(indicatorRed),
-    RED_CONTAINER(indicatorRedContainer)
+    RED_CONTAINER(indicatorRedContainer),
+    BLUE(indicatorBlue),
+    BLUE_CONTAINER(indicatorBlueContainer)
 }

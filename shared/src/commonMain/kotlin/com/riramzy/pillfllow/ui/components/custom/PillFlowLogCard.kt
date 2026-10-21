@@ -26,17 +26,18 @@ import com.riramzy.pillfllow.utils.medication.IndicatorColor
 
 @Composable
 fun PillFlowLogCard(
+    modifier: Modifier = Modifier,
     actionTitle: String = "July 29, Aspirin 500mg",
     actionDescription: String = "Scheduled 8:00 AM",
     timestampText: String = "Logged 8:02 AM",
     status: ComplianceStatus = ComplianceStatus.MISSED,
-    modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (status) {
         ComplianceStatus.DEFAULT -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
         ComplianceStatus.ON_TIME -> IndicatorColor.GREEN_CONTAINER.color to IndicatorColor.GREEN.color
         ComplianceStatus.LATE -> IndicatorColor.YELLOW_CONTAINER.color to IndicatorColor.YELLOW.color
         ComplianceStatus.MISSED -> IndicatorColor.RED_CONTAINER.color to IndicatorColor.RED.color
+        ComplianceStatus.SKIPPED -> IndicatorColor.BLUE_CONTAINER.color to IndicatorColor.BLUE.color
     }
 
     Card(
@@ -118,6 +119,13 @@ fun PillFlowLogCardPreview() {
                 timestampText = "Dose Missed",
                 status = ComplianceStatus.MISSED
             )
+
+            PillFlowLogCard(
+                actionTitle = "July 29, Aspirin 500mg",
+                actionDescription = "Scheduled 8:00 AM",
+                timestampText = "Skipped 8:14 AM",
+                status = ComplianceStatus.SKIPPED
+            )
         }
     }
 }
@@ -156,6 +164,13 @@ fun PillFlowLogCardPreviewDark() {
                 actionDescription = "Scheduled 8:00 AM",
                 timestampText = "Dose Missed",
                 status = ComplianceStatus.MISSED
+            )
+
+            PillFlowLogCard(
+                actionTitle = "July 29, Aspirin 500mg",
+                actionDescription = "Scheduled 8:00 AM",
+                timestampText = "Skipped 8:14 AM",
+                status = ComplianceStatus.SKIPPED
             )
         }
     }

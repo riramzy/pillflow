@@ -37,6 +37,9 @@ class MedicationRepoImpl(
 ): MedicationRepo {
     override fun getAllMedications(): Flow<List<MedicationEntity>> = medicationDao.getAllMedications()
 
+    override suspend fun getMedicationByIdOnce(id: String): MedicationEntity? =
+        medicationDao.getMedicationByIdOnce(id)
+
     override suspend fun insertMedication(medication: MedicationEntity): String {
         medicationDao.insertMedication(medication)
         val now = currentTimeMillis()
@@ -49,6 +52,50 @@ class MedicationRepoImpl(
             medicationDao.markMedicationSynced(medication.id)
         }
         return medication.id
+    }
+
+    override suspend fun logPrnDose(dose: ScheduledDoseEntity) {
+        medicationDao.insertScheduledDoses(listOf(dose))
+
+        val now = currentTimeMillis()
+        val med = medicationDao.getMedicationByIdOnce(dose.medicationId)
+        val userId = med?.userId ?: sessionManager.currentUser.value?.id ?: ""
+        val patientName = userDao?.getUserByIdOnce(userId)?.firstName
+            ?: sessionManager.currentUser.value?.firstName
+            ?: "Patient"
+
+        runCatching {
+            val dto = dose.toDto(
+                userId = userId,
+                medicationName = med?.name ?: "",
+                dosage = med?.dosage ?: "",
+                updatedAt = now
+            )
+
+            firestore
+                .collection("scheduled_doses")
+                .document(dose.id)
+                .set(dto)
+
+            val logDto = DoseLogDto(
+                id = "log_${currentTimeMillis()}_${dose.id}",
+                patientId = userId,
+                patientName = patientName,
+                medicationName = med?.name ?: "",
+                dosage = med?.dosage ?: "",
+                actionType = "DOSE_PRN",
+                complianceStatus = "PRN",
+                scheduledTime = dose.scheduledTime,
+                timestamp = dose.takenTime ?: now
+            )
+
+            firestore
+                .collection("dose_logs")
+                .document(logDto.id)
+                .set(logDto)
+
+            medicationDao.markScheduledDoseSynced(dose.id)
+        }
     }
 
     override fun getMedicationForUser(userId: String): Flow<List<MedicationEntity>> = channelFlow {
@@ -193,37 +240,101 @@ class MedicationRepoImpl(
         }
 
         runCatching {
-            firestore
-                .collection("scheduled_doses")
-                .document(id)
-                .update(
-                    "isTaken" to isTaken,
-                    "takenTime" to takenTime,
-                    "complianceStatus" to complianceStatus,
-                    "updatedAt" to currentTimeMillis()
+            val localDose = medicationDao.getScheduledDoseById(id)
+            val med = localDose?.let { medicationDao.getMedicationByIdOnce(it.medicationId) }
+            val userId = med?.userId ?: sessionManager.currentUser.value?.id ?: ""
+            val patientName = userDao?.getUserByIdOnce(userId)?.firstName
+                ?: sessionManager.currentUser.value?.firstName
+                ?: "Patient"
+
+            if (localDose != null) {
+                val dto = localDose.toDto(
+                    userId = userId,
+                    medicationName = med?.name ?: "",
+                    dosage = med?.dosage ?: "",
+                    updatedAt = currentTimeMillis()
                 )
 
-            medicationDao.markScheduledDoseSynced(id)
+                firestore
+                    .collection("scheduled_doses")
+                    .document(id)
+                    .set(dto)
 
-            val doseDoc = firestore
-                .collection("scheduled_doses")
-                .document(id)
-                .get()
+                medicationDao.markScheduledDoseSynced(id)
 
-            if (doseDoc.exists) {
-                val doseDto = doseDoc.data<ScheduledDoseDto>()
                 val logDto = DoseLogDto(
                     id = "log_${currentTimeMillis()}_${id}",
-                    patientId = doseDto.userId,
-                    patientName = "",
-                    medicationName = doseDto.medicationName,
-                    dosage = doseDto.dosage,
+                    patientId = userId,
+                    patientName = patientName,
+                    medicationName = med?.name ?: "",
+                    dosage = med?.dosage ?: "",
                     actionType = if (isTaken) "DOSE_TAKEN" else "DOSE_SKIPPED",
                     complianceStatus = complianceStatus,
-                    scheduledTime = doseDto.scheduledTime,
+                    scheduledTime = localDose.scheduledTime,
                     timestamp = takenTime
                 )
-                firestore.collection("dose_logs").document(logDto.id).set(logDto)
+
+                firestore
+                    .collection("dose_logs")
+                    .document(logDto.id)
+                    .set(logDto)
+            }
+        }
+    }
+
+    override suspend fun markScheduledDoseSkipped(
+        id: String,
+        takenTime: Long,
+        skipReason: String
+    ) {
+        medicationDao.markScheduledDoseSkipped(
+            id,
+            takenTime,
+            skipReason
+        )
+
+        platformNotifier.cancelReminder(doseId = id)
+
+        runCatching {
+            val localDose = medicationDao.getScheduledDoseById(id)
+            val med = localDose?.let { medicationDao.getMedicationByIdOnce(it.medicationId) }
+            val userId = med?.userId ?: sessionManager.currentUser.value?.id ?: ""
+            val patientName = userDao?.getUserByIdOnce(userId)?.firstName
+                ?: sessionManager.currentUser.value?.firstName
+                ?: "Patient"
+
+            if (localDose != null) {
+                val dto = localDose.toDto(
+                    userId = userId,
+                    medicationName = med?.name ?: "",
+                    dosage = med?.dosage ?: "",
+                    updatedAt = currentTimeMillis()
+                )
+
+                firestore
+                    .collection("scheduled_doses")
+                    .document(id)
+                    .set(dto)
+
+                medicationDao.markScheduledDoseSynced(id)
+
+                val logDto = DoseLogDto(
+                    id = "log_${currentTimeMillis()}_${id}",
+                    patientId = userId,
+                    patientName = patientName,
+                    medicationName = med?.name ?: "",
+                    dosage = med?.dosage ?: "",
+                    actionType = "DOSE_SKIPPED",
+                    complianceStatus = "SKIPPED",
+                    scheduledTime = localDose.scheduledTime,
+                    timestamp = takenTime,
+                    notes = skipReason
+                )
+
+                firestore
+                    .collection("dose_logs")
+                    .document(logDto.id)
+                    .set(logDto)
             }
         }
     }
@@ -328,7 +439,15 @@ class MedicationRepoImpl(
 
             unsyncedDoses.forEach { dose ->
                 runCatching {
-                    if (dose.isTaken) {
+                    if (dose.complianceStatus == "SKIPPED") {
+                        markScheduledDoseSkipped(
+                            id = dose.id,
+                            takenTime = dose.takenTime ?: now,
+                            skipReason = dose.skipReason ?: ""
+                        )
+                    } else if (dose.isTaken && (dose.complianceStatus == "PRN" || allMeds[dose.medicationId]?.isPrn == true)) {
+                        logPrnDose(dose)
+                    } else if (dose.isTaken) {
                         markScheduledDoseTaken(
                             id = dose.id,
                             takenTime = dose.takenTime ?: now,
@@ -418,12 +537,22 @@ class MedicationRepoImpl(
                                 val local = localDosesMap[remote.id]
                                 if (local != null && local.isTaken && !remote.isTaken) {
                                     this@runCatching.launch(Dispatchers.IO) {
-                                        markScheduledDoseTaken(
-                                            id = remote.id,
-                                            takenTime = remote.takenTime ?: currentTimeMillis(),
-                                            isTaken = true,
-                                            complianceStatus = remote.complianceStatus
-                                        )
+                                        if (local.complianceStatus == "SKIPPED") {
+                                            markScheduledDoseSkipped(
+                                                id = remote.id,
+                                                takenTime = local.takenTime ?: currentTimeMillis(),
+                                                skipReason = local.skipReason ?: ""
+                                            )
+                                        } else if (local.complianceStatus == "PRN") {
+                                            logPrnDose(local)
+                                        } else {
+                                            markScheduledDoseTaken(
+                                                id = remote.id,
+                                                takenTime = local.takenTime ?: currentTimeMillis(),
+                                                isTaken = true,
+                                                complianceStatus = local.complianceStatus
+                                            )
+                                        }
                                     }
 
                                     local
@@ -437,38 +566,46 @@ class MedicationRepoImpl(
                             val currentUserId = sessionManager.currentUser.value?.id
 
                             if (userId == currentUserId) {
+                                reconciledEntities.filter { it.isTaken }.forEach { dose ->
+                                    platformNotifier.cancelReminder(doseId = dose.id)
+                                }
+
+                                val allMedsMap = medicationDao.getAllMedicationsOnce().associateBy { it.id }
                                 val now = currentTimeMillis()
+
                                 reconciledEntities.filter { !it.isTaken }.forEach { dose ->
-                                    val med = medicationDao.getAllMedicationsOnce().firstOrNull { it.id == dose.medicationId }
+                                    val med = allMedsMap[dose.medicationId]
                                     val medName = med?.name ?: "Medication"
 
-                                    if (dose.scheduledTime > now) {
-                                        val advanceTarget = dose.scheduledTime - 30 * 60 * 1000L
-                                        if (advanceTarget > now) {
+                                    if (med != null && !med.isPaused && !med.isPrn && !med.isArchived) {
+                                        if (dose.scheduledTime > now) {
+                                            val advanceTarget = dose.scheduledTime - 30 * 60 * 1000L
+                                            if (advanceTarget > now) {
+                                                platformNotifier.scheduleDoseReminder(
+                                                    doseId = dose.id,
+                                                    pillName = medName,
+                                                    triggerTimeMillis = advanceTarget,
+                                                    stage = DoseReminderStage.ADVANCE_30MIN
+                                                )
+                                            }
+
                                             platformNotifier.scheduleDoseReminder(
                                                 doseId = dose.id,
                                                 pillName = medName,
-                                                triggerTimeMillis = advanceTarget,
-                                                stage = DoseReminderStage.ADVANCE_30MIN
+                                                triggerTimeMillis = dose.scheduledTime,
+                                                stage = DoseReminderStage.DUE_NOW
                                             )
                                         }
 
-                                        platformNotifier.scheduleDoseReminder(
-                                            doseId = dose.id,
-                                            pillName = medName,
-                                            triggerTimeMillis = dose.scheduledTime,
-                                            stage = DoseReminderStage.DUE_NOW
-                                        )
-                                    }
-
-                                    val tPlus15 = dose.scheduledTime + 15 * 60 * 1000L
-                                    if (tPlus15 > now) {
-                                        platformNotifier.scheduleDoseReminder(
-                                            doseId = dose.id,
-                                            pillName = medName,
-                                            triggerTimeMillis = tPlus15,
-                                            stage = DoseReminderStage.PRE_EXPIRY_15MIN
-                                        )
+                                        val tPlus15 = dose.scheduledTime + 15 * 60 * 1000L
+                                        if (tPlus15 > now) {
+                                            platformNotifier.scheduleDoseReminder(
+                                                doseId = dose.id,
+                                                pillName = medName,
+                                                triggerTimeMillis = tPlus15,
+                                                stage = DoseReminderStage.PRE_EXPIRY_15MIN
+                                            )
+                                        }
                                     }
                                 }
                             }

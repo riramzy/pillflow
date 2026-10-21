@@ -14,7 +14,8 @@ data class ScheduledDoseDto(
     val takenTime: Long? = null,
     val complianceStatus: String = "PENDING",
     val isTaken: Boolean = false,
-    val updatedAt: Long = 0L
+    val updatedAt: Long = 0L,
+    val skipReason: String? = null
 )
 
 fun ScheduledDoseDto.toEntity(
@@ -28,7 +29,8 @@ fun ScheduledDoseDto.toEntity(
     scheduledTime = scheduledTime,
     complianceStatus = complianceStatus,
     isTaken = isTaken,
-    isSynced = isSynced
+    isSynced = isSynced,
+    skipReason = skipReason
 )
 
 fun ScheduledDoseEntity.toDto(
@@ -48,5 +50,6 @@ fun ScheduledDoseEntity.toDto(
     takenTime = takenTime,
     complianceStatus = complianceStatus,
     isTaken = isTaken,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    skipReason = skipReason
 )

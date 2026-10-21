@@ -10,5 +10,7 @@ data class DoseHistoryEntity(
     val scheduledTime: Long,
     val takenTime: Long?,
     val complianceStatus: String,
-    val isTaken: Boolean
+    val isTaken: Boolean,
+    val skipReason: String? = null,
+    val isPrn: Boolean = false
 )

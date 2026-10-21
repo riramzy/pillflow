@@ -19,6 +19,10 @@ data class MedicationEntity(
     val colorHex: String,
     val shape: String = "CAPSULE",
     val instructions: String = "",
+    val remainingPills: Int? = null,
+    val refillThreshold: Int = 5,
+    val isPaused: Boolean = false,
+    val isPrn: Boolean = false,
     val isSynced: Boolean = false,
     val isArchived: Boolean = false
 )

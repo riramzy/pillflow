@@ -18,6 +18,9 @@ interface MedicationDao {
     @Query("SELECT * FROM medications")
     suspend fun getAllMedicationsOnce(): List<MedicationEntity>
 
+    @Query("SELECT * FROM medications WHERE id = :id LIMIT 1")
+    suspend fun getMedicationByIdOnce(id: String): MedicationEntity?
+
     @Query("SELECT * FROM medications WHERE isSynced = 0")
     suspend fun getUnsyncedMedications(): List<MedicationEntity>
 
@@ -56,6 +59,8 @@ interface MedicationDao {
         WHERE scheduled_doses.isTaken = 0 
             AND medications.userId = :userId 
             AND medications.isArchived = 0
+            AND medications.isPaused = 0 
+            AND medications.isPrn = 0
         ORDER BY scheduled_doses.scheduledTime ASC
     """)
     fun getPendingDosesForUser(userId: String): Flow<List<PendingDoseWithMedication>>
@@ -73,7 +78,9 @@ interface MedicationDao {
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id
         WHERE scheduled_doses.isTaken = 0
             AND medications.userId IN (:patientIds)
-            AND medications.isArchived = 0        
+            AND medications.isArchived = 0    
+            AND medications.isPaused = 0 
+            AND medications.isPrn = 0
         ORDER BY scheduled_doses.scheduledTime ASC
     """)
     fun getPendingDosesForPatients(patientIds: List<String>): Flow<List<PendingDoseWithMedication>>
@@ -103,6 +110,9 @@ interface MedicationDao {
     @Query("UPDATE scheduled_doses SET isSynced = 1 WHERE id = :id")
     suspend fun markScheduledDoseSynced(id: String)
 
+    @Query("UPDATE scheduled_doses SET isTaken = 1, takenTime = :takenTime, complianceStatus = 'SKIPPED', skipReason = :skipReason, isSynced = 0 WHERE id = :id")
+    suspend fun markScheduledDoseSkipped(id: String, takenTime: Long, skipReason: String)
+
     @Query("UPDATE scheduled_doses SET isTaken = :isTaken, takenTime = :takenTime, complianceStatus = :complianceStatus, isSynced = 0 WHERE id = :id")
     suspend fun markScheduledDoseTaken(id: String, takenTime: Long, isTaken: Boolean, complianceStatus: String)
 
@@ -120,7 +130,9 @@ interface MedicationDao {
         scheduled_doses.scheduledTime AS scheduledTime,
         scheduled_doses.takenTime AS takenTime,
         scheduled_doses.complianceStatus AS complianceStatus,
-        scheduled_doses.isTaken AS isTaken
+        scheduled_doses.isTaken AS isTaken,
+        scheduled_doses.skipReason AS skipReason,
+        medications.isPrn AS isPrn
     FROM scheduled_doses
     INNER JOIN medications ON scheduled_doses.medicationId = medications.id
     WHERE medications.userId = :userId
@@ -139,7 +151,9 @@ interface MedicationDao {
         scheduled_doses.scheduledTime AS scheduledTime,
         scheduled_doses.takenTime AS takenTime,
         scheduled_doses.complianceStatus AS complianceStatus,
-        scheduled_doses.isTaken AS isTaken
+        scheduled_doses.isTaken AS isTaken,
+        scheduled_doses.skipReason AS skipReason,
+        medications.isPrn AS isPrn
     FROM scheduled_doses
     INNER JOIN medications ON scheduled_doses.medicationId = medications.id
     WHERE medications.userId = :userId
@@ -184,7 +198,9 @@ interface MedicationDao {
         SELECT scheduled_doses.id 
         FROM scheduled_doses 
         INNER JOIN medications ON scheduled_doses.medicationId = medications.id 
-        WHERE medications.userId = :userId AND scheduled_doses.isSynced = 1"""
-    )
+        WHERE medications.userId = :userId 
+            AND scheduled_doses.isSynced = 1
+            AND scheduled_doses.isTaken = 0
+    """)
     suspend fun getSyncedScheduledDoseIdsForUser(userId: String): List<String>
 }

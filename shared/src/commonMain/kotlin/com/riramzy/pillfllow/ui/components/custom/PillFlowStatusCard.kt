@@ -56,6 +56,11 @@ fun PillFlowStatusCard(
             backgroundColor = IndicatorColor.RED_CONTAINER.color
             text = "Missed"
         }
+        ComplianceStatus.SKIPPED -> {
+            color = IndicatorColor.BLUE.color
+            backgroundColor = IndicatorColor.BLUE_CONTAINER.color
+            text = "Skipped"
+        }
     }
 
     Box(
@@ -80,7 +85,7 @@ fun PillFlowStatusCard(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun PillFlowStatusCardPreview() {
     PillFlowTheme {
@@ -91,11 +96,12 @@ fun PillFlowStatusCardPreview() {
             PillFlowStatusCard(status = ComplianceStatus.ON_TIME, customText = "Taken: 9.02AM")
             PillFlowStatusCard(status = ComplianceStatus.LATE, customText = "Late: 30m ago")
             PillFlowStatusCard(status = ComplianceStatus.MISSED)
+            PillFlowStatusCard(status = ComplianceStatus.SKIPPED, customText = "Skipped: 30m ago")
         }
     }
 }
 
-@Preview(uiMode = UI_MODE_NIGHT_YES)
+@Preview(uiMode = UI_MODE_NIGHT_YES, showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 fun PillFlowStatusCardPreviewDark() {
     PillFlowTheme {
@@ -106,6 +112,7 @@ fun PillFlowStatusCardPreviewDark() {
             PillFlowStatusCard(status = ComplianceStatus.ON_TIME, customText = "Taken: 9.02AM")
             PillFlowStatusCard(status = ComplianceStatus.LATE, customText = "Late: 30m ago")
             PillFlowStatusCard(status = ComplianceStatus.MISSED)
+            PillFlowStatusCard(status = ComplianceStatus.SKIPPED, customText = "Skipped: 30m ago")
         }
     }
 }

@@ -4,5 +4,6 @@ enum class ComplianceStatus {
     DEFAULT,
     ON_TIME,
     LATE,
-    MISSED
+    MISSED,
+    SKIPPED
 }

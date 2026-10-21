@@ -18,5 +18,6 @@ data class ScheduledDoseEntity(
     val scheduledTime: Long,
     val complianceStatus: String = "PENDING",
     val isTaken: Boolean = false,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val skipReason: String? = null
 )

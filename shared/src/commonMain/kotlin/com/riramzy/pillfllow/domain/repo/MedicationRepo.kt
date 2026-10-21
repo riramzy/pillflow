@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.Flow
 
 interface MedicationRepo {
     fun getAllMedications(): Flow<List<MedicationEntity>>
+    suspend fun getMedicationByIdOnce(id: String): MedicationEntity?
     suspend fun getUnsyncedMedications(): List<MedicationEntity>
     suspend fun insertMedication(medication: MedicationEntity): String
+    suspend fun logPrnDose(dose: ScheduledDoseEntity)
     suspend fun getPendingDoseIdsForMedication(medicationId: String): List<String>
     suspend fun deleteMedicationById(id: String)
     suspend fun markMedicationSynced(id: String)
@@ -20,6 +22,7 @@ interface MedicationRepo {
     fun getUnsyncedScheduledDoses(): Flow<List<ScheduledDoseEntity>>
     suspend fun getScheduledDoseById(id: String): ScheduledDoseEntity?
     suspend fun markScheduledDoseSynced(id: String)
+    suspend fun markScheduledDoseSkipped(id: String, takenTime: Long, skipReason: String)
     suspend fun markScheduledDoseTaken(id: String, takenTime: Long, isTaken: Boolean, complianceStatus: String)
     suspend fun insertScheduledDoses(scheduledDose: List<ScheduledDoseEntity>): List<String>
     fun getDoseHistoryForUser(userId: String): Flow<List<DoseHistoryEntity>>

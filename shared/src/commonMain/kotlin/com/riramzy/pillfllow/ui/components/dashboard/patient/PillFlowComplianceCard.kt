@@ -37,6 +37,7 @@ import pillfllow.shared.generated.resources.compliance_missed
 import pillfllow.shared.generated.resources.compliance_ontime
 import pillfllow.shared.generated.resources.next
 import pillfllow.shared.generated.resources.pills
+import pillfllow.shared.generated.resources.skip
 
 @Composable
 fun PillFlowComplianceCard(
@@ -79,6 +80,12 @@ fun PillFlowComplianceCard(
             icon = Res.drawable.compliance_missed
             color = IndicatorColor.RED.color
             backgroundColor = IndicatorColor.RED_CONTAINER.color
+        }
+
+        ComplianceStatus.SKIPPED -> {
+            icon = Res.drawable.skip
+            color = IndicatorColor.BLUE.color
+            backgroundColor = IndicatorColor.BLUE_CONTAINER.color
         }
     }
 
@@ -180,6 +187,13 @@ fun PilFlowComplianceCardPreview() {
                 badgeText = "Grace Expired",
                 status = ComplianceStatus.MISSED
             )
+
+            PillFlowComplianceCard(
+                title = "Skipped: Vitamin D",
+                subtitle = "1 scheduled doses skipped today",
+                badgeText = "Skipped",
+                status = ComplianceStatus.SKIPPED
+            )
         }
     }
 }
@@ -218,6 +232,13 @@ fun PilFlowComplianceCardPreviewDark() {
                 subtitle = "Was due at 2:00 PM (35 mins ago)",
                 badgeText = "Grace Expired",
                 status = ComplianceStatus.MISSED
+            )
+
+            PillFlowComplianceCard(
+                title = "Skipped: Vitamin D",
+                subtitle = "1 scheduled doses skipped today",
+                badgeText = "Skipped",
+                status = ComplianceStatus.SKIPPED
             )
         }
     }
