@@ -27,7 +27,8 @@ data class PrescriptionUiModel(
     val pillColor: PillColor,
     val scheduleText: String,
     val instructionsText: String,
-    val nextDoseText: String
+    val nextDoseText: String,
+    val isPrn: Boolean = false
 )
 
 sealed interface PatientPrescriptionsAction {
@@ -42,7 +43,8 @@ sealed interface PatientPrescriptionsAction {
         val timeOfDay: String,
         val colorHex: String,
         val shape: String,
-        val scheduledTimesMillis: List<Long> = emptyList()
+        val scheduledTimesMillis: List<Long> = emptyList(),
+        val isPrn: Boolean = false
     ): PatientPrescriptionsAction
     data class DeletePrescription(val id: String): PatientPrescriptionsAction
     data object ClearMessages: PatientPrescriptionsAction

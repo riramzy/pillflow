@@ -51,8 +51,9 @@ fun PrescriptionSheet(
         timeOfDay: String,
         colorHex: String,
         shape: String,
-        scheduledTimesMillis: List<Long>
-    ) -> Unit = { _, _, _, _, _, _, _, _ -> },
+        scheduledTimesMillis: List<Long>,
+        isPrn: Boolean
+    ) -> Unit = { _, _, _, _, _, _, _, _, _ -> },
     isSaving: Boolean = false
 ) {
     var medicationName by remember(initialMedication) {
@@ -88,16 +89,23 @@ fun PrescriptionSheet(
     val repetitionList: List<Pair<String, @Composable () -> Unit>> = listOf(
         Pair("Once Daily", { Text("1x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }),
         Pair("Twice Daily", { Text("2x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }),
-        Pair("3 Times Daily", { Text("3x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) })
+        Pair("3 Times Daily", { Text("3x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }),
+        Pair("As Needed (PRN)", { Text("PRN", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) })
     )
 
     var selectedRepetition: Pair<String, @Composable () -> Unit>? by remember(initialMedication) {
         mutableStateOf(
-            repetitionList.find {
-                initialMedication?.scheduleText?.startsWith(it.first) == true
+            if (initialMedication?.isPrn == true) {
+                repetitionList.find { it.first == "As Needed (PRN)" }
+            } else {
+                repetitionList.find {
+                    initialMedication?.scheduleText?.startsWith(it.first) == true
+                }
             }
         )
     }
+
+    val isPrn = selectedRepetition?.first == "As Needed (PRN)"
 
     val totalDoses = when (selectedRepetition?.first) {
         "Twice Daily" -> 2
@@ -269,18 +277,20 @@ fun PrescriptionSheet(
                 }
             )
 
-            PillFlowSelector(
-                title = "Time",
-                placeholder = "Select Time",
-                items = emptyList(),
-                selectedItem = selectedTimeText?.let { Pair(it, { Text("⏰") }) },
-                onClick = {
-                    accumulatedTimes = mutableListOf()
-                    accumulatedMillis = mutableListOf()
-                    currentDoseIndex = 0
-                    showTimeDialog = true
-                }
-            )
+            if (!isPrn) {
+                PillFlowSelector(
+                    title = "Time",
+                    placeholder = "Select Time",
+                    items = emptyList(),
+                    selectedItem = selectedTimeText?.let { Pair(it, { Text("⏰") }) },
+                    onClick = {
+                        accumulatedTimes = mutableListOf()
+                        accumulatedMillis = mutableListOf()
+                        currentDoseIndex = 0
+                        showTimeDialog = true
+                    }
+                )
+            }
         }
 
         PillFlowButton(
@@ -289,6 +299,7 @@ fun PrescriptionSheet(
             isEnabled = !isSaving,
             onClick = {
                 val finalScheduledMillis = when {
+                    isPrn -> emptyList()
                     accumulatedMillis.isNotEmpty() -> accumulatedMillis
                     !selectedTimeText.isNullOrBlank() -> parseScheduleTimeToMillis(selectedTimeText)
                     else -> listOf(getTodayTimeInMillis(8, 0))
@@ -298,11 +309,12 @@ fun PrescriptionSheet(
                     medicationName,
                     medicationDosage,
                     medicationInstructions,
-                    selectedRepetition?.first ?: "Once Daily",
-                    selectedTimeText ?: "08:00 AM",
+                    if (isPrn) "As Needed" else (selectedRepetition?.first ?: "Once Daily"),
+                    if (isPrn) "As Needed" else (selectedTimeText ?: "08:00 AM"),
                     selectedColor?.first ?: "SKY_BLUE",
                     selectedShape?.first ?: "CAPSULE",
-                    finalScheduledMillis
+                    finalScheduledMillis,
+                    isPrn
                 )
             }
         )

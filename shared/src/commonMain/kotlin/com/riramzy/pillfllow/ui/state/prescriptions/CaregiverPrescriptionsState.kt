@@ -33,7 +33,8 @@ sealed interface CaregiverPrescriptionsAction {
         val timeOfDay: String,
         val colorHex: String,
         val shape: String,
-        val scheduledTimesMillis: List<Long> = emptyList()
+        val scheduledTimesMillis: List<Long> = emptyList(),
+        val isPrn: Boolean = false
     ): CaregiverPrescriptionsAction
     data class DeletePrescription(val id: String): CaregiverPrescriptionsAction
     data object ClearMessages: CaregiverPrescriptionsAction

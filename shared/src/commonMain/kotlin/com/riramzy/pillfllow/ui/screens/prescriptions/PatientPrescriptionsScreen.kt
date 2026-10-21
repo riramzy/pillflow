@@ -123,7 +123,7 @@ fun PatientPrescriptionsScreenContent(
             PrescriptionSheet(
                 initialMedication = editingPrescription,
                 isSaving = state.isSaving,
-                onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis ->
+                onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis, isPrn ->
                     onAction(
                         PatientPrescriptionsAction.SavePrescription(
                             name = name,
@@ -133,7 +133,8 @@ fun PatientPrescriptionsScreenContent(
                             timeOfDay = time,
                             colorHex = color,
                             shape = shape,
-                            scheduledTimesMillis = scheduledTimeMillis
+                            scheduledTimesMillis = scheduledTimeMillis,
+                            isPrn = isPrn
                         )
                     )
                 },

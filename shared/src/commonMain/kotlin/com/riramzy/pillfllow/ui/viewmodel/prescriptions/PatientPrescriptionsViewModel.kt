@@ -74,9 +74,10 @@ class PatientPrescriptionsViewModel(
                             dosage = med.dosage,
                             pillShape = pillShape,
                             pillColor = pillColor,
-                            scheduleText = "${med.frequency}, ${med.timeOfDay}",
+                            scheduleText = if (med.isPrn) "As Needed (PRN)" else "${med.frequency}, ${med.timeOfDay}",
                             instructionsText = med.instructions.ifBlank { "Take as prescribed" },
-                            nextDoseText = formatRelativeNextDose(nextDose?.scheduledTime, now)
+                            nextDoseText = if (med.isPaused) "Paused" else if (med.isPrn) "Take as needed" else formatRelativeNextDose(nextDose?.scheduledTime, now),
+                            isPrn = med.isPrn
                         )
                     }
 
@@ -139,7 +140,8 @@ class PatientPrescriptionsViewModel(
         timeOfDay: String,
         colorHex: String,
         shape: String,
-        scheduledTimesMillis: List<Long> = emptyList()
+        scheduledTimesMillis: List<Long> = emptyList(),
+        isPrn: Boolean = false
     ) {
         val isEditing = _state.value.editingMedicationId != null
         _state.update { it.copy(isSaving = true) }
@@ -161,7 +163,8 @@ class PatientPrescriptionsViewModel(
                 timeOfDay = timeOfDay,
                 colorHex = colorHex,
                 shape = shape,
-                scheduledTimesMillis = scheduledTimesMillis
+                scheduledTimesMillis = scheduledTimesMillis,
+                isPrn = isPrn
             )
 
             when (result) {
@@ -227,8 +230,15 @@ class PatientPrescriptionsViewModel(
             is PatientPrescriptionsAction.OpenEditSheet -> openEditSheet(action.medicationId)
             is PatientPrescriptionsAction.CloseAddSheet -> closeAddSheet()
             is PatientPrescriptionsAction.SavePrescription -> savePrescription(
-                action.name, action.dosage, action.instructions, action.frequency,
-                action.timeOfDay, action.colorHex, action.shape, action.scheduledTimesMillis
+                action.name,
+                action.dosage,
+                action.instructions,
+                action.frequency,
+                action.timeOfDay,
+                action.colorHex,
+                action.shape,
+                action.scheduledTimesMillis,
+                action.isPrn
             )
             is PatientPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
             is PatientPrescriptionsAction.ClearMessages -> clearMessages()

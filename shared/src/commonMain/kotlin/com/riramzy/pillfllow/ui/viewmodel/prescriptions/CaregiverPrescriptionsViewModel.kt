@@ -104,9 +104,10 @@ class CaregiverPrescriptionsViewModel(
                                 dosage = med.dosage,
                                 pillColor = pillColor,
                                 pillShape = pillShape,
-                                scheduleText = "${med.frequency}, ${med.timeOfDay}",
+                                scheduleText = if (med.isPrn) "As Needed (PRN)" else "${med.frequency}, ${med.timeOfDay}",
                                 instructionsText = med.instructions.ifBlank { "Take as prescribed" },
-                                nextDoseText = formatRelativeNextDose(nextDose?.scheduledTime, now)
+                                nextDoseText = if (med.isPaused) "Paused" else if (med.isPrn) "Take as needed" else formatRelativeNextDose(nextDose?.scheduledTime, now),
+                                isPrn = med.isPrn
                             )
                         }
 
@@ -164,7 +165,8 @@ class CaregiverPrescriptionsViewModel(
         timeOfDay: String,
         colorHex: String,
         shape: String,
-        scheduledTimesMillis: List<Long> = emptyList()
+        scheduledTimesMillis: List<Long> = emptyList(),
+        isPrn: Boolean = false
     ) {
         val isEditing = _state.value.editingMedicationId != null
         _state.update { it.copy(isSaving = true) }
@@ -186,7 +188,8 @@ class CaregiverPrescriptionsViewModel(
                 timeOfDay = timeOfDay,
                 colorHex = colorHex,
                 shape = shape,
-                scheduledTimesMillis = scheduledTimesMillis
+                scheduledTimesMillis = scheduledTimesMillis,
+                isPrn = isPrn
             )
 
             when (result) {
@@ -265,7 +268,8 @@ class CaregiverPrescriptionsViewModel(
                 action.timeOfDay,
                 action.colorHex,
                 action.shape,
-                action.scheduledTimesMillis
+                action.scheduledTimesMillis,
+                action.isPrn
             )
             is CaregiverPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
             is CaregiverPrescriptionsAction.ClearMessages -> clearMessages()

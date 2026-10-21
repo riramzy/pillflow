@@ -138,7 +138,7 @@ fun CaregiverPrescriptionsScreenContent(
             PrescriptionSheet(
                 initialMedication = editingPrescription,
                 isSaving = state.isSaving,
-                onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis ->
+                onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis, isPrn ->
                     onAction(
                         CaregiverPrescriptionsAction.SavePrescription(
                             name = name,
@@ -148,7 +148,8 @@ fun CaregiverPrescriptionsScreenContent(
                             timeOfDay = time,
                             colorHex = color,
                             shape = shape,
-                            scheduledTimesMillis = scheduledTimeMillis
+                            scheduledTimesMillis = scheduledTimeMillis,
+                            isPrn = isPrn
                         )
                     )
                 },
