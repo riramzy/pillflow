@@ -31,6 +31,7 @@ fun PillFlowMonthlyScoreCard(
     onTimeCount: Int = 28,
     lateCount: Int = 3,
     missedCount: Int = 1,
+    skippedCount: Int = 0,
     hasRecords: Boolean = true
 ) {
     Card(
@@ -109,26 +110,47 @@ fun PillFlowMonthlyScoreCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     if (hasRecords) {
-                        PillFlowStatusCard(
-                            modifier = Modifier.weight(1f),
-                            status = ComplianceStatus.ON_TIME,
-                            customText = "$onTimeCount On Time"
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                PillFlowStatusCard(
+                                    modifier = Modifier.weight(1f),
+                                    status = ComplianceStatus.ON_TIME,
+                                    customText = "$onTimeCount On Time"
+                                )
 
-                        PillFlowStatusCard(
-                            modifier = Modifier.weight(1f),
-                            status = ComplianceStatus.LATE,
-                            customText = "$lateCount Late"
-                        )
+                                PillFlowStatusCard(
+                                    modifier = Modifier.weight(1f),
+                                    status = ComplianceStatus.LATE,
+                                    customText = "$lateCount Late"
+                                )
+                            }
 
-                        PillFlowStatusCard(
-                            modifier = Modifier.weight(1f),
-                            status = ComplianceStatus.MISSED,
-                            customText = "$missedCount Missed"
-                        )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                PillFlowStatusCard(
+                                    modifier = Modifier.weight(1f),
+                                    status = ComplianceStatus.MISSED,
+                                    customText = "$missedCount Missed"
+                                )
+
+                                PillFlowStatusCard(
+                                    modifier = Modifier.weight(1f),
+                                    status = ComplianceStatus.SKIPPED,
+                                    customText = "$skippedCount Skipped"
+                                )
+                            }
+                        }
                     } else {
                         PillFlowStatusCard(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxWidth(),
                             status = ComplianceStatus.DEFAULT,
                             customText = "No Data Recorded"
                         )

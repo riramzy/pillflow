@@ -14,6 +14,7 @@ data class HistoryState(
     val onTimeCount: Int = 0,
     val lateCount: Int = 0,
     val missedCount: Int = 0,
+    val skippedCount: Int = 0,
     val monthlyComplianceDays: List<MonthDaysCompliance> = emptyList(),
     val logRecords: List<HistoryLogRecordUiModel> = emptyList(),
     val isLoading: Boolean = true,

@@ -37,7 +37,10 @@ val viewModelModule: Module = module {
             getPhysicsSensitivityUseCase = get(),
             getDoseHistoryForUserUseCase = get(),
             syncAndMaintainScheduleUseCase = get(),
-            notificationsRepo = get()
+            notificationsRepo = get(),
+            getMedicationsForUserUseCase = get(),
+            skipDoseUseCase = get(),
+            logPrnDoseUseCase = get()
         )
     }
 

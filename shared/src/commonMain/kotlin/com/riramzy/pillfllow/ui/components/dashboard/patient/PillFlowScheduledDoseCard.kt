@@ -34,7 +34,7 @@ fun PillFlowScheduledDoseCard(
     time: String = "8:00 PM",
     color: PillColor = PillColor.CORAL_RED,
     status: ComplianceStatus = ComplianceStatus.DEFAULT,
-    badgeText: String = "100% On-Time"
+    badgeText: String = "100% On-Time",
 ) {
     Card(
         modifier = modifier

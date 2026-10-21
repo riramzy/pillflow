@@ -9,12 +9,16 @@ import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetDoseHistoryForUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.LogPrnDoseUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.SkipDoseUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
+import com.riramzy.pillfllow.ui.state.dashboard.PrnMedicationUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.state.notifications.NotificationType
 import com.riramzy.pillfllow.ui.state.notifications.NotificationsAction
@@ -48,7 +52,10 @@ class PatientDashboardViewModel(
     private val getPhysicsSensitivityUseCase: GetPhysicsSensitivityUseCase,
     private val getDoseHistoryForUserUseCase: GetDoseHistoryForUserUseCase,
     private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase,
-    private val notificationsRepo: NotificationsRepo
+    private val notificationsRepo: NotificationsRepo,
+    private val getMedicationsForUserUseCase: GetMedicationsForUserUseCase,
+    private val skipDoseUseCase: SkipDoseUseCase,
+    private val logPrnDoseUseCase: LogPrnDoseUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(PatientDashboardState())
     val state: StateFlow<PatientDashboardState> = _state.asStateFlow()
@@ -76,8 +83,9 @@ class PatientDashboardViewModel(
                     combine(
                         getPendingDosesForUserUseCase(user.id),
                         getDoseHistoryForUserUseCase(user.id),
+                        getMedicationsForUserUseCase(user.id),
                         tickerFlow()
-                    ) { pendingDoses, historyDoses, now ->
+                    ) { pendingDoses, historyDoses, medications, now ->
                         val todayPendingDoses = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
                         val todayHistoryDoses = historyDoses.filter {
                             it.isTaken && isSameDay(it.scheduledTime, now)
@@ -151,10 +159,49 @@ class PatientDashboardViewModel(
                         val remainingCount = mappedUiDoses.count { it.status != ComplianceStatus.MISSED }
                         val missedCount = mappedUiDoses.count { it.status == ComplianceStatus.MISSED }
 
+                        val activePrnMeds = medications.filter { it.isPrn && !it.isPaused && !it.isArchived }
+
+                        val prnUiModels = activePrnMeds.map { med ->
+                            val lastTaken = historyDoses
+                                .filter { it.medicationId == med.id && it.isTaken }
+                                .maxByOrNull { it.takenTime ?: it.scheduledTime }
+
+                            val lastTakenText = lastTaken?.let {
+                                val t = it.takenTime ?: it.scheduledTime
+                                "Last taken: ${formatTime(t)}"
+                            }
+
+                            PrnMedicationUiModel(
+                                medicationId = med.id,
+                                name = med.name,
+                                dosage = med.dosage,
+                                color = PillColorMapper.fromRaw(med.colorHex),
+                                lastTakenText = lastTakenText
+                            )
+                        }
+
+                        val skippedUiDoses = todayHistoryDoses
+                            .filter { it.complianceStatus == "SKIPPED" }
+                            .map { dose ->
+                                ScheduledDoseUiModel(
+                                    id = dose.id,
+                                    name = dose.name,
+                                    dosage = dose.dosage,
+                                    timeFormatted = formatTime(dose.scheduledTime),
+                                    color = PillColorMapper.fromRaw(dose.colorHex),
+                                    status = ComplianceStatus.SKIPPED,
+                                    badgeText = if (!dose.skipReason.isNullOrBlank()) "Skipped: ${dose.skipReason}" else "Skipped",
+                                    scheduledTime = dose.scheduledTime
+                                )
+                            }
+
+                        val allScheduledDoses = (mappedUiDoses + skippedUiDoses).sortedBy { it.scheduledTime }
+
                         _state.update {
                             it.copy(
-                                hasPrescriptions = pendingDoses.isNotEmpty() || historyDoses.isNotEmpty(),
-                                scheduledDoses = mappedUiDoses,
+                                hasPrescriptions = medications.isNotEmpty() || pendingDoses.isNotEmpty() || historyDoses.isNotEmpty(),
+                                scheduledDoses = allScheduledDoses,
+                                prnMedications = prnUiModels,
                                 remainingDosesCount = remainingCount,
                                 missedDosesCount = missedCount,
                                 pills = mappedPills,
@@ -186,6 +233,17 @@ class PatientDashboardViewModel(
         }
     }
 
+    fun logPrnDose(medicationId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = logPrnDoseUseCase(medicationId)) {
+                is Result.Error -> {
+                    _state.update { it.copy(errorMessage = result.message ?: "Failed to log as-needed dose.") }
+                }
+                else -> Unit
+            }
+        }
+    }
+
     fun onErrorDismissed() {
         _state.update { it.copy(errorMessage = null) }
     }
@@ -203,6 +261,17 @@ class PatientDashboardViewModel(
         notificationsRepo.onAction(NotificationsAction.DismissAlert(nudgeId))
     }
 
+    fun skipDose(doseId: String, reason: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = skipDoseUseCase(doseId, reason)) {
+                is Result.Error -> {
+                    _state.update { it.copy(errorMessage = result.message ?: "Failed to skip dose.") }
+                }
+                else -> Unit
+            }
+        }
+    }
+
     private fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
             _state.update { it.copy(isRefreshing = true) }
@@ -217,6 +286,8 @@ class PatientDashboardViewModel(
     fun onAction(action: PatientDashboardAction) {
         when (action) {
             is PatientDashboardAction.LogDose -> logDose(action.doseId, action.scheduledTime)
+            is PatientDashboardAction.LogPrnDose -> logPrnDose(action.medicationId)
+            is PatientDashboardAction.SkipDose -> skipDose(action.doseId, action.reason)
             is PatientDashboardAction.DismissError -> onErrorDismissed()
             is PatientDashboardAction.DismissNudge -> dismissNudge(action.nudgeId)
             is PatientDashboardAction.Refresh -> refresh()

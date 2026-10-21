@@ -1,12 +1,13 @@
 package com.riramzy.pillfllow.ui.components.dashboard.patient
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,8 +43,12 @@ import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import com.riramzy.pillfllow.utils.medication.IndicatorColor
 import com.riramzy.pillfllow.utils.pill.PillShape
 import kotlinx.coroutines.isActive
+import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.pills
+import pillfllow.shared.generated.resources.skip
 
 @Composable
 fun PillFlowPillJarSandbox(
@@ -53,6 +58,7 @@ fun PillFlowPillJarSandbox(
     tiltX: Float,
     tiltY: Float,
     onLogMedication: (String) -> Unit,
+    onSkipMedication: ((String) -> Unit)? = null
 ) {
     val loggedPillIds = remember { mutableSetOf<String>() }
 
@@ -68,7 +74,7 @@ fun PillFlowPillJarSandbox(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(470.dp)
+                .heightIn(min = 470.dp, max = 500.dp)
         ) {
             val width = constraints.maxWidth.toFloat()
             val height = constraints.maxHeight.toFloat()
@@ -252,12 +258,32 @@ fun PillFlowPillJarSandbox(
                 }
             }
 
-            PillFlowStatusCard(
-                customText = "$totalRemainingDoses pills remaining",
+            val hasActivePill = pillsState.isNotEmpty() && onSkipMedication != null
+            val currentPill = pillsState.firstOrNull()
+
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 20.dp)
-            )
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                verticalArrangement = if (hasActivePill) Arrangement.spacedBy(4.dp) else Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                PillFlowStatusCard(
+                    customText = if (totalRemainingDoses == 1) "1 pill remaining" else "$totalRemainingDoses pills remaining",
+                    customLeadingIcon = Res.drawable.pills
+                )
+
+                if (hasActivePill && currentPill != null) {
+                    PillFlowStatusCard(
+                        customText = "Skip Dose",
+                        customLeadingIcon = Res.drawable.skip,
+                        customBackgroundColor = IndicatorColor.BLUE_CONTAINER.color,
+                        customTextColor = IndicatorColor.BLUE.color,
+                        modifier = Modifier.clickable { onSkipMedication.invoke(currentPill.id) }
+                    )
+                }
+            }
         }
     }
 }
@@ -276,6 +302,7 @@ fun PillFlowPillJarSandboxPreview() {
             tiltX = 0f,
             tiltY = 0.5f,
             onLogMedication = {},
+            onSkipMedication = {},
             modifier = Modifier.padding(15.dp)
         )
     }
@@ -295,6 +322,7 @@ fun PillFlowPillJarSandboxDarkPreview() {
             tiltX = 0f,
             tiltY = 0.5f,
             onLogMedication = {},
+            onSkipMedication = {},
             modifier = Modifier.padding(15.dp)
         )
     }

@@ -4,10 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.medication.IndicatorColor
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun PillFlowStatusCard(
@@ -29,7 +34,8 @@ fun PillFlowStatusCard(
     status: ComplianceStatus = ComplianceStatus.DEFAULT,
     customText: String? = null,
     customTextColor: Color? = null,
-    customBackgroundColor: Color? = null
+    customBackgroundColor: Color? = null,
+    customLeadingIcon: DrawableResource? = null
 ) {
     var color: Color
     var backgroundColor: Color
@@ -73,15 +79,29 @@ fun PillFlowStatusCard(
             ),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = customText ?: text,
-            color = customTextColor?: color,
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (customLeadingIcon != null) {
+                Icon(
+                    imageVector = vectorResource(customLeadingIcon),
+                    contentDescription = null,
+                    tint = customTextColor?: color,
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(12.dp)
+                )
+            }
 
+            Text(
+                text = customText ?: text,
+                color = customTextColor?: color,
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+            )
+        }
     }
 }
 

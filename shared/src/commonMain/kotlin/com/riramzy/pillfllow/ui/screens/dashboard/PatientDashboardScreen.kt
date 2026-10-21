@@ -8,17 +8,26 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -30,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +51,7 @@ import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
+import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
@@ -57,6 +68,7 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
 import com.riramzy.pillfllow.utils.app.Screen
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.medication.IndicatorColor
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
 import org.koin.compose.koinInject
@@ -93,6 +105,7 @@ fun PatientDashboardScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientDashboardScreenContent(
     modifier: Modifier = Modifier,
@@ -105,7 +118,121 @@ fun PatientDashboardScreenContent(
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
 ) {
+    var doseToSkip by remember { mutableStateOf<ScheduledDoseUiModel?>(null) }
+    var skipReason by remember { mutableStateOf("Doctor Advised") }
+    val presetReasons = listOf("Doctor Advised", "Fasting / Lab Work", "Side Effects / Nausea", "Out of Supply")
+
     val snackbarHostState = remember { SnackbarHostState() }
+
+    var showPrnSheet by remember { mutableStateOf(false) }
+
+    if (showPrnSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showPrnSheet = false }
+        ) {
+            Column(
+                modifier = Modifier.padding(15.dp),
+                verticalArrangement = Arrangement.spacedBy(30.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Log As-Needed Medication",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "Tap a medication to record a dose taken now",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                state.prnMedications.forEach { prnMed ->
+                    PillFlowScheduledDoseCard(
+                        name = prnMed.name,
+                        dose = prnMed.dosage,
+                        time = "As Needed",
+                        color = prnMed.color,
+                        status = ComplianceStatus.DEFAULT,
+                        badgeText = prnMed.lastTakenText ?: "Log Dose",
+                    )
+                }
+            }
+        }
+    }
+
+    if (doseToSkip != null) {
+        AlertDialog(
+            onDismissRequest = { doseToSkip = null },
+            title = {
+                Text(
+                    text = "Skip ${doseToSkip?.name}?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Select or enter a clinical reason for skipping this dose:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    OptIn(ExperimentalLayoutApi::class)
+                    FlowRow {
+                        presetReasons.forEach { reason ->
+                            FilterChip(
+                                selected = skipReason == reason,
+                                onClick = { skipReason = reason },
+                                label = {
+                                    Text(
+                                        text = reason,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center
+                                    )
+                                },
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                PillFlowButton(
+                    text = "Skip",
+                    customColor = IndicatorColor.BLUE_CONTAINER.color,
+                    customTextColor = IndicatorColor.BLUE.color,
+                    onClick = {
+                        doseToSkip?.let {
+                            onAction(PatientDashboardAction.SkipDose(it.id, skipReason.ifBlank { "Doctor Advised" }))
+                        }
+                        doseToSkip = null
+                    }
+                )
+            },
+            dismissButton = {
+                PillFlowButton(
+                    text = "Cancel",
+                    customColor = MaterialTheme.colorScheme.surface,
+                    customTextColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { doseToSkip = null }
+                )
+            }
+        )
+    }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { error ->
@@ -198,6 +325,13 @@ fun PatientDashboardScreenContent(
 
                                 onAction(PatientDashboardAction.LogDose(doseId = pillId, scheduledTime = scheduledTime))
                             },
+                            onSkipMedication = { pillId ->
+                                val targetDose = state.scheduledDoses.firstOrNull { it.id == pillId }
+                                if (targetDose != null) {
+                                    skipReason = "Doctor Advised"
+                                    doseToSkip = targetDose
+                                }
+                            },
                             modifier = Modifier.padding(horizontal = 15.dp)
                         )
                     }
@@ -237,13 +371,35 @@ fun PatientDashboardScreenContent(
                                 .fillMaxWidth()
                                 .padding(horizontal = 15.dp)
                         ) {
-                            Text(
-                                text = "Daily Schedule",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Daily Schedule",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                if (state.prnMedications.isNotEmpty()) {
+                                    Surface(
+                                        onClick = { showPrnSheet = true },
+                                        shape = RoundedCornerShape(20.dp),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                    ) {
+                                        Text(
+                                            text = "+ As-Needed",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(10.dp)
+                                        )
+                                    }
+                                }
+                            }
 
                             if (state.scheduledDoses.isEmpty()) {
                                 PillFlowEmptyStateCard(

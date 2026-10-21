@@ -158,6 +158,23 @@ class CaregiverDashboardViewModel(
                         )
                     }
 
+                    val skippedUiDoses = todayTakenDoses
+                        .filter { it.complianceStatus == "SKIPPED" }
+                        .map { dose ->
+                            ScheduledDoseUiModel(
+                                id = dose.id,
+                                name = dose.name,
+                                dosage = dose.dosage,
+                                timeFormatted = formatTime(dose.scheduledTime),
+                                color = PillColorMapper.fromRaw(dose.colorHex),
+                                status = ComplianceStatus.SKIPPED,
+                                badgeText = if (!dose.skipReason.isNullOrBlank()) "Skipped: ${dose.skipReason}" else "Skipped",
+                                scheduledTime = dose.scheduledTime
+                            )
+                        }
+
+                    val allUiDoses = (mappedUiDoses + skippedUiDoses).sortedBy { it.scheduledTime }
+
                     val takenActivities = todayTakenDoses.map { dose ->
                         val takenTime = dose.takenTime ?: dose.scheduledTime
 
@@ -233,7 +250,7 @@ class CaregiverDashboardViewModel(
                         current.copy(
                             patients = updatedPatients,
                             selectedPatientId = patientId,
-                            selectedPatientDoses = mappedUiDoses,
+                            selectedPatientDoses = allUiDoses,
                             selectedPatientDailyStatus = if (nudgeJob?.isActive == true) current.selectedPatientDailyStatus else dailyStatus,
                             dailyStatusAlertText = if (nudgeJob?.isActive == true) current.dailyStatusAlertText else alertText,
                             weeklyCompliance = weeklyDays,

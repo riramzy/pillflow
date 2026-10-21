@@ -208,6 +208,7 @@ fun CaregiverHistoryScreenContent(
                                 onTimeCount = state.onTimeCount,
                                 lateCount = state.lateCount,
                                 missedCount = state.missedCount,
+                                skippedCount = state.skippedCount,
                                 hasRecords = state.hasRecords,
                                 modifier = Modifier.padding(horizontal = 15.dp)
                             )

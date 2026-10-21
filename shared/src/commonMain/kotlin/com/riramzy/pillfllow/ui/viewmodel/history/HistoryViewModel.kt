@@ -103,6 +103,7 @@ class HistoryViewModel(
                         onTimeCount = analytics.onTimeCount,
                         lateCount = analytics.lateCount,
                         missedCount = analytics.missedCount,
+                        skippedCount = analytics.skippedCount,
                         monthlyComplianceDays = analytics.monthlyHeatmap,
                         logRecords = analytics.logRecords,
                         isLoading = false

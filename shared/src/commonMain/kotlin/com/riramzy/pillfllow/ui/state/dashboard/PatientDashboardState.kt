@@ -24,12 +24,13 @@ data class PatientDashboardState(
     val missedDosesCount: Int = 0,
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
     val activeNudges: List<NotificationAlertUiModel> = emptyList(),
+    val prnMedications: List<PrnMedicationUiModel> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
 ) {
     val isNewUserWithoutPrescriptions: Boolean
-        get() = !hasPrescriptions && scheduledDoses.isEmpty()
+        get() = !hasPrescriptions && scheduledDoses.isEmpty() && prnMedications.isEmpty()
 
     val headerDosesSubtitle: String
         get() = when {
@@ -59,8 +60,18 @@ data class ComplianceCardUiModel(
     val badgeText: String
 )
 
+data class PrnMedicationUiModel(
+    val medicationId: String,
+    val name: String,
+    val dosage: String,
+    val color: PillColor,
+    val lastTakenText: String? = null
+)
+
 sealed interface PatientDashboardAction {
     data class LogDose(val doseId: String, val scheduledTime: Long? = null): PatientDashboardAction
+    data class SkipDose(val doseId: String, val reason: String) : PatientDashboardAction
+    data class LogPrnDose(val medicationId: String) : PatientDashboardAction
     data object DismissError: PatientDashboardAction
     data class DismissNudge(val nudgeId: String) : PatientDashboardAction
     data object Refresh : PatientDashboardAction
