@@ -40,6 +40,7 @@ data class HistoryAnalyticsEvaluation(
     val onTimeCount: Int,
     val lateCount: Int,
     val missedCount: Int,
+    val skippedCount: Int = 0,
     val monthlyHeatmap: List<MonthDaysCompliance>,
     val logRecords: List<HistoryLogRecordUiModel>
 )
@@ -88,6 +89,9 @@ object DoseComplianceEvaluator {
         todayHistoryDoses: List<DoseHistoryEntity>,
         now: Long
     ): DailyStatusEvaluation {
+        val scheduledHistory = todayHistoryDoses.filter { !it.isPrn }
+        val prnHistory = todayHistoryDoses.filter { it.isPrn }
+
         val totalToday = todayPendingDoses.size + todayHistoryDoses.size
         if (totalToday == 0) {
             return DailyStatusEvaluation(ComplianceStatus.DEFAULT, "No Doses Scheduled Today")
@@ -120,17 +124,22 @@ object DoseComplianceEvaluator {
             return DailyStatusEvaluation(ComplianceStatus.DEFAULT, "Next: ${d.name} ${d.dosage} is scheduled for ${formatTime(d.scheduledTime)}")
         }
 
-        val hasLate = todayHistoryDoses.any { it.complianceStatus == "LATE" }
-
-        val allSkipped = todayHistoryDoses.isNotEmpty() && todayHistoryDoses.all { it.complianceStatus == "SKIPPED" }
+        val hasLate = scheduledHistory.any { it.complianceStatus == "LATE" }
+        val allSkipped = scheduledHistory.isNotEmpty() && scheduledHistory.all { it.complianceStatus == "SKIPPED" }
 
         return when {
             allSkipped -> {
-                val reason = todayHistoryDoses.firstOrNull()?.skipReason?.ifBlank { null } ?: "Doctor Hold"
+                val reason = scheduledHistory.firstOrNull()?.skipReason?.ifBlank { null } ?: "Doctor Hold"
                 DailyStatusEvaluation(ComplianceStatus.SKIPPED, "All Set For Today (Dose Skipped: $reason)")
             }
+
             hasLate -> DailyStatusEvaluation(ComplianceStatus.LATE, "All Doses Taken (With Late Doses)")
-            else -> DailyStatusEvaluation(ComplianceStatus.ON_TIME, "All Set For Today! 100% On-Time")
+
+            scheduledHistory.isNotEmpty() -> DailyStatusEvaluation(ComplianceStatus.ON_TIME, "All Set For Today! 100% On-Time")
+
+            prnHistory.isNotEmpty() -> DailyStatusEvaluation(ComplianceStatus.ON_TIME, "All Good! As-Needed Dose Logged")
+
+            else -> DailyStatusEvaluation(ComplianceStatus.DEFAULT, "No Doses Scheduled Today")
         }
     }
 
@@ -172,7 +181,7 @@ object DoseComplianceEvaluator {
 
                 index == currentDayIndex -> {
                     val todayPending = pendingDoses.filter { isSameDay(it.scheduledTime, now) }
-                    val todayHistory = historyDoses.filter { isSameDay(it.scheduledTime, now) }
+                    val todayHistory = historyDoses.filter { isSameDay(it.scheduledTime, now) && !it.isPrn }
 
                     val overdueCount = todayPending.count { (now - it.scheduledTime) > DoseStateMachine.LATE_WINDOW_MILLIS }
 
@@ -187,9 +196,12 @@ object DoseComplianceEvaluator {
 
                     val hasLateHistory = todayHistory.any { it.complianceStatus == "LATE" }
 
+                    val isAllSkipped = todayHistory.isNotEmpty() && todayPending.isEmpty() && todayHistory.all { it.complianceStatus == "SKIPPED" }
+
                     val todayStatus = when {
                         overdueCount > 0 || hasMissedHistory -> ComplianceStatus.MISSED
                         lateCount > 0 || hasLateHistory -> ComplianceStatus.LATE
+                        isAllSkipped -> ComplianceStatus.SKIPPED
                         todayHistory.isEmpty() && (todayPending.isEmpty() || todayPending.all { now < it.scheduledTime }) -> ComplianceStatus.DEFAULT
                         else -> ComplianceStatus.ON_TIME
                     }
@@ -198,15 +210,21 @@ object DoseComplianceEvaluator {
                 }
 
                 else -> {
-                    val dayRecords = historyDoses.filter { isSameDay(it.scheduledTime, targetDayMillis) }
+                    val dayRecords = historyDoses.filter {
+                        isSameDay(it.scheduledTime, targetDayMillis) && !it.isPrn
+                    }
 
                     val dayStatus = when {
                         dayRecords.isEmpty() -> ComplianceStatus.DEFAULT
+
                         dayRecords.any {
-                            (!it.isTaken && it.complianceStatus != "SKIPPED") ||
-                                    it.complianceStatus == "MISSED"
+                            (!it.isTaken && it.complianceStatus != "SKIPPED") || it.complianceStatus == "MISSED"
                         } -> ComplianceStatus.MISSED
+
                         dayRecords.any { it.complianceStatus == "LATE" } -> ComplianceStatus.LATE
+
+                        dayRecords.all { it.complianceStatus == "SKIPPED" } -> ComplianceStatus.SKIPPED
+
                         else -> ComplianceStatus.ON_TIME
                     }
 
@@ -306,25 +324,68 @@ object DoseComplianceEvaluator {
             )
         }
 
-        val hasLateHistory = todayHistoryDoses.any { it.complianceStatus == "LATE" }
-        return if (hasLateHistory) {
-            listOf(
-                ComplianceCardUiModel(
-                    status = ComplianceStatus.LATE,
-                    title = "All Doses Taken For Today",
-                    subtitle = "Completed with late doses",
-                    badgeText = "Completed Late"
+        val scheduledHistory = todayHistoryDoses.filter { !it.isPrn }
+        val hasLateHistory = scheduledHistory.any { it.complianceStatus == "LATE" }
+        val allSkipped = scheduledHistory.isNotEmpty() && scheduledHistory.all { it.complianceStatus == "SKIPPED" }
+
+        return when {
+            allSkipped -> {
+                val reason = scheduledHistory.firstOrNull()?.skipReason?.ifBlank { null }
+                val reasonSuffix = if (reason != null) ": $reason" else ""
+
+                listOf(
+                    ComplianceCardUiModel(
+                        status = ComplianceStatus.SKIPPED,
+                        title = "All Scheduled Doses Skipped",
+                        subtitle = "Marked as skipped$reasonSuffix",
+                        badgeText = "Skipped Today"
+                    )
                 )
-            )
-        } else {
-            listOf(
-                ComplianceCardUiModel(
-                    status = ComplianceStatus.ON_TIME,
-                    title = "All Set For Today!",
-                    subtitle = "All ${todayHistoryDoses.size} scheduled doses completed on time",
-                    badgeText = "100% On-Time"
+            }
+
+            hasLateHistory -> {
+                listOf(
+                    ComplianceCardUiModel(
+                        status = ComplianceStatus.LATE,
+                        title = "All Doses Taken For Today",
+                        subtitle = "Completed with late doses",
+                        badgeText = "Completed Late"
+                    )
                 )
-            )
+            }
+
+            scheduledHistory.isNotEmpty() -> {
+                listOf(
+                    ComplianceCardUiModel(
+                        status = ComplianceStatus.ON_TIME,
+                        title = "All Set For Today!",
+                        subtitle = "All ${scheduledHistory.size} scheduled doses completed on time",
+                        badgeText = "100% On-Time"
+                    )
+                )
+            }
+
+            todayHistoryDoses.any { it.isPrn } -> {
+                listOf(
+                    ComplianceCardUiModel(
+                        status = ComplianceStatus.DEFAULT,
+                        title = "As-Needed Dose Logged",
+                        subtitle = "PRN medication taken today",
+                        badgeText = "PRN Logged"
+                    )
+                )
+            }
+
+            else -> {
+                listOf(
+                    ComplianceCardUiModel(
+                        status = ComplianceStatus.DEFAULT,
+                        title = "No Prescriptions Today",
+                        subtitle = "You have no doses scheduled for today",
+                        badgeText = "No Schedule"
+                    )
+                )
+            }
         }
     }
 
@@ -338,6 +399,7 @@ object DoseComplianceEvaluator {
         var onTime = 0
         var late = 0
         var missed = 0
+        var skipped = 0
 
         val pastOrTakenRecords = monthDoses.filter { record ->
             record.isTaken ||
@@ -347,6 +409,8 @@ object DoseComplianceEvaluator {
 
         monthDoses.forEach { record ->
             when {
+                record.complianceStatus == "SKIPPED" -> skipped++
+                record.isPrn -> { /* Neutral: PRN does not affect scheduled adherence */ }
                 record.isTaken && record.complianceStatus == "ON_TIME" -> onTime++
                 record.isTaken && record.complianceStatus == "LATE" -> late++
                 !record.isTaken && now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS) -> missed++
@@ -362,20 +426,17 @@ object DoseComplianceEvaluator {
         val daysInMonth = getDaysInMonth(targetMonthMillis)
 
         val heatmap = (1..daysInMonth).map { day ->
-            val dayDoses = monthDoses.filter { getDayOfMonth(it.scheduledTime) == day }
+            val dayDoses = monthDoses.filter { getDayOfMonth(it.scheduledTime) == day && !it.isPrn }
 
             val dayStatus = when {
                 dayDoses.isEmpty() -> ComplianceStatus.DEFAULT
-
                 dayDoses.any {
                     (!it.isTaken && now > (it.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)) ||
                             it.complianceStatus == "MISSED"
                 } -> ComplianceStatus.MISSED
-
                 dayDoses.any { it.complianceStatus == "LATE" } -> ComplianceStatus.LATE
-
-                dayDoses.all { it.isTaken && it.complianceStatus == "ON_TIME" } -> ComplianceStatus.ON_TIME
-
+                dayDoses.all { it.complianceStatus == "SKIPPED" } -> ComplianceStatus.SKIPPED
+                dayDoses.all { it.isTaken && (it.complianceStatus == "ON_TIME" || it.complianceStatus == "SKIPPED") } -> ComplianceStatus.ON_TIME
                 else -> ComplianceStatus.DEFAULT
             }
 
@@ -383,13 +444,18 @@ object DoseComplianceEvaluator {
         }
 
         val logRecords = pastOrTakenRecords.map { record ->
-            val isMissed = (!record.isTaken && now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)) ||
-                    record.complianceStatus == "MISSED"
-
             val isSkipped = record.complianceStatus == "SKIPPED"
+
+            val isPrn = record.isPrn
+
+            val isMissed = !isSkipped && !isPrn && (
+                    (!record.isTaken && now > (record.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)) ||
+                            record.complianceStatus == "MISSED"
+                    )
 
             val recordStatus = when {
                 isSkipped -> ComplianceStatus.SKIPPED
+                isPrn -> ComplianceStatus.ON_TIME
                 record.isTaken && record.complianceStatus == "ON_TIME" -> ComplianceStatus.ON_TIME
                 record.isTaken && record.complianceStatus == "LATE" -> ComplianceStatus.LATE
                 isMissed -> ComplianceStatus.MISSED
@@ -397,8 +463,17 @@ object DoseComplianceEvaluator {
             }
 
             val recordTimestampText = when {
+                isSkipped -> {
+                    val reason = record.skipReason?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""
+                    "Skipped$reason"
+                }
+
+                isPrn -> "Taken ${formatTime(record.takenTime ?: record.scheduledTime)}"
+
                 record.isTaken && record.takenTime != null -> "Logged ${formatTime(record.takenTime)}"
+
                 isMissed -> "Dose Missed"
+
                 else -> "Scheduled ${formatTime(record.scheduledTime)}"
             }
 
@@ -406,7 +481,7 @@ object DoseComplianceEvaluator {
                 id = record.id,
                 patientName = "",
                 actionTitle = "${formatDate(record.scheduledTime)}, ${record.name} ${record.dosage}",
-                actionDescription = "Scheduled ${formatTime(record.scheduledTime)}",
+                actionDescription = if (isPrn) "As Needed (PRN)" else "Scheduled ${formatTime(record.scheduledTime)}",
                 timestampText = recordTimestampText,
                 status = recordStatus,
             )
@@ -417,6 +492,7 @@ object DoseComplianceEvaluator {
             onTimeCount = onTime,
             lateCount = late,
             missedCount = missed,
+            skippedCount = skipped,
             monthlyHeatmap = heatmap,
             logRecords = logRecords
         )
@@ -445,7 +521,11 @@ object DoseComplianceEvaluator {
 
         val onTimeCount = todayHistoryDoses.count { it.isTaken && it.complianceStatus == "ON_TIME" }
 
+        val scheduledHistory = todayHistoryDoses.filter { !it.isPrn }
+        val allSkipped = scheduledHistory.isNotEmpty() && todayPendingDoses.isEmpty() && scheduledHistory.all { it.complianceStatus == "SKIPPED" }
+
         val status = when {
+            allSkipped -> ComplianceStatus.SKIPPED
             missedCount > 0 -> ComplianceStatus.MISSED
             lateCount > 0 -> ComplianceStatus.LATE
             todayPendingDoses.any { now >= it.scheduledTime } -> ComplianceStatus.DEFAULT

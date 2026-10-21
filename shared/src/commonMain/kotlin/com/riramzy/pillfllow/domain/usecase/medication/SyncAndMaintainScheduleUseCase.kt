@@ -12,8 +12,16 @@ class SyncAndMaintainScheduleUseCase(
 ) {
     suspend operator fun invoke(): Result<Unit> = safeCall {
         medicationRepo.syncUnsyncedData()
-        val activeMeds = medicationDao.getAllMedicationsOnce().filter { !it.isArchived }
+        val allMeds = medicationDao.getAllMedicationsOnce()
         val allDoses = medicationDao.getAllScheduledDosesOnce().groupBy { it.medicationId }
+
+        allMeds.filter { it.isArchived || it.isPaused || it.isPrn }.forEach { med ->
+            if (allDoses[med.id]?.any { !it.isTaken } == true) {
+                medicationRepo.deletePendingDosesForMedication(med.id)
+            }
+        }
+
+        val activeMeds = allMeds.filter { !it.isArchived && !it.isPaused && !it.isPrn }
 
         activeMeds.forEach { med ->
             val medDoses = allDoses[med.id].orEmpty()

@@ -160,12 +160,16 @@ class CaregiverDashboardViewModel(
 
                     val takenActivities = todayTakenDoses.map { dose ->
                         val takenTime = dose.takenTime ?: dose.scheduledTime
-                        val (status, action) = when (dose.complianceStatus) {
-                            "SKIPPED" -> {
+
+                        val (status, action) = when {
+                            dose.complianceStatus == "SKIPPED" -> {
                                 val reason = dose.skipReason?.ifBlank { null }
                                 ComplianceStatus.SKIPPED to "skipped ${dose.name} ${dose.dosage}${if (reason != null) " ($reason)" else ""}"
                             }
-                            "LATE" -> ComplianceStatus.LATE to "took ${dose.name} ${dose.dosage}"
+                            dose.isPrn -> {
+                                ComplianceStatus.ON_TIME to "took ${dose.name} ${dose.dosage} (As Needed)"
+                            }
+                            dose.complianceStatus == "LATE" -> ComplianceStatus.LATE to "took ${dose.name} ${dose.dosage}"
                             else -> ComplianceStatus.ON_TIME to "took ${dose.name} ${dose.dosage}"
                         }
 

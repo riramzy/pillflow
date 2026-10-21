@@ -20,28 +20,37 @@ class SavePrescriptionUseCase(
         timeOfDay: String,
         colorHex: String,
         shape: String,
-        scheduledTimesMillis: List<Long> = emptyList()
+        scheduledTimesMillis: List<Long> = emptyList(),
+        isPrn: Boolean = false
     ): Result<String> = safeCall {
         val medicationId = editingMedicationId ?: randomUUID()
+        val existing = editingMedicationId?.let { medicationRepo.getMedicationByIdOnce(it) }
 
         val medication = MedicationEntity(
             id = medicationId,
             userId = userId,
             name = name,
             dosage = dosage,
-            frequency = frequency,
-            timeOfDay = timeOfDay,
+            frequency = if (isPrn) "As Needed" else frequency,
+            timeOfDay = if (isPrn) "As Needed" else timeOfDay,
             colorHex = colorHex,
             shape = shape,
             instructions = instructions,
+            isPaused = existing?.isPaused ?: false,
+            isPrn = isPrn,
+            remainingPills = existing?.remainingPills,
+            refillThreshold = existing?.refillThreshold ?: 5,
             isSynced = false
         )
 
         medicationRepo.insertMedication(medication)
 
-        if (scheduledTimesMillis.isNotEmpty()) {
+        if (editingMedicationId != null) {
+            medicationRepo.deletePendingDosesForMedication(editingMedicationId)
+        }
+
+        if (!isPrn && !medication.isPaused && scheduledTimesMillis.isNotEmpty()) {
             val existingTakenTimes = if (editingMedicationId != null) {
-                medicationRepo.deletePendingDosesForMedication(editingMedicationId)
                 medicationRepo.getTakenDoseTimesForMedication(editingMedicationId)
             } else {
                 emptySet()
