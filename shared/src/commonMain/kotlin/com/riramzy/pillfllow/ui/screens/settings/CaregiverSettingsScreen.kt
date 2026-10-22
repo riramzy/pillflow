@@ -36,6 +36,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.settings.PillFlowConnectedUserCard
@@ -278,92 +279,99 @@ fun CaregiverSettingsScreenContent(
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(bottom = 100.dp),
-        ) {
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+        if (state.isLoading) {
+            PillFlowLoadingCard(
+                message = "Loading...",
+                modifier = Modifier.padding(innerPadding)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 100.dp),
+            ) {
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Settings",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
 
-                    Text(
-                        text = "Caregiver link codes, active patients & profile settings",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
+                        Text(
+                            text = "Caregiver link codes, active patients & profile settings",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                item {
+                    PillFlowUserProfileCard(
+                        userName = state.userName,
+                        userEmail = state.userEmail,
+                        avatar = state.avatarRes,
+                        onEditClick = { showUpdateProfileSheet = true },
+                        onSignOutClick = { showSignOutDialog = true },
+                        modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
-            }
 
-            item {
-                PillFlowUserProfileCard(
-                    userName = state.userName,
-                    userEmail = state.userEmail,
-                    avatar = state.avatarRes,
-                    onEditClick = { showUpdateProfileSheet = true },
-                    onSignOutClick = { showSignOutDialog = true },
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                PillFlowPatientPairingCard(
-                    pairingCode = state.inputCode,
-                    onCodeChange = { onAction(CaregiverSettingsAction.InputCodeChanged(it)) },
-                    onLinkClick = { onAction(CaregiverSettingsAction.InitiateLink(state.inputCode)) },
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Active Patients",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                item {
+                    PillFlowPatientPairingCard(
+                        pairingCode = state.inputCode,
+                        onCodeChange = { onAction(CaregiverSettingsAction.InputCodeChanged(it)) },
+                        onLinkClick = { onAction(CaregiverSettingsAction.InitiateLink(state.inputCode)) },
+                        modifier = Modifier.padding(horizontal = 15.dp)
                     )
+                }
 
-
-                    if (state.activePatients.isEmpty()) {
-                        PillFlowEmptyStateCard(
-                            title = "No Linked Patients Yet",
-                            description = "Enter a 6-digit code provided by your patient above to link accounts and monitor their daily adherence.",
-                            icon = Res.drawable.user_patient
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Active Patients",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                    } else {
-                        state.activePatients.forEach { patient ->
-                            PillFlowConnectedUserCard(
-                                patient = patient,
-                                onPatientClick = {
-                                    if (patient.phoneNumber.isNotBlank()) {
-                                        openPhoneDialer(patient.phoneNumber)
-                                    }
-                                },
-                                onUnlinkClick = { patientToUnlink = patient }
+
+
+                        if (state.activePatients.isEmpty()) {
+                            PillFlowEmptyStateCard(
+                                title = "No Linked Patients Yet",
+                                description = "Enter a 6-digit code provided by your patient above to link accounts and monitor their daily adherence.",
+                                icon = Res.drawable.user_patient
                             )
+                        } else {
+                            state.activePatients.forEach { patient ->
+                                PillFlowConnectedUserCard(
+                                    patient = patient,
+                                    onPatientClick = {
+                                        if (patient.phoneNumber.isNotBlank()) {
+                                            openPhoneDialer(patient.phoneNumber)
+                                        }
+                                    },
+                                    onUnlinkClick = { patientToUnlink = patient }
+                                )
+                            }
                         }
                     }
                 }

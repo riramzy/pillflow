@@ -60,7 +60,8 @@ class HistoryViewModel(
                             it.copy(
                                 isCaregiver = true,
                                 pairedPatients = patientModels,
-                                selectedPatientId = selectedPatientId.value ?: ""
+                                selectedPatientId = selectedPatientId.value ?: "",
+                                isLoading = patientModels.isNotEmpty() && it.isLoading
                             )
                         }
                     }

@@ -53,6 +53,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
@@ -297,129 +298,139 @@ fun PatientDashboardScreenContent(
                 onRefresh = { onAction(PatientDashboardAction.Refresh) },
                 modifier = Modifier.fillMaxSize()
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    contentPadding = PaddingValues(bottom = 100.dp),
-                ) {
-                    item {
-                        PillFlowUserCard(
-                            userName = state.user?.firstName ?: "User",
-                            headerDosesSubtitle = state.headerDosesSubtitle,
-                            modifier = Modifier
-                                .padding(horizontal = 15.dp)
-                        )
-                    }
-
-                    item {
-                        PillFlowPillJarSandbox(
-                            pillsState = state.pills,
-                            totalRemainingDoses = state.totalDoses,
-                            tiltX = tiltX,
-                            tiltY = tiltY,
-                            onLogMedication = { pillId ->
-                                val scheduledTime = state.scheduledDoses.firstOrNull { dose ->
-                                    dose.id == pillId
-                                }?.scheduledTime
-
-                                onAction(PatientDashboardAction.LogDose(doseId = pillId, scheduledTime = scheduledTime))
-                            },
-                            onSkipMedication = { pillId ->
-                                val targetDose = state.scheduledDoses.firstOrNull { it.id == pillId }
-                                if (targetDose != null) {
-                                    skipReason = "Doctor Advised"
-                                    doseToSkip = targetDose
-                                }
-                            },
-                            modifier = Modifier.padding(horizontal = 15.dp)
-                        )
-                    }
-
-                    item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(15.dp),
-                            horizontalAlignment = Alignment.Start,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 15.dp)
-                        ) {
-                            Text(
-                                text = "Daily Compliance",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                if (state.isLoading) {
+                    PillFlowLoadingCard(message = "Loading...")
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        contentPadding = PaddingValues(bottom = 100.dp),
+                    ) {
+                        item {
+                            PillFlowUserCard(
+                                userName = state.user?.firstName ?: "User",
+                                headerDosesSubtitle = state.headerDosesSubtitle,
+                                modifier = Modifier
+                                    .padding(horizontal = 15.dp)
                             )
-
-                            state.complianceCards.forEach { card ->
-                                PillFlowComplianceCard(
-                                    title = card.title,
-                                    subtitle = card.subtitle,
-                                    badgeText = card.badgeText,
-                                    status = card.status
-                                )
-                            }
                         }
-                    }
 
-                    item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(15.dp),
-                            horizontalAlignment = Alignment.Start,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 15.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        item {
+                            PillFlowPillJarSandbox(
+                                pillsState = state.pills,
+                                totalRemainingDoses = state.totalDoses,
+                                tiltX = tiltX,
+                                tiltY = tiltY,
+                                onLogMedication = { pillId ->
+                                    val scheduledTime = state.scheduledDoses.firstOrNull { dose ->
+                                        dose.id == pillId
+                                    }?.scheduledTime
+
+                                    onAction(
+                                        PatientDashboardAction.LogDose(
+                                            doseId = pillId,
+                                            scheduledTime = scheduledTime
+                                        )
+                                    )
+                                },
+                                onSkipMedication = { pillId ->
+                                    val targetDose =
+                                        state.scheduledDoses.firstOrNull { it.id == pillId }
+                                    if (targetDose != null) {
+                                        skipReason = "Doctor Advised"
+                                        doseToSkip = targetDose
+                                    }
+                                },
+                                modifier = Modifier.padding(horizontal = 15.dp)
+                            )
+                        }
+
+                        item {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(15.dp),
+                                horizontalAlignment = Alignment.Start,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 15.dp)
                             ) {
                                 Text(
-                                    text = "Daily Schedule",
+                                    text = "Daily Compliance",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
 
-                                if (state.prnMedications.isNotEmpty()) {
-                                    Surface(
-                                        onClick = { showPrnSheet = true },
-                                        shape = RoundedCornerShape(20.dp),
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                    ) {
-                                        Text(
-                                            text = "+ As-Needed",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.padding(10.dp)
-                                        )
-                                    }
+                                state.complianceCards.forEach { card ->
+                                    PillFlowComplianceCard(
+                                        title = card.title,
+                                        subtitle = card.subtitle,
+                                        badgeText = card.badgeText,
+                                        status = card.status
+                                    )
                                 }
                             }
+                        }
 
-                            if (state.scheduledDoses.isEmpty()) {
-                                PillFlowEmptyStateCard(
-                                    title = if (state.isNewUserWithoutPrescriptions) "No Medications Scheduled" else "All Caught Up!",
-                                    description = if (state.isNewUserWithoutPrescriptions) "Add your medications to schedule doses." else "Great job! All daily doses completed",
-                                    icon = if (state.isNewUserWithoutPrescriptions) Res.drawable.pills else Res.drawable.compliance_ontime,
-                                    buttonText = if (state.isNewUserWithoutPrescriptions) "Add Prescription" else null,
-                                    buttonIcon = if (state.isNewUserWithoutPrescriptions) Res.drawable.add else null,
-                                    onButtonClick = onNavigateToPrescriptions
-                                )
-                            } else {
-                                state.scheduledDoses.forEach { scheduledDose ->
-                                    PillFlowScheduledDoseCard(
-                                        name = scheduledDose.name,
-                                        dose = scheduledDose.dosage,
-                                        time = scheduledDose.timeFormatted,
-                                        color = scheduledDose.color,
-                                        status = scheduledDose.status,
-                                        badgeText = scheduledDose.badgeText,
+                        item {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(15.dp),
+                                horizontalAlignment = Alignment.Start,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 15.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Daily Schedule",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
+
+                                    if (state.prnMedications.isNotEmpty()) {
+                                        Surface(
+                                            onClick = { showPrnSheet = true },
+                                            shape = RoundedCornerShape(20.dp),
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                        ) {
+                                            Text(
+                                                text = "+ As-Needed",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(10.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (state.scheduledDoses.isEmpty()) {
+                                    PillFlowEmptyStateCard(
+                                        title = if (state.isNewUserWithoutPrescriptions) "No Medications Scheduled" else "All Caught Up!",
+                                        description = if (state.isNewUserWithoutPrescriptions) "Add your medications to schedule doses." else "Great job! All daily doses completed",
+                                        icon = if (state.isNewUserWithoutPrescriptions) Res.drawable.pills else Res.drawable.compliance_ontime,
+                                        buttonText = if (state.isNewUserWithoutPrescriptions) "Add Prescription" else null,
+                                        buttonIcon = if (state.isNewUserWithoutPrescriptions) Res.drawable.add else null,
+                                        onButtonClick = onNavigateToPrescriptions
+                                    )
+                                } else {
+                                    state.scheduledDoses.forEach { scheduledDose ->
+                                        PillFlowScheduledDoseCard(
+                                            name = scheduledDose.name,
+                                            dose = scheduledDose.dosage,
+                                            time = scheduledDose.timeFormatted,
+                                            color = scheduledDose.color,
+                                            status = scheduledDose.status,
+                                            badgeText = scheduledDose.badgeText,
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -82,7 +82,8 @@ class PatientSettingsViewModel(
                             activePairingId = status.activePairingId,
                             connectedCaregiverId = status.caregiverId,
                             connectedCaregiverName = status.caregiverName ?: "",
-                            connectedCaregiverRelation = status.relation ?: ""
+                            connectedCaregiverRelation = status.relation ?: "",
+                            isLoading = false
                         )
                     }
 

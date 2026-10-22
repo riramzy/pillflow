@@ -36,6 +36,7 @@ import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
+import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.settings.PillFlowConnectedUserCard
@@ -299,86 +300,93 @@ fun PatientSettingsScreenContent(
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.statusBarsPadding()
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(bottom = 100.dp),
-        ) {
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                ) {
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+        if (state.isLoading) {
+            PillFlowLoadingCard(
+                message = "Loading...",
+                modifier = Modifier.padding(innerPadding)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 100.dp),
+            ) {
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp)
+                    ) {
+                        Text(
+                            text = "Settings",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
 
-                    Text(
-                        text = "Link codes, sensor calibration & profile settings",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        Text(
+                            text = "Link codes, sensor calibration & profile settings",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
-            }
 
-            item {
-                PillFlowUserProfileCard(
-                    userName = state.userName,
-                    userEmail = state.userEmail,
-                    avatar = state.avatarRes,
-                    onEditClick = { showUpdateProfileSheet = true },
-                    onSignOutClick = { showSignOutDialog = true },
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
-            item {
-                if (state.hasActivePairing) {
-                    PillFlowConnectedUserCard(
-                        modifier = Modifier.padding(horizontal = 15.dp),
-                        patient = PairedPatientUiModel(
-                            id = state.connectedCaregiverId ?: "",
-                            name = state.connectedCaregiverName,
-                            relation = state.connectedCaregiverRelation.ifBlank { "Caregiver" },
-                            status = ComplianceStatus.DEFAULT
-                        ),
-                        onUnlinkClick = { showUnlinkDialog = true },
-                        isCaregiver = true
-                    )
-                } else {
-                    PillFlowPairingCard(
-                        pairingCode = state.pairingCode,
-                        onCopyClick = {
-                            if (state.pairingCode.isNotBlank()) {
-                                copyToClipboard(state.pairingCode)
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Pairing code copied to clipboard")
-                                }
-                            }
-                        },
-                        onRegenerateClick = { onAction(PatientSettingsAction.RegenerateCode) },
-                        isRegenerating = state.isRegenerating,
+                item {
+                    PillFlowUserProfileCard(
+                        userName = state.userName,
+                        userEmail = state.userEmail,
+                        avatar = state.avatarRes,
+                        onEditClick = { showUpdateProfileSheet = true },
+                        onSignOutClick = { showSignOutDialog = true },
                         modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
-            }
 
-            item {
-                PillFlowPhysicsSensitivityCard(
-                    selectedSensitivity = state.physicsSensitivity,
-                    onSensitivitySelected = { onAction(PatientSettingsAction.RequestChangeSensitivity(it)) },
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
+                item {
+                    if (state.hasActivePairing) {
+                        PillFlowConnectedUserCard(
+                            modifier = Modifier.padding(horizontal = 15.dp),
+                            patient = PairedPatientUiModel(
+                                id = state.connectedCaregiverId ?: "",
+                                name = state.connectedCaregiverName,
+                                relation = state.connectedCaregiverRelation.ifBlank { "Caregiver" },
+                                status = ComplianceStatus.DEFAULT
+                            ),
+                            onUnlinkClick = { showUnlinkDialog = true },
+                            isCaregiver = true
+                        )
+                    } else {
+                        PillFlowPairingCard(
+                            pairingCode = state.pairingCode,
+                            onCopyClick = {
+                                if (state.pairingCode.isNotBlank()) {
+                                    copyToClipboard(state.pairingCode)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Pairing code copied to clipboard")
+                                    }
+                                }
+                            },
+                            onRegenerateClick = { onAction(PatientSettingsAction.RegenerateCode) },
+                            isRegenerating = state.isRegenerating,
+                            modifier = Modifier.padding(horizontal = 15.dp)
+                        )
+                    }
+                }
+
+                item {
+                    PillFlowPhysicsSensitivityCard(
+                        selectedSensitivity = state.physicsSensitivity,
+                        onSensitivitySelected = { onAction(PatientSettingsAction.RequestChangeSensitivity(it)) },
+                        modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
             }
         }
     }

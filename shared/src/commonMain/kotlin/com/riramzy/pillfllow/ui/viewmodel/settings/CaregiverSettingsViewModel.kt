@@ -58,7 +58,12 @@ class CaregiverSettingsViewModel(
 
                 getCaregiverPatientsUseCase(user.id)
             }.collectLatest { patients ->
-                _state.update { it.copy(activePatients = patients) }
+                _state.update {
+                    it.copy(
+                        activePatients = patients,
+                        isLoading = false
+                    )
+                }
             }
         }
     }

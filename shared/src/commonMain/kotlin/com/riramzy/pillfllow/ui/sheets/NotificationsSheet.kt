@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.notifications.PillFlowNotificationAlertCard
 import com.riramzy.pillfllow.ui.state.notifications.NotificationsAction
 import com.riramzy.pillfllow.ui.state.notifications.NotificationsState
@@ -113,7 +115,12 @@ fun NotificationsSheetContent(
             }
         }
 
-        if (state.alerts.isEmpty()) {
+        if (state.isLoading) {
+            PillFlowLoadingCard(
+                message = "Loading...",
+                modifier = Modifier.fillMaxWidth().height(260.dp)
+            )
+        } else if (state.alerts.isEmpty()) {
             PillFlowEmptyStateCard(
                 title = "You're all caught up!",
                 description = "No active reminders or alerts right now",

@@ -125,199 +125,196 @@ fun CaregiverDashboardScreenContent(
             onRefresh = { onAction(CaregiverDashboardAction.Refresh) },
             modifier = Modifier.padding(innerPadding)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(bottom = 100.dp),
-            ) {
-                item {
-                    PillFlowUserCard(
-                        userName = state.caregiver?.firstName ?: "User",
-                        headerDosesSubtitle = "Monitoring ${state.patients.size} family members",
-                        modifier = Modifier
-                            .padding(horizontal = 15.dp)
-                    )
-                }
-
-                if (state.isLoading) {
+            if (state.isLoading) {
+                PillFlowLoadingCard(message = "Loading...")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(bottom = 100.dp),
+                ) {
                     item {
-                        PillFlowLoadingCard(
-                            message = "Loading Patients...",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                } else if (state.patients.isEmpty()) {
-                    item {
-                        PillFlowEmptyStateCard(
-                            title = "No Patients Linked Yet",
-                            description = "Connect with your family members to monitor their medication adherence, send reminder nudges, and receive missed dose alerts in real-time.",
-                            icon = Res.drawable.user_patient,
-                            buttonText = "Link a Patient in Settings",
-                            buttonIcon = Res.drawable.settings,
-                            onButtonClick = onNavigateToSettings,
-                            modifier = Modifier.padding(horizontal = 15.dp)
-                        )
-                    }
-                } else {
-                    item {
-                        PillFlowPatientCarousel(
-                            patients = state.patients,
-                            selectedPatientId = state.selectedPatientId,
-                            onPatientSelected = { patientId ->
-                                onAction(CaregiverDashboardAction.SelectPatient(patientId))
-                            },
-                            modifier = Modifier.padding(horizontal = 15.dp)
+                        PillFlowUserCard(
+                            userName = state.caregiver?.firstName ?: "User",
+                            headerDosesSubtitle = "Monitoring ${state.patients.size} family members",
+                            modifier = Modifier
+                                .padding(horizontal = 15.dp)
                         )
                     }
 
-                    item {
-                        AnimatedContent(
-                            targetState = state.selectedPatientId,
-                            transitionSpec = {
-                                (
-                                        fadeIn(animationSpec = tween(250)) +
-                                                slideInVertically(animationSpec = tween(250)) { it / 14 }
-                                        ).togetherWith(fadeOut(animationSpec = tween(150)))
-                            },
-                            label = "CaregiverBodyTransition"
-                        ) {
-                            PillFlowPatientDailyStatusCard(
-                                patientName = state.activePatient?.name ?: "",
-                                lastUpdatedText = state.lastUpdatedText,
-                                status = state.selectedPatientDailyStatus,
-                                statusAlertText = state.dailyStatusAlertText,
-                                onCallClick = { onAction(CaregiverDashboardAction.CallPatient(state.selectedPatientId)) },
-                                onNudgeClick = { onAction(CaregiverDashboardAction.NudgePatient(state.selectedPatientId)) },
+                    if (state.patients.isEmpty()) {
+                        item {
+                            PillFlowEmptyStateCard(
+                                title = "No Patients Linked Yet",
+                                description = "Connect with your family members to monitor their medication adherence, send reminder nudges, and receive missed dose alerts in real-time.",
+                                icon = Res.drawable.user_patient,
+                                buttonText = "Link a Patient in Settings",
+                                buttonIcon = Res.drawable.settings,
+                                onButtonClick = onNavigateToSettings,
+                                modifier = Modifier.padding(horizontal = 15.dp)
+                            )
+                        }
+                    } else {
+                        item {
+                            PillFlowPatientCarousel(
+                                patients = state.patients,
+                                selectedPatientId = state.selectedPatientId,
+                                onPatientSelected = { patientId ->
+                                    onAction(CaregiverDashboardAction.SelectPatient(patientId))
+                                },
                                 modifier = Modifier.padding(horizontal = 15.dp)
                             )
                         }
 
-                    }
-
-                    item {
-                        AnimatedContent(
-                            targetState = state.selectedPatientId,
-                            transitionSpec = {
-                                (
-                                        fadeIn(animationSpec = tween(250)) +
-                                                slideInVertically(animationSpec = tween(250)) { it / 14 }
-                                        ).togetherWith(fadeOut(animationSpec = tween(150)))
-                            },
-                            label = "CaregiverBodyTransition"
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(15.dp),
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 15.dp)
+                        item {
+                            AnimatedContent(
+                                targetState = state.selectedPatientId,
+                                transitionSpec = {
+                                    (
+                                            fadeIn(animationSpec = tween(250)) +
+                                                    slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                            ).togetherWith(fadeOut(animationSpec = tween(150)))
+                                },
+                                label = "CaregiverBodyTransition"
                             ) {
-                                Text(
-                                    text = "Weekly Overview",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-
-                                PillFlowPatientWeeklyOverviewCard(
-                                    weeklyRatePercentage = state.weeklyRatePercentage,
-                                    weeklyDays = state.weeklyCompliance,
+                                PillFlowPatientDailyStatusCard(
+                                    patientName = state.activePatient?.name ?: "",
+                                    lastUpdatedText = state.lastUpdatedText,
+                                    status = state.selectedPatientDailyStatus,
+                                    statusAlertText = state.dailyStatusAlertText,
+                                    onCallClick = { onAction(CaregiverDashboardAction.CallPatient(state.selectedPatientId)) },
+                                    onNudgeClick = { onAction(CaregiverDashboardAction.NudgePatient(state.selectedPatientId)) },
+                                    modifier = Modifier.padding(horizontal = 15.dp)
                                 )
                             }
+
                         }
-                    }
 
-                    item {
-                        AnimatedContent(
-                            targetState = state.selectedPatientId,
-                            transitionSpec = {
-                                (
-                                        fadeIn(animationSpec = tween(250)) +
-                                                slideInVertically(animationSpec = tween(250)) { it / 14 }
-                                        ).togetherWith(fadeOut(animationSpec = tween(150)))
-                            },
-                            label = "CaregiverBodyTransition"
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(15.dp),
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 15.dp)
+                        item {
+                            AnimatedContent(
+                                targetState = state.selectedPatientId,
+                                transitionSpec = {
+                                    (
+                                            fadeIn(animationSpec = tween(250)) +
+                                                    slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                            ).togetherWith(fadeOut(animationSpec = tween(150)))
+                                },
+                                label = "CaregiverBodyTransition"
                             ) {
-                                Text(
-                                    text = "Today's Schedule",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-
-                                if (state.selectedPatientDoses.isEmpty()) {
-                                    PillFlowEmptyStateCard(
-                                        title = "All Caught Up!",
-                                        description = "No upcoming or missed doses scheduled for today.",
-                                        icon = Res.drawable.compliance_ontime
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(15.dp),
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 15.dp)
+                                ) {
+                                    Text(
+                                        text = "Weekly Overview",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
-                                } else {
-                                    state.selectedPatientDoses.forEach { dose ->
-                                        PillFlowScheduledDoseCard(
-                                            name = dose.name,
-                                            dose = dose.dosage,
-                                            time = dose.timeFormatted,
-                                            color = dose.color,
-                                            status = dose.status,
-                                            badgeText = dose.badgeText
+
+                                    PillFlowPatientWeeklyOverviewCard(
+                                        weeklyRatePercentage = state.weeklyRatePercentage,
+                                        weeklyDays = state.weeklyCompliance,
+                                    )
+                                }
+                            }
+                        }
+
+                        item {
+                            AnimatedContent(
+                                targetState = state.selectedPatientId,
+                                transitionSpec = {
+                                    (
+                                            fadeIn(animationSpec = tween(250)) +
+                                                    slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                            ).togetherWith(fadeOut(animationSpec = tween(150)))
+                                },
+                                label = "CaregiverBodyTransition"
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(15.dp),
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 15.dp)
+                                ) {
+                                    Text(
+                                        text = "Today's Schedule",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+
+                                    if (state.selectedPatientDoses.isEmpty()) {
+                                        PillFlowEmptyStateCard(
+                                            title = "All Caught Up!",
+                                            description = "No upcoming or missed doses scheduled for today.",
+                                            icon = Res.drawable.compliance_ontime
                                         )
+                                    } else {
+                                        state.selectedPatientDoses.forEach { dose ->
+                                            PillFlowScheduledDoseCard(
+                                                name = dose.name,
+                                                dose = dose.dosage,
+                                                time = dose.timeFormatted,
+                                                color = dose.color,
+                                                status = dose.status,
+                                                badgeText = dose.badgeText
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    item {
-                        AnimatedContent(
-                            targetState = state.selectedPatientId,
-                            transitionSpec = {
-                                (
-                                        fadeIn(animationSpec = tween(250)) +
-                                                slideInVertically(animationSpec = tween(250)) { it / 14 }
-                                        ).togetherWith(fadeOut(animationSpec = tween(150)))
-                            },
-                            label = "CaregiverBodyTransition"
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(15.dp),
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 15.dp)
+                        item {
+                            AnimatedContent(
+                                targetState = state.selectedPatientId,
+                                transitionSpec = {
+                                    (
+                                            fadeIn(animationSpec = tween(250)) +
+                                                    slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                            ).togetherWith(fadeOut(animationSpec = tween(150)))
+                                },
+                                label = "CaregiverBodyTransition"
                             ) {
-                                Text(
-                                    text = "Live Activity",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-
-                                if (state.recentActivities.isEmpty()) {
-                                    PillFlowEmptyStateCard(
-                                        title = "No Activity Yet",
-                                        description = "Live dose updates and adherence logs for ${state.activePatient?.name ?: "your patient"} will appear here in real-time.",
-                                        icon = Res.drawable.history
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(15.dp),
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 15.dp)
+                                ) {
+                                    Text(
+                                        text = "Live Activity",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
-                                } else {
-                                    state.recentActivities.forEach { action ->
-                                        PillFlowActivityCard(
-                                            patientName = action.patientName,
-                                            actionDescription = action.actionDescription,
-                                            timestampText = action.timestampText,
-                                            status = action.status,
-                                            modifier = Modifier.fillMaxWidth()
+
+                                    if (state.recentActivities.isEmpty()) {
+                                        PillFlowEmptyStateCard(
+                                            title = "No Activity Yet",
+                                            description = "Live dose updates and adherence logs for ${state.activePatient?.name ?: "your patient"} will appear here in real-time.",
+                                            icon = Res.drawable.history
                                         )
+                                    } else {
+                                        state.recentActivities.forEach { action ->
+                                            PillFlowActivityCard(
+                                                patientName = action.patientName,
+                                                actionDescription = action.actionDescription,
+                                                timestampText = action.timestampText,
+                                                status = action.status,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
                                     }
                                 }
                             }

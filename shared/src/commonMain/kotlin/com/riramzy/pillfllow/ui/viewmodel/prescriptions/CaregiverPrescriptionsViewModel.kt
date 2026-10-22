@@ -68,7 +68,7 @@ class CaregiverPrescriptionsViewModel(
                             it.copy(
                                 pairedPatients = patients,
                                 selectedPatientId = selectedPatientId.value,
-                                isLoading = false
+                                isLoading = patients.isNotEmpty() && it.isLoading
                             )
                         }
                     }

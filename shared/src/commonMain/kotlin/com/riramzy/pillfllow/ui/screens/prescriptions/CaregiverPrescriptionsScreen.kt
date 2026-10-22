@@ -42,6 +42,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
@@ -247,135 +248,139 @@ fun CaregiverPrescriptionsScreenContent(
             onRefresh = { onAction(CaregiverPrescriptionsAction.Refresh) },
             modifier = Modifier.padding(innerPadding)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(bottom = 100.dp),
-            ) {
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Prescriptions",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Text(
-                            text = "Manage medications, dosages & schedules",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                if (state.pairedPatients.isEmpty()) {
+            if (state.isLoading) {
+                PillFlowLoadingCard(message = "Loading...")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(bottom = 100.dp),
+                ) {
                     item {
-                        PillFlowEmptyStateCard(
-                            title = "No Paired Patients Yet",
-                            description = "Link with a patient using their 6-digit pairing code in Settings to view and manage their prescriptions.",
-                            icon = Res.drawable.user_patient,
-                            buttonText = "Go to Settings",
-                            buttonIcon = Res.drawable.settings,
-                            onButtonClick = onNavigateToSettings,
-                            modifier = Modifier.padding(horizontal = 15.dp)
-                        )
-                    }
-                } else {
-                    item {
-                        PillFlowPatientCarousel(
-                            patients = state.pairedPatients,
-                            selectedPatientId = state.selectedPatientId
-                                ?: state.pairedPatients.first().id,
-                            mode = PatientCarouselMode.Prescriptions(prescriptionCount = state.prescriptions.size),
-                            onPatientSelected = { patientId ->
-                                onAction(CaregiverPrescriptionsAction.SelectPatient(patientId))
-                            },
-                            modifier = Modifier.padding(horizontal = 15.dp)
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Text(
+                                text = "Prescriptions",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Text(
+                                text = "Manage medications, dosages & schedules",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
 
-                    if (state.isEmpty) {
+                    if (state.pairedPatients.isEmpty()) {
                         item {
                             PillFlowEmptyStateCard(
-                                title = "No Prescriptions Yet",
-                                description = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
-                                icon = Res.drawable.pills,
-                                buttonText = "Add First Prescription",
-                                buttonIcon = Res.drawable.add,
-                                onButtonClick = { onAction(CaregiverPrescriptionsAction.OpenAddSheet) },
+                                title = "No Paired Patients Yet",
+                                description = "Link with a patient using their 6-digit pairing code in Settings to view and manage their prescriptions.",
+                                icon = Res.drawable.user_patient,
+                                buttonText = "Go to Settings",
+                                buttonIcon = Res.drawable.settings,
+                                onButtonClick = onNavigateToSettings,
                                 modifier = Modifier.padding(horizontal = 15.dp)
                             )
                         }
                     } else {
                         item {
-                            AnimatedContent(
-                                targetState = state.selectedPatientId,
-                                transitionSpec = {
-                                    (
-                                            fadeIn(animationSpec = tween(250)) +
-                                                    slideInVertically(animationSpec = tween(250)) { it / 14 }
-                                            ).togetherWith(fadeOut(animationSpec = tween(150)))
+                            PillFlowPatientCarousel(
+                                patients = state.pairedPatients,
+                                selectedPatientId = state.selectedPatientId
+                                    ?: state.pairedPatients.first().id,
+                                mode = PatientCarouselMode.Prescriptions(prescriptionCount = state.prescriptions.size),
+                                onPatientSelected = { patientId ->
+                                    onAction(CaregiverPrescriptionsAction.SelectPatient(patientId))
                                 },
-                                label = "CaregiverBodyTransition"
-                            ) {
-                                PillFlowPrescriptionsSummaryCard(
-                                    activeCount = state.activeCount,
-                                    nextDoseTime = state.nextDoseTime,
-                                    nextDoseMedication = state.nextDoseMedication,
+                                modifier = Modifier.padding(horizontal = 15.dp)
+                            )
+                        }
+
+                        if (state.isEmpty) {
+                            item {
+                                PillFlowEmptyStateCard(
+                                    title = "No Prescriptions Yet",
+                                    description = "Add your daily medications to track dosage schedules and roll pills in your 3D dish.",
+                                    icon = Res.drawable.pills,
+                                    buttonText = "Add First Prescription",
+                                    buttonIcon = Res.drawable.add,
+                                    onButtonClick = { onAction(CaregiverPrescriptionsAction.OpenAddSheet) },
                                     modifier = Modifier.padding(horizontal = 15.dp)
                                 )
                             }
-                        }
-
-                        item {
-                            AnimatedContent(
-                                targetState = state.selectedPatientId,
-                                transitionSpec = {
-                                    (
-                                            fadeIn(animationSpec = tween(250)) +
-                                                    slideInVertically(animationSpec = tween(250)) { it / 14 }
-                                            ).togetherWith(fadeOut(animationSpec = tween(150)))
-                                },
-                                label = "CaregiverBodyTransition"
-                            ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                                    horizontalAlignment = Alignment.Start,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 15.dp)
+                        } else {
+                            item {
+                                AnimatedContent(
+                                    targetState = state.selectedPatientId,
+                                    transitionSpec = {
+                                        (
+                                                fadeIn(animationSpec = tween(250)) +
+                                                        slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                                ).togetherWith(fadeOut(animationSpec = tween(150)))
+                                    },
+                                    label = "CaregiverBodyTransition"
                                 ) {
-                                    Text(
-                                        text = "Active Prescriptions",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.primary
+                                    PillFlowPrescriptionsSummaryCard(
+                                        activeCount = state.activeCount,
+                                        nextDoseTime = state.nextDoseTime,
+                                        nextDoseMedication = state.nextDoseMedication,
+                                        modifier = Modifier.padding(horizontal = 15.dp)
                                     )
+                                }
+                            }
 
-                                    state.prescriptions.forEach { prescription ->
-                                        PillFlowPrescriptionCard(
-                                            medicationName = prescription.medicationName,
-                                            dosage = prescription.dosage,
-                                            pillShape = prescription.pillShape,
-                                            pillColor = prescription.pillColor,
-                                            scheduleText = prescription.scheduleText,
-                                            instructionsText = prescription.instructionsText,
-                                            nextDoseText = prescription.nextDoseText,
-                                            onEditClick = { onAction(CaregiverPrescriptionsAction.OpenEditSheet(prescription.id)) },
-                                            onDeleteClick = { prescriptionToDelete = prescription }
+                            item {
+                                AnimatedContent(
+                                    targetState = state.selectedPatientId,
+                                    transitionSpec = {
+                                        (
+                                                fadeIn(animationSpec = tween(250)) +
+                                                        slideInVertically(animationSpec = tween(250)) { it / 14 }
+                                                ).togetherWith(fadeOut(animationSpec = tween(150)))
+                                    },
+                                    label = "CaregiverBodyTransition"
+                                ) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                                        horizontalAlignment = Alignment.Start,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 15.dp)
+                                    ) {
+                                        Text(
+                                            text = "Active Prescriptions",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.primary
                                         )
+
+                                        state.prescriptions.forEach { prescription ->
+                                            PillFlowPrescriptionCard(
+                                                medicationName = prescription.medicationName,
+                                                dosage = prescription.dosage,
+                                                pillShape = prescription.pillShape,
+                                                pillColor = prescription.pillColor,
+                                                scheduleText = prescription.scheduleText,
+                                                instructionsText = prescription.instructionsText,
+                                                nextDoseText = prescription.nextDoseText,
+                                                onEditClick = { onAction(CaregiverPrescriptionsAction.OpenEditSheet(prescription.id)) },
+                                                onDeleteClick = { prescriptionToDelete = prescription }
+                                            )
+                                        }
                                     }
                                 }
                             }

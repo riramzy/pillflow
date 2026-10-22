@@ -19,7 +19,7 @@ data class PatientSettingsState(
     val connectedCaregiverRelation: String = "",
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
     val pendingSensitivity: PhysicsSensitivity? = null,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val isRegenerating: Boolean = false,
     val successMessage: String? = null,
     val errorMessage: String? = null

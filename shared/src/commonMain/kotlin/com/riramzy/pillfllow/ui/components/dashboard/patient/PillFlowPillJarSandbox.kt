@@ -43,7 +43,6 @@ import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.ui.components.custom.PillFlowStatusCard
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
-import com.riramzy.pillfllow.utils.medication.IndicatorColor
 import com.riramzy.pillfllow.utils.pill.PillShape
 import kotlinx.coroutines.isActive
 import pillfllow.shared.generated.resources.Res
@@ -278,8 +277,8 @@ fun PillFlowPillJarSandbox(
                     PillFlowStatusCard(
                         customText = "Skip Dose",
                         customLeadingIcon = Res.drawable.skip,
-                        customBackgroundColor = IndicatorColor.BLUE_CONTAINER.color,
-                        customTextColor = IndicatorColor.BLUE.color,
+                        customBackgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                        customTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.clickable { onSkipMedication.invoke(currentPill.id) }
                     )
                 }

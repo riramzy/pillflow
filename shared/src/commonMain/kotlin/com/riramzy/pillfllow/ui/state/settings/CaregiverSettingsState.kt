@@ -17,7 +17,7 @@ data class CaregiverSettingsState(
     val relationInput: String = "",
     val activePatients: List<PairedPatientUiModel> = emptyList(),
     val isLinking: Boolean = false,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val successMessage: String? = null
 )
