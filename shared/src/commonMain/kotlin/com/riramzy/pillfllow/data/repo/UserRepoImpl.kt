@@ -42,12 +42,14 @@ class UserRepoImpl(
     }
 
     override suspend fun getUserByIdOnce(id: String): UserEntity? {
+        val localUser = userDao.getUserByIdOnce(id)
+        if (localUser != null) return localUser
+
         val remoteUser = runCatching {
             val doc = firestore
                 .collection("users")
                 .document(id)
                 .get()
-
             if (doc.exists) doc.data<UserDto>().toEntity() else null
         }.getOrNull()
 
@@ -56,7 +58,7 @@ class UserRepoImpl(
             return remoteUser
         }
 
-        return userDao.getUserByIdOnce(id)
+        return null
     }
 
     override suspend fun insertUser(user: UserEntity) {

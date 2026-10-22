@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,13 +39,13 @@ import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 
 @Composable
 fun PillFlowLoadingCard(
+    modifier: Modifier = Modifier,
     message: String = "Loading...",
-    modifier: Modifier = Modifier
 ) {
     val transition = rememberInfiniteTransition(label = "PillLoadingTransition")
 
     val translateY by transition.animateFloat(
-        initialValue = 12f,
+        initialValue = -12f,
         targetValue = 12f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
@@ -96,55 +98,68 @@ fun PillFlowLoadingCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 64.dp, height = 30.dp)
-                    .graphicsLayer {
-                        translationY = translateY
-                        rotationZ = rotation
-                    }
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(15.dp)
-                    )
+            Surface(
+                modifier = modifier.wrapContentSize(),
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                Box(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .width(32.dp)
-                        .align(Alignment.CenterEnd)
-                        .background(
-                            color = MaterialTheme.colorScheme.inversePrimary,
-                            shape = RoundedCornerShape(topEnd = 15.dp, bottomEnd = 15.dp)
+                        .padding(30.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 64.dp, height = 30.dp)
+                            .graphicsLayer {
+                                translationY = translateY
+                                rotationZ = rotation
+                            }
+                            .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(15.dp)
+                            )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(32.dp)
+                                .align(Alignment.CenterEnd)
+                                .background(
+                                    color = MaterialTheme.colorScheme.inversePrimary,
+                                    shape = RoundedCornerShape(topEnd = 15.dp, bottomEnd = 15.dp)
+                                )
                         )
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .size(width = 44.dp, height = 6.dp)
-                    .graphicsLayer {
-                        scaleX = shadowScale
-                        scaleY = shadowScale
-                        alpha = (1.2f - (translateY + 12f) / 24f).coerceIn(0.2f, 0.7f)
                     }
-                    .background(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
-                        shape = CircleShape
-                    )
-            )
 
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(top = 15.dp)
-                    .alpha(textAlpha)
-            )
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 16.dp)
+                            .size(width = 44.dp, height = 6.dp)
+                            .graphicsLayer {
+                                scaleX = shadowScale
+                                scaleY = shadowScale
+                                alpha = (1.2f - (translateY + 12f) / 24f).coerceIn(0.2f, 0.7f)
+                            }
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
+                                shape = CircleShape
+                            )
+                    )
+
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(top = 15.dp)
+                            .alpha(textAlpha)
+                    )
+                }
+            }
         }
     }
 }
