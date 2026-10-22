@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,6 +63,7 @@ fun PillFlowBottomNavBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
+            .padding(horizontal = 15.dp)
             .wrapContentSize()
     ) {
         Card(
@@ -68,7 +71,9 @@ fun PillFlowBottomNavBar(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
             shape = RoundedCornerShape(50.dp),
-            modifier = Modifier.wrapContentHeight()
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .wrapContentHeight()
         ) {
             when (selectedPage) {
                 Screen.Home.route -> {
@@ -76,7 +81,7 @@ fun PillFlowBottomNavBar(
                         modifier = Modifier
                             .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PillFlowNavItemExpanded(icon = Res.drawable.home, name = "Home")
                         PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
@@ -89,7 +94,7 @@ fun PillFlowBottomNavBar(
                         modifier = Modifier
                             .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                         PillFlowNavItemExpanded(icon = Res.drawable.history, name = "History")
@@ -102,7 +107,7 @@ fun PillFlowBottomNavBar(
                         modifier = Modifier
                             .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                         PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
@@ -115,7 +120,7 @@ fun PillFlowBottomNavBar(
                         modifier = Modifier
                             .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                         PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
@@ -128,7 +133,7 @@ fun PillFlowBottomNavBar(
                         modifier = Modifier
                             .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PillFlowNavItem(icon = Res.drawable.home, onNavItemClick = { onHomeClick() })
                         PillFlowNavItem(icon = Res.drawable.history, onNavItemClick = { onHistoryClick() })
@@ -166,7 +171,7 @@ fun PillFlowBottomNavBar(
                     onClick = { onActionButtonClick() },
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .size(56.dp),
+                        .requiredSize(56.dp),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     ),
@@ -220,7 +225,7 @@ fun PillFlowNavItemExpanded(icon: DrawableResource, name: String) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(horizontal = 15.dp, vertical = 6.dp)
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
         ) {
             Icon(
                 imageVector = vectorResource(icon),
@@ -234,13 +239,16 @@ fun PillFlowNavItemExpanded(icon: DrawableResource, name: String) {
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onPrimary
             )
         }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun PillFlowBottomNavBarPreview() {
     PillFlowTheme {
@@ -256,7 +264,7 @@ fun PillFlowBottomNavBarPreview() {
     }
 }
 
-@Preview(uiMode = UI_MODE_NIGHT_YES)
+@Preview(uiMode = UI_MODE_NIGHT_YES, showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 fun PillFlowBottomNavBarPreviewDark() {
     PillFlowTheme {

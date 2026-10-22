@@ -19,19 +19,42 @@ fun formatRelativeNextDose(
 ): String {
     if (scheduledTime == null) return "No upcoming doses"
     val diffMillis = scheduledTime - now
+    val timeLabel = formatTime(scheduledTime)
+
     return when {
-        diffMillis < -DoseStateMachine.ON_TIME_WINDOW_MILLIS -> "Overdue"
-        diffMillis <= 0 -> "Due now"
+        diffMillis < -DoseStateMachine.ON_TIME_WINDOW_MILLIS -> "Overdue ($timeLabel)"
+        diffMillis <= 0 -> "Due now ($timeLabel)"
         else -> {
-            val minutes = (diffMillis / (1000 * 60)).toInt()
-            val hours = minutes / 60
+            val totalMinutes = (diffMillis / (1000 * 60)).toInt().coerceAtLeast(1)
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+
             when {
-                minutes < 60 -> "Next dose in $minutes mins"
-                hours < 24 -> "Next dose in $hours ${if (hours == 1) "hour" else "hours"}"
-                else -> "Next dose at ${formatTime(scheduledTime)}"
+                totalMinutes < 60 -> "Next dose in ${totalMinutes}m ($timeLabel)"
+                isSameDay(scheduledTime, now) -> {
+                    if (minutes > 0) "Next dose in ${hours}h ${minutes}m ($timeLabel)"
+                    else "Next dose in ${hours}h ($timeLabel)"
+                }
+                else -> "Next dose at $timeLabel"
             }
         }
     }
+}
+
+fun findNextActionDoseTime(
+    scheduledTimes: Iterable<Long>,
+    now: Long,
+    includeLateWindowToday: Boolean = true
+): Long? {
+    return scheduledTimes.filter { time ->
+        if (includeLateWindowToday) {
+            time >= now - DoseStateMachine.ON_TIME_WINDOW_MILLIS ||
+                    (isSameDay(time, now) &&
+                            time >= now - DoseStateMachine.LATE_WINDOW_MILLIS)
+        } else {
+            time >= now - DoseStateMachine.ON_TIME_WINDOW_MILLIS
+        }
+    }.minOrNull()
 }
 
 fun parseTimeStringToMillis(timeStr: String): Long? {

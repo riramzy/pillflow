@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.prescriptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCase
@@ -17,6 +18,7 @@ import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.findNextActionDoseTime
 import com.riramzy.pillfllow.utils.platform.formatRelativeNextDose
 import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
@@ -87,15 +89,18 @@ class CaregiverPrescriptionsViewModel(
                     ) { pendingDoses, meds ->
                         val now = currentTimeMillis()
 
-                        val earliestDose = pendingDoses.minByOrNull { it.scheduledTime }
+                        val earliestDose = pendingDoses
+                            .filter { it.scheduledTime >= now - DoseStateMachine.ON_TIME_WINDOW_MILLIS }
+                            .minByOrNull { it.scheduledTime }
 
                         val prescriptions = meds.map { med ->
-                            val nextDose = pendingDoses
-                                .filter { it.name.equals(med.name, ignoreCase = true) }
-                                .minByOrNull { it.scheduledTime }
+                            val medDoseTimes = pendingDoses
+                                .filter { it.id.startsWith("${med.id}_") || it.name.equals(med.name, ignoreCase = true) }
+                                .map { it.scheduledTime }
+
+                            val nextDoseTimeMillis = findNextActionDoseTime(medDoseTimes, now)
 
                             val pillShape = PillShapeMapper.fromRaw(med.shape)
-
                             val pillColor = PillColorMapper.fromRaw(med.colorHex)
 
                             PrescriptionUiModel(
@@ -106,7 +111,11 @@ class CaregiverPrescriptionsViewModel(
                                 pillShape = pillShape,
                                 scheduleText = if (med.isPrn) "As Needed (PRN)" else "${med.frequency}, ${med.timeOfDay}",
                                 instructionsText = med.instructions.ifBlank { "Take as prescribed" },
-                                nextDoseText = if (med.isPaused) "Paused" else if (med.isPrn) "Take as needed" else formatRelativeNextDose(nextDose?.scheduledTime, now),
+                                nextDoseText = when {
+                                    med.isPaused -> "Paused"
+                                    med.isPrn -> "Take as needed"
+                                    else -> formatRelativeNextDose(nextDoseTimeMillis, now)
+                                },
                                 isPrn = med.isPrn
                             )
                         }
