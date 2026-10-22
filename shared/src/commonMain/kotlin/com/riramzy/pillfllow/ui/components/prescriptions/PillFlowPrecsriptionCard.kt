@@ -1,16 +1,14 @@
 package com.riramzy.pillfllow.ui.components.prescriptions
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,14 +26,19 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPillColor
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPillShape
+import com.riramzy.pillfllow.ui.state.prescriptions.StorageExtensionStyle
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
+import com.riramzy.pillfllow.utils.medication.IndicatorColor
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import pillfllow.shared.generated.resources.Res
+import pillfllow.shared.generated.resources.compliance_late
+import pillfllow.shared.generated.resources.compliance_missed
+import pillfllow.shared.generated.resources.compliance_ontime
 import pillfllow.shared.generated.resources.delete
 import pillfllow.shared.generated.resources.edit
 import pillfllow.shared.generated.resources.next
@@ -52,156 +55,200 @@ fun PillFlowPrescriptionCard(
     scheduleText: String = "Twice Daily, 08:00 AM, 08:00 PM",
     instructionsText: String = "Take with a full glass of water",
     nextDoseText: String = "Next dose in 2 hours",
+    remainingPills: Int? = null,
+    refillThreshold: Int = 5,
+    daysLeft: Int? = null,
+    onRefillClick: (() -> Unit)? = null,
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        shape = RoundedCornerShape(25.dp)
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Column(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(15.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .wrapContentHeight(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            shape = RoundedCornerShape(25.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(2f)
-                ) {
-                    PillFlowPillColor(
-                        customColor = pillColor.color,
-                    )
-
-                    PillFlowPillShape(
-                        shape = pillShape
-                    )
-
-                    Text(
-                        text = "$medicationName, $dosage",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    IconButton(
-                        onClick = { onEditClick() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                            .size(35.dp)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.edit),
-                            contentDescription = "Edit",
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                            modifier = Modifier
-                                .size(14.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { onDeleteClick() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier
-                            .size(35.dp)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.delete),
-                            contentDescription = "Delete",
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.error),
-                            modifier = Modifier
-                                .size(14.dp)
-                        )
-                    }
-                }
-
-            }
-
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.Start
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(15.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                PrescriptionMetadataRow(
-                    icon = Res.drawable.time,
-                    title = scheduleText
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(2f)
+                    ) {
+                        PillFlowPillColor(
+                            customColor = pillColor.color,
+                        )
 
-                PrescriptionMetadataRow(
-                    icon = Res.drawable.note,
-                    title = instructionsText
-                )
+                        PillFlowPillShape(
+                            shape = pillShape
+                        )
 
-                PrescriptionMetadataRow(
-                    icon = Res.drawable.next,
-                    title = nextDoseText
-                )
+                        Text(
+                            text = "$medicationName, $dosage",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        IconButton(
+                            onClick = { onEditClick() },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier
+                                .size(35.dp)
+                        ) {
+                            Image(
+                                imageVector = vectorResource(Res.drawable.edit),
+                                contentDescription = "Edit",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                                modifier = Modifier
+                                    .size(14.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { onDeleteClick() },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier
+                                .size(35.dp)
+                        ) {
+                            Image(
+                                imageVector = vectorResource(Res.drawable.delete),
+                                contentDescription = "Delete",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.error),
+                                modifier = Modifier
+                                    .size(14.dp)
+                            )
+                        }
+                    }
+
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    PillFlowPrescriptionMetadataRow(
+                        icon = Res.drawable.time,
+                        title = scheduleText
+                    )
+
+                    PillFlowPrescriptionMetadataRow(
+                        icon = Res.drawable.note,
+                        title = instructionsText
+                    )
+
+                    PillFlowPrescriptionMetadataRow(
+                        icon = Res.drawable.next,
+                        title = nextDoseText
+                    )
+                }
             }
         }
-    }
-}
 
-@Composable
-fun PrescriptionMetadataRow(
-    modifier: Modifier = Modifier,
-    icon: DrawableResource = Res.drawable.time,
-    title: String = "Twice Daily, 08:00 AM, 08:00 PM",
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primary.copy(0.3f),
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                imageVector = vectorResource(icon),
-                contentDescription = "Pills Icon",
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+        if (remainingPills != null) {
+            Card(
                 modifier = Modifier
-                    .size(10.dp)
-            )
-        }
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = RoundedCornerShape(25.dp)
+            ) {
+                val isOut = remainingPills == 0
+                val isLow = remainingPills in 1..refillThreshold
 
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Normal
-        )
+                val daysText = daysLeft?.let { " • Runs out in $it ${if (it == 1) "day" else "days"}" } ?: ""
+                val daysStockedText = daysLeft?.let { ", ~$it ${if (it == 1) "day" else "days"} left" } ?: ""
+
+                val style = when {
+                    isOut -> StorageExtensionStyle(
+                        badgeBg = IndicatorColor.RED_CONTAINER.color,
+                        badgeTint = IndicatorColor.RED.color,
+                        badgeIcon = Res.drawable.compliance_missed,
+                        badgeText = "Out of Stock: 0 pills left",
+                        btnBg = IndicatorColor.RED_CONTAINER.color,
+                        btnTextColor = IndicatorColor.RED.color
+                    )
+                    isLow -> StorageExtensionStyle(
+                        badgeBg = IndicatorColor.YELLOW_CONTAINER.color,
+                        badgeTint = IndicatorColor.YELLOW.color,
+                        badgeIcon = Res.drawable.compliance_late,
+                        badgeText = "Low Supply: $remainingPills left$daysText",
+                        btnBg = IndicatorColor.YELLOW_CONTAINER.color,
+                        btnTextColor = IndicatorColor.YELLOW.color
+                    )
+                    else -> StorageExtensionStyle(
+                        badgeBg = IndicatorColor.GREEN_CONTAINER.color,
+                        badgeTint = IndicatorColor.GREEN.color,
+                        badgeIcon = Res.drawable.compliance_ontime,
+                        badgeText = "$remainingPills pills in stock$daysStockedText",
+                        btnBg = MaterialTheme.colorScheme.primary,
+                        btnTextColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PillFlowPrescriptionMetadataRow(
+                        icon = style.badgeIcon,
+                        customIconColor = style.badgeTint,
+                        customIconBackgroundColor = style.badgeBg,
+                        title = style.badgeText,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 7.dp)
+                    )
+
+                    PillFlowButton(
+                        text = "Refill",
+                        customColor = style.btnBg,
+                        customTextColor = style.btnTextColor,
+                        onClick = { onRefillClick?.invoke() },
+                        modifier = Modifier
+                            .height(40.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -214,7 +261,14 @@ fun PillFlowPrescriptionCardPreview() {
             medicationName = "Metformin",
             dosage = "500mg",
             pillShape = PillShape.CAPSULE,
-            pillColor = PillColor.SKY_BLUE
+            pillColor = PillColor.SKY_BLUE,
+            scheduleText = "Twice Daily, 08:00 AM, 08:00 PM",
+            instructionsText = "Take with a full glass of water",
+            nextDoseText = "Next dose in 2 hours",
+            remainingPills = 0,
+            refillThreshold = 5,
+            daysLeft = 1,
+            onRefillClick = {}
         )
     }
 }
@@ -225,10 +279,17 @@ fun PillFlowPrescriptionCardPreviewDark() {
     PillFlowTheme {
         PillFlowPrescriptionCard(
             modifier = Modifier.padding(15.dp),
-            medicationName = "Aspirin",
+            medicationName = "Metformin",
             dosage = "500mg",
-            pillShape = PillShape.OVAL,
-            pillColor = PillColor.SOFT_PURPLE
+            pillShape = PillShape.CAPSULE,
+            pillColor = PillColor.SKY_BLUE,
+            scheduleText = "Twice Daily, 08:00 AM, 08:00 PM",
+            instructionsText = "Take with a full glass of water",
+            nextDoseText = "Next dose in 2 hours",
+            remainingPills = 5,
+            refillThreshold = 5,
+            daysLeft = 2,
+            onRefillClick = {}
         )
     }
 }

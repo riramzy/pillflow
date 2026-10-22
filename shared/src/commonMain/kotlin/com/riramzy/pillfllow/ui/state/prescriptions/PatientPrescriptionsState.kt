@@ -1,7 +1,9 @@
 package com.riramzy.pillfllow.ui.state.prescriptions
 
+import androidx.compose.ui.graphics.Color
 import com.riramzy.pillfllow.utils.pill.PillColor
 import com.riramzy.pillfllow.utils.pill.PillShape
+import org.jetbrains.compose.resources.DrawableResource
 
 data class PatientPrescriptionsState(
     val prescriptions: List<PrescriptionUiModel> = emptyList(),
@@ -29,6 +31,23 @@ data class PrescriptionUiModel(
     val instructionsText: String,
     val nextDoseText: String,
     val isPrn: Boolean = false
+)
+
+data class LowSupplyMedicationUiModel(
+    val id: String = "",
+    val name: String = "",
+    val dosage: String = "",
+    val remainingPills: Int = 0,
+    val daysLeft: Int? = null
+)
+
+data class StorageExtensionStyle(
+    val badgeBg: Color,
+    val badgeTint: Color,
+    val badgeIcon: DrawableResource,
+    val badgeText: String,
+    val btnBg: Color,
+    val btnTextColor: Color
 )
 
 sealed interface PatientPrescriptionsAction {
