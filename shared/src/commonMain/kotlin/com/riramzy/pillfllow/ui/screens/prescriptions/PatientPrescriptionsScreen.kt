@@ -119,7 +119,6 @@ fun PatientPrescriptionsScreenContent(
         ModalBottomSheet(
             onDismissRequest = { onAction(PatientPrescriptionsAction.CloseAddSheet) },
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface
         ) {
             PrescriptionSheet(
                 initialMedication = editingPrescription,
