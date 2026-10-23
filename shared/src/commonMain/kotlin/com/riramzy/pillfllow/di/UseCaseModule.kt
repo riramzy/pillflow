@@ -16,6 +16,7 @@ import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseC
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogPrnDoseUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.RefillPrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SkipDoseUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
@@ -54,5 +55,6 @@ val useCaseModule: Module = module {
     factory { SyncAndMaintainScheduleUseCase(medicationRepo = get(), medicationDao = get()) }
     factory { GetPendingDosesForPatientsUseCase(medicationRepo = get()) }
     factory { SkipDoseUseCase(medicationRepo = get()) }
-    factory { LogPrnDoseUseCase(medicationRepo = get()) }
+    factory { LogPrnDoseUseCase(medicationRepo = get(), platformNotifier = get()) }
+    factory { RefillPrescriptionUseCase(medicationRepo = get()) }
 }

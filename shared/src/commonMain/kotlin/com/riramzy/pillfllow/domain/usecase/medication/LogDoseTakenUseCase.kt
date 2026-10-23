@@ -34,14 +34,18 @@ class LogDoseTakenUseCase(
         platformNotifier.cancelReminder(doseId = doseId)
 
         dose?.medicationId?.let { medId ->
-            val med = medicationRepo.getMedicationByIdOnce(medId)
-            if (med?.remainingPills != null && med.remainingPills > 0) {
-                val updated = med.copy(
-                    remainingPills = (med.remainingPills - 1).coerceAtLeast(0),
-                    isSynced = false
-                )
+            val updatedMed = medicationRepo.getMedicationByIdOnce(medId)
+            if (updatedMed?.remainingPills != null && updatedMed.remainingPills <= updatedMed.refillThreshold) {
+                val alertBody = if (updatedMed.remainingPills == 0) {
+                    "${updatedMed.name} is out of stock! Refill immediately."
+                } else {
+                    "${updatedMed.name} is running low (${updatedMed.remainingPills} pills left)."
+                }
 
-                medicationRepo.insertMedication(updated)
+                platformNotifier.sendInstantNudge(
+                    title = "Refill Alert",
+                    message = alertBody
+                )
             }
         }
     }

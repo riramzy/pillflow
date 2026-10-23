@@ -203,4 +203,20 @@ interface MedicationDao {
             AND scheduled_doses.isTaken = 0
     """)
     suspend fun getSyncedScheduledDoseIdsForUser(userId: String): List<String>
+
+    @Query("""
+        UPDATE medications 
+        SET remainingPills = MAX(0, remainingPills - 1), 
+            isSynced = 0 
+        WHERE id = :medicationId AND remainingPills IS NOT NULL
+    """)
+    suspend fun decrementRemainingPills(medicationId: String)
+
+    @Query("""
+        UPDATE medications 
+        SET remainingPills = :newRemainingPills, 
+            isSynced = 0 
+        WHERE id = :medicationId
+    """)
+    suspend fun updateRemainingPills(medicationId: String, newRemainingPills: Int)
 }

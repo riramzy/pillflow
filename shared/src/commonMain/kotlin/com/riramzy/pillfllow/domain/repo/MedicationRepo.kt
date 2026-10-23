@@ -30,4 +30,5 @@ interface MedicationRepo {
     suspend fun getTakenDoseTimesForMedication(medicationId: String): Set<Long>
     suspend fun deletePendingDosesForMedication(medicationId: String)
     suspend fun syncUnsyncedData()
+    suspend fun refillMedication(medicationId: String, newRemainingPills: Int)
 }

@@ -21,7 +21,9 @@ class SavePrescriptionUseCase(
         colorHex: String,
         shape: String,
         scheduledTimesMillis: List<Long> = emptyList(),
-        isPrn: Boolean = false
+        isPrn: Boolean = false,
+        remainingPills: Int? = null,
+        refillThreshold: Int = 5
     ): Result<String> = safeCall {
         val medicationId = editingMedicationId ?: randomUUID()
         val existing = editingMedicationId?.let { medicationRepo.getMedicationByIdOnce(it) }
@@ -38,8 +40,8 @@ class SavePrescriptionUseCase(
             instructions = instructions,
             isPaused = existing?.isPaused ?: false,
             isPrn = isPrn,
-            remainingPills = existing?.remainingPills,
-            refillThreshold = existing?.refillThreshold ?: 5,
+            remainingPills = remainingPills ?: existing?.remainingPills,
+            refillThreshold = if (remainingPills != null) refillThreshold else (existing?.refillThreshold ?: 5),
             isSynced = false
         )
 

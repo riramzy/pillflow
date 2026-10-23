@@ -1,6 +1,7 @@
 package com.riramzy.pillfllow.domain.usecase.medication
 
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
+import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.domain.repo.MedicationRepo
 import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.app.safeCall
@@ -8,7 +9,8 @@ import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.randomUUID
 
 class LogPrnDoseUseCase(
-    private val medicationRepo: MedicationRepo
+    private val medicationRepo: MedicationRepo,
+    private val platformNotifier: PlatformNotifier = PlatformNotifier()
 ) {
     suspend operator fun invoke(medicationId: String): Result<Unit> = safeCall {
         val now = currentTimeMillis()
@@ -26,13 +28,18 @@ class LogPrnDoseUseCase(
 
         medicationRepo.logPrnDose(prnDose)
 
-        if (med.remainingPills != null && med.remainingPills > 0) {
-            val updated = med.copy(
-                remainingPills = (med.remainingPills - 1).coerceAtLeast(0),
-                isSynced = false
-            )
+        val updatedMed = medicationRepo.getMedicationByIdOnce(medicationId)
+        if (updatedMed?.remainingPills != null && updatedMed.remainingPills <= updatedMed.refillThreshold) {
+            val alertBody = if (updatedMed.remainingPills == 0) {
+                "${updatedMed.name} is out of stock! Refill immediately."
+            } else {
+                "${updatedMed.name} is running low (${updatedMed.remainingPills} pills left)."
+            }
 
-            medicationRepo.insertMedication(updated)
+            platformNotifier.sendInstantNudge(
+                title = "Refill Alert",
+                message = alertBody
+            )
         }
     }
 }

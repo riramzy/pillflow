@@ -55,7 +55,15 @@ class MedicationRepoImpl(
     }
 
     override suspend fun logPrnDose(dose: ScheduledDoseEntity) {
+        val existingDose = medicationDao.getScheduledDoseById(dose.id)
+        val shouldDecrement = existingDose == null
+
         medicationDao.insertScheduledDoses(listOf(dose))
+
+        if (shouldDecrement) {
+            medicationDao.decrementRemainingPills(dose.medicationId)
+            syncMedicationInventoryToRemote(dose.medicationId)
+        }
 
         val now = currentTimeMillis()
         val med = medicationDao.getMedicationByIdOnce(dose.medicationId)
@@ -233,7 +241,15 @@ class MedicationRepoImpl(
         isTaken: Boolean,
         complianceStatus: String
     ) {
+        val existingDose = medicationDao.getScheduledDoseById(id)
+        val shouldDecrement = isTaken && existingDose?.isTaken != true
+
         medicationDao.markScheduledDoseTaken(id, takenTime, isTaken, complianceStatus)
+
+        if (shouldDecrement && existingDose != null) {
+            medicationDao.decrementRemainingPills(existingDose.medicationId)
+            syncMedicationInventoryToRemote(existingDose.medicationId)
+        }
 
         if (isTaken) {
             platformNotifier.cancelReminder(doseId = id)
@@ -475,6 +491,28 @@ class MedicationRepoImpl(
         }
     }
 
+    override suspend fun refillMedication(
+        medicationId: String,
+        newRemainingPills: Int
+    ) {
+        medicationDao.updateRemainingPills(medicationId, newRemainingPills.coerceAtLeast(0))
+        syncMedicationInventoryToRemote(medicationId)
+    }
+
+    private suspend fun syncMedicationInventoryToRemote(medicationId: String) {
+        val updatedMed = medicationDao.getMedicationByIdOnce(medicationId) ?: return
+        val now = currentTimeMillis()
+
+        runCatching {
+            firestore
+                .collection("medications")
+                .document(medicationId)
+                .set(updatedMed.toDto(updatedAt = now))
+
+            medicationDao.markMedicationSynced(medicationId)
+        }
+    }
+
     private fun CoroutineScope.syncMedicationsForUser(userId: String) {
         launch(Dispatchers.IO) {
             runCatching {
@@ -503,7 +541,14 @@ class MedicationRepoImpl(
                             }
                         }
 
-                        if (remote.isNotEmpty()) medicationDao.insertMedications(remote)
+                        val localMap = local.associateBy { it.id }
+
+                        val reconciledRemote = remote.map { remoteMed ->
+                            val localMed = localMap[remoteMed.id]
+                            if (localMed != null && !localMed.isSynced) localMed else remoteMed
+                        }
+
+                        if (reconciledRemote.isNotEmpty()) medicationDao.insertMedications(reconciledRemote)
                     }
             }
         }
