@@ -5,7 +5,8 @@ enum class NotificationType {
     OVERDUE_DOSE,
     UPCOMING_DOSE,
     ADHERENCE_ALERT,
-    CAREGIVER_LATE_ALERT
+    CAREGIVER_LATE_ALERT,
+    REFILL_ALERT
 }
 
 data class NotificationAlertUiModel(

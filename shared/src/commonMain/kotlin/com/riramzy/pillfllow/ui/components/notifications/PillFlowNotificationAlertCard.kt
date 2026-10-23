@@ -38,6 +38,7 @@ import pillfllow.shared.generated.resources.compliance_late
 import pillfllow.shared.generated.resources.compliance_missed
 import pillfllow.shared.generated.resources.next
 import pillfllow.shared.generated.resources.nugde
+import pillfllow.shared.generated.resources.refill
 
 @Composable
 fun PillFlowNotificationAlertCard(
@@ -45,6 +46,7 @@ fun PillFlowNotificationAlertCard(
     alert: NotificationAlertUiModel,
     onDismiss: (String) -> Unit = {},
     onTakeDose: (String) -> Unit = {},
+    onRefill: (String) -> Unit = {}
 ) {
     var icon: DrawableResource
     var color: Color
@@ -91,6 +93,14 @@ fun PillFlowNotificationAlertCard(
             backgroundColor = IndicatorColor.YELLOW_CONTAINER.color
             actionLabel = "Dismiss"
             typeLabel = "Late"
+        }
+
+        NotificationType.REFILL_ALERT -> {
+            icon = Res.drawable.refill
+            color = IndicatorColor.YELLOW.color
+            backgroundColor = IndicatorColor.YELLOW_CONTAINER.color
+            actionLabel = "Refill"
+            typeLabel = "Refill"
         }
     }
 
@@ -176,10 +186,10 @@ fun PillFlowNotificationAlertCard(
                     customColor = backgroundColor,
                     customTextColor = color,
                     onClick = {
-                        if (alert.type == NotificationType.OVERDUE_DOSE) {
-                            onTakeDose(alert.id)
-                        } else {
-                            onDismiss(alert.id)
+                        when (alert.type) {
+                            NotificationType.OVERDUE_DOSE -> onTakeDose(alert.id)
+                            NotificationType.REFILL_ALERT -> onRefill(alert.id)
+                            else -> onDismiss(alert.id)
                         }
                     },
                     modifier = Modifier
@@ -219,7 +229,7 @@ fun PillFlowNotificationAlertCardPreviewDark() {
                 title = "Bon One 1000mg",
                 description = "Dose One was due at 19:00",
                 timestampText = "Today, at 19:00",
-                type = NotificationType.ADHERENCE_ALERT,
+                type = NotificationType.REFILL_ALERT,
                 actionLabel = "Take immediately"
             ),
             modifier = Modifier.padding(15.dp)
