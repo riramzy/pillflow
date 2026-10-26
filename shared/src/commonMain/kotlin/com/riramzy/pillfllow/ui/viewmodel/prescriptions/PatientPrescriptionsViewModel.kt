@@ -2,7 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.prescriptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
+import com.riramzy.pillfllow.domain.medication.PrescriptionEvaluator
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.DeletePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseCase
@@ -12,14 +12,8 @@ import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
-import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
 import com.riramzy.pillfllow.utils.app.Result
-import com.riramzy.pillfllow.utils.pill.PillColorMapper
-import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
-import com.riramzy.pillfllow.utils.platform.findNextActionDoseTime
-import com.riramzy.pillfllow.utils.platform.formatRelativeNextDose
-import com.riramzy.pillfllow.utils.platform.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
@@ -57,56 +51,19 @@ class PatientPrescriptionsViewModel(
                     getPendingDosesForUserUseCase(user.id),
                     getMedicationsForUserUseCase(user.id)
                 ) { pendingDoses, medications ->
-                    val now = currentTimeMillis()
-
-                    val earliestDose = pendingDoses
-                        .filter { it.scheduledTime >= now - DoseStateMachine.ON_TIME_WINDOW_MILLIS }
-                        .minByOrNull { it.scheduledTime }
-                    val nextTime = earliestDose?.let { formatTime(it.scheduledTime) } ?: "--:--"
-                    val nextMed = earliestDose?.let { "${it.name} ${it.dosage}" } ?: "None"
-
-                    val prescriptions = medications.map { med ->
-                        val medDoseTimes = pendingDoses
-                            .filter {
-                                it.id.startsWith("${med.id}_") ||
-                                        it.name.equals(med.name, ignoreCase = true)
-                            }
-                            .map { it.scheduledTime }
-
-                        val nextDoseTimeMillis = findNextActionDoseTime(medDoseTimes, now)
-
-                        val pillShape = PillShapeMapper.fromRaw(med.shape)
-                        val pillColor = PillColorMapper.fromRaw(med.colorHex)
-
-                        PrescriptionUiModel(
-                            id = med.id,
-                            medicationName = med.name,
-                            dosage = med.dosage,
-                            pillShape = pillShape,
-                            pillColor = pillColor,
-                            scheduleText = if (med.isPrn) "As Needed (PRN)" else "${med.frequency}, ${med.timeOfDay}",
-                            instructionsText = med.instructions.ifBlank { "Take as prescribed" },
-                            nextDoseText = when {
-                                med.isPaused -> "Paused"
-                                med.isPrn -> "Take as needed"
-                                else -> formatRelativeNextDose(nextDoseTimeMillis, now)
-                            },
-                            isPrn = med.isPrn,
-                            remainingPills = med.remainingPills,
-                            refillThreshold = med.refillThreshold,
-                            daysLeft = RefillPrescriptionUseCase.estimateDaysOfSupply(med.remainingPills, med.timeOfDay, med.isPrn)
-                        )
-                    }
-
-                    prescriptions to (nextTime to nextMed)
+                    PrescriptionEvaluator.evaluatePrescriptionsOverview(
+                        medications = medications,
+                        pendingDoses = pendingDoses,
+                        now = currentTimeMillis()
+                    )
                 }
-            }.collectLatest { (prescriptions, nextDoseInfo) ->
+            }.collectLatest { overview ->
                 _state.update { current ->
                     current.copy(
-                        prescriptions = prescriptions,
-                        activeCount = prescriptions.size,
-                        nextDoseTime = nextDoseInfo.first,
-                        nextDoseMedication = nextDoseInfo.second,
+                        prescriptions = overview.prescriptions,
+                        activeCount = overview.activeCount,
+                        nextDoseTime = overview.nextDoseTime,
+                        nextDoseMedication = overview.nextDoseMedication,
                         isLoading = false
                     )
                 }

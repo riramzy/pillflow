@@ -2,11 +2,14 @@ package com.riramzy.pillfllow.ui.viewmodel.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
 import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.utils.app.Result
+import com.riramzy.pillfllow.utils.app.Result.Error
+import com.riramzy.pillfllow.utils.app.Result.Success
 import com.riramzy.pillfllow.utils.platform.Country
 import com.riramzy.pillfllow.utils.user.UserType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,135 +67,74 @@ class AuthViewModel(
 
     fun signUp(onSuccess: () -> Unit = {}) {
         val currentState = state.value
-        val cleanFirstName = currentState.firstName.trim()
-        val cleanLastName = currentState.lastName.trim()
-        val cleanEmail = currentState.email.trim()
-        val cleanPassword = currentState.password.trim()
-        val cleanConfirmPassword = currentState.confirmPassword.trim()
-        val cleanPhone = currentState.phoneNumber.trim()
-
-        if (cleanFirstName.isBlank() || cleanLastName.isBlank() || cleanEmail.isBlank() || cleanPassword.isBlank()) {
-            _state.update { it.copy(errorMessage = "Please fill in all fields") }
-            return
-        }
-
-        if (!cleanEmail.contains("@") || !cleanEmail.contains(".")) {
-            _state.update { it.copy(errorMessage = "Please enter a valid email address") }
-            return
-        }
-
-        if (cleanPassword.length < 6) {
-            _state.update { it.copy(errorMessage = "Password must be at least 6 characters") }
-            return
-        }
-
-        if (cleanPassword != cleanConfirmPassword) {
-            _state.update { it.copy(errorMessage = "Passwords do not match") }
-            return
-        }
-
-        if (cleanPhone.isBlank()) {
-            _state.update { it.copy(errorMessage = "Please enter your phone number") }
-            return
-        }
-
-        if (cleanPhone.length < currentState.selectedCountry.minLength) {
-            _state.update { it.copy(errorMessage = "Please enter a valid phone number for ${currentState.selectedCountry.name}") }
-            return
-        }
-
-        val fullE164Phone = "${currentState.selectedCountry.dialCode}$cleanPhone"
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val result = signUpUseCase(
-                email = cleanEmail,
-                pass = cleanPassword,
-                firstName = cleanFirstName,
-                lastName = cleanLastName,
+                email = currentState.email,
+                pass = currentState.password,
+                confirmPass = currentState.confirmPassword,
+                firstName = currentState.firstName,
+                lastName = currentState.lastName,
                 role = currentState.selectedRole,
-                phoneNumber = fullE164Phone,
+                phoneNumber = currentState.phoneNumber,
+                country = currentState.selectedCountry,
                 avatarRes = currentState.selectedAvatar
             )
 
-            when (result) {
-                is Result.Success -> {
-                    val resolvedRole = if (result.data.userType.equals("CAREGIVER", ignoreCase = true)) {
-                        UserType.CAREGIVER
-                    } else {
-                        UserType.PATIENT
-                    }
-
-                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = result.data.id, selectedRole = resolvedRole) }
-                    onSuccess()
-                }
-
-                is Result.Error -> {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = result.message ?: "An unexpected error occurred. Please try again."
-                        )
-                    }
-                }
-
-                else -> Unit
-            }
+            handleAuthResult(result, onSuccess)
         }
     }
 
     fun signIn(onSuccess: () -> Unit = {}) {
         val currentState = state.value
-        val cleanEmail = currentState.email.trim()
-        val cleanPassword = currentState.password.trim()
-
-        if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
-            _state.update { it.copy(errorMessage = "Please enter your email and password") }
-            return
-        }
-
-        if (!cleanEmail.contains("@") || !cleanEmail.contains(".")) {
-            _state.update { it.copy(errorMessage = "Please enter a valid email address") }
-            return
-        }
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val result = signInUseCase(
-                email = cleanEmail,
-                password = cleanPassword
+                email = currentState.email,
+                password = currentState.password
             )
 
-            when (result) {
-                is Result.Success -> {
-                    val resolvedRole = if (result.data.userType.equals("CAREGIVER", ignoreCase = true)) {
-                        UserType.CAREGIVER
-                    } else {
-                        UserType.PATIENT
-                    }
-
-                    _state.update { it.copy(isLoading = false, isAuthenticated = true, userId = result.data.id, selectedRole = resolvedRole) }
-                    onSuccess()
-                }
-
-                is Result.Error -> {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = result.message ?: "An unexpected error occurred. Please try again."
-                        )
-                    }
-                }
-
-                else -> Unit
-            }
+            handleAuthResult(result, onSuccess)
         }
     }
 
     fun onErrorDismissed() {
         _state.update { it.copy(errorMessage = null) }
+    }
+
+    private fun handleAuthResult(
+        result: Result<UserEntity>,
+        onSuccess: () -> Unit
+    ) {
+        when (result) {
+            is Success -> {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isAuthenticated = true,
+                        userId = result.data.id,
+                        selectedRole = UserType.fromRaw(result.data.userType)
+                    )
+                }
+
+                onSuccess()
+            }
+
+            is Error -> {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = result.message ?: "An unexpected error occurred. Please try again."
+                    )
+                }
+            }
+
+            else -> Unit
+        }
     }
 
     fun onAction(action: AuthAction) {

@@ -2,8 +2,7 @@ package com.riramzy.pillfllow.ui.viewmodel.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.riramzy.pillfllow.domain.session.SessionManager
-import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.ResolveStartDestinationUseCase
 import com.riramzy.pillfllow.ui.state.splash.SplashAction
 import com.riramzy.pillfllow.ui.state.splash.SplashNavEvent
 import com.riramzy.pillfllow.ui.state.splash.SplashState
@@ -18,8 +17,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 class SplashViewModel(
-    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
-    private val sessionManager: SessionManager,
+    private val resolveStartDestinationUseCase: ResolveStartDestinationUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow(SplashState())
     val state: StateFlow<SplashState> = _state.asStateFlow()
@@ -40,18 +38,9 @@ class SplashViewModel(
     private fun checkSession() {
         viewModelScope.launch(Dispatchers.IO) {
             delay(1000.milliseconds)
-            val user = runCatching { observeCurrentUserUseCase.once() }.getOrNull()
+            val destination = resolveStartDestinationUseCase()
             _state.update { it.copy(isLoading = false) }
-
-            _navEvent.value = if (user != null) {
-                SplashNavEvent.NavigateToHome
-            } else {
-                if (sessionManager.isOnboardingCompleted()) {
-                    SplashNavEvent.NavigateToRoleSelection
-                } else {
-                    SplashNavEvent.NavigateToOnboarding
-                }
-            }
+            _navEvent.value = destination
         }
     }
 }
