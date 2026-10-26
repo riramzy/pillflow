@@ -1,6 +1,9 @@
 package com.riramzy.pillfllow.ui.state.dashboard
 
+import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
+import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
 import com.riramzy.pillfllow.data.local.entity.UserEntity
+import com.riramzy.pillfllow.ui.state.prescriptions.LowSupplyMedicationUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.platform.defaultSampleDays
 import org.jetbrains.compose.resources.DrawableResource
@@ -18,6 +21,9 @@ data class CaregiverDashboardState(
     val lastUpdatedText: String = "Updated just now",
     val weeklyCompliance: List<ComplianceDayUiModel> = defaultSampleDays,
     val weeklyRatePercentage: Int = 95,
+    val trackedMedicationsCount: Int = 0,
+    val minDaysOfSupply: Int? = null,
+    val lowSupplyMedications: List<LowSupplyMedicationUiModel> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
@@ -60,6 +66,14 @@ sealed interface PatientCarouselMode {
     ): PatientCarouselMode
     data class Prescriptions(val prescriptionCount: Int) : PatientCarouselMode
 }
+
+data class CombinedDoseUiData(
+    val patientId: String,
+    val pendingDoses: List<PendingDoseWithMedication>,
+    val historyDoses: List<DoseHistoryEntity>,
+    val medications: List<com.riramzy.pillfllow.data.local.entity.MedicationEntity>,
+    val patientName: String
+)
 
 sealed interface CaregiverDashboardAction {
     data class SelectPatient(val patientId: String): CaregiverDashboardAction

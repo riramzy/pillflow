@@ -40,6 +40,7 @@ import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientCa
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientDailyStatusCard
 import com.riramzy.pillfllow.ui.components.dashboard.caregiver.PillFlowPatientWeeklyOverviewCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
+import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCabinetCard
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.CaregiverDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.PairedPatientUiModel
@@ -189,6 +190,18 @@ fun CaregiverDashboardScreenContent(
                                 )
                             }
 
+                        }
+
+                        if (state.trackedMedicationsCount > 0) {
+                            item {
+                                PillFlowPrescriptionCabinetCard(
+                                    trackedCount = state.trackedMedicationsCount,
+                                    minDaysOfSupply = state.minDaysOfSupply,
+                                    lowSupplyMedications = state.lowSupplyMedications,
+                                    onRefillClick = { onNavigateToPrescriptions() },
+                                    modifier = Modifier.padding(horizontal = 15.dp)
+                                )
+                            }
                         }
 
                         item {

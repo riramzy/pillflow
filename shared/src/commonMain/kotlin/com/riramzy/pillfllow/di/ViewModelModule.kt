@@ -77,7 +77,8 @@ val viewModelModule: Module = module {
             getDoseHistoryForUserUseCase = get(),
             sessionManager = get(),
             syncAndMaintainScheduleUseCase = get(),
-            getPendingDosesForPatientsUseCase = get()
+            getPendingDosesForPatientsUseCase = get(),
+            getMedicationsForUserUseCase = get()
         )
     }
 

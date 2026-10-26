@@ -64,7 +64,8 @@ fun PillFlowTopAppBar(
             ) {
                 Image(
                     painter = painterResource(Res.drawable.pillflow_logo),
-                    modifier = Modifier.size(26.dp),
+                    modifier = Modifier.size(30.dp),
+                    contentScale = ContentScale.Fit,
                     contentDescription = "null"
                 )
 

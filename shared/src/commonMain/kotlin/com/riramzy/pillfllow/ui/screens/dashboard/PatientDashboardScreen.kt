@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +63,7 @@ import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceC
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowFloatingNudgeBanner
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
+import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCabinetCard
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
@@ -161,6 +163,10 @@ fun PatientDashboardScreenContent(
                         color = prnMed.color,
                         status = ComplianceStatus.DEFAULT,
                         badgeText = prnMed.lastTakenText ?: "Log Dose",
+                        modifier = Modifier.clickable {
+                            onAction(PatientDashboardAction.LogPrnDose(prnMed.medicationId))
+                            showPrnSheet = false
+                        }
                     )
                 }
             }
@@ -344,6 +350,18 @@ fun PatientDashboardScreenContent(
                                 },
                                 modifier = Modifier.padding(horizontal = 15.dp)
                             )
+                        }
+
+                        if (state.trackedMedicationsCount > 0) {
+                            item {
+                                PillFlowPrescriptionCabinetCard(
+                                    trackedCount = state.trackedMedicationsCount,
+                                    minDaysOfSupply = state.minDaysOfSupply,
+                                    lowSupplyMedications = state.lowSupplyMedications,
+                                    onRefillClick = { onNavigateToPrescriptions() },
+                                    modifier = Modifier.padding(horizontal = 15.dp)
+                                )
+                            }
                         }
 
                         item {
