@@ -43,6 +43,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionsSummaryCard
 import com.riramzy.pillfllow.ui.sheets.PrescriptionSheet
+import com.riramzy.pillfllow.ui.sheets.RefillSheet
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsAction
 import com.riramzy.pillfllow.ui.state.prescriptions.PatientPrescriptionsState
 import com.riramzy.pillfllow.ui.state.prescriptions.PrescriptionUiModel
@@ -123,18 +124,20 @@ fun PatientPrescriptionsScreenContent(
             PrescriptionSheet(
                 initialMedication = editingPrescription,
                 isSaving = state.isSaving,
-                onMedicationSaved = { name, dosage, instructions, freq, time, color, shape, scheduledTimeMillis, isPrn ->
+                onMedicationSaved = { name, dosage, instructions, frequency, timeOfDay, colorHex, shape, scheduledTimesMillis, isPrn, remainingPills, refillThreshold ->
                     onAction(
                         PatientPrescriptionsAction.SavePrescription(
                             name = name,
                             dosage = dosage,
                             instructions = instructions,
-                            frequency = freq,
-                            timeOfDay = time,
-                            colorHex = color,
+                            frequency = frequency,
+                            timeOfDay = timeOfDay,
+                            colorHex = colorHex,
                             shape = shape,
-                            scheduledTimesMillis = scheduledTimeMillis,
-                            isPrn = isPrn
+                            scheduledTimesMillis = scheduledTimesMillis,
+                            isPrn = isPrn,
+                            remainingPills = remainingPills,
+                            refillThreshold = refillThreshold
                         )
                     )
                 },
@@ -185,6 +188,25 @@ fun PatientPrescriptionsScreenContent(
                 )
             }
         )
+    }
+
+    val refillingMed = state.prescriptions.find { it.id == state.refillingMedicationId }
+
+    if (state.refillingMedicationId != null && refillingMed != null) {
+        ModalBottomSheet(
+            onDismissRequest = { onAction(PatientPrescriptionsAction.CloseRefillSheet) }
+        ) {
+            RefillSheet(
+                medicationName = refillingMed.medicationName,
+                dosage = refillingMed.dosage,
+                currentPills = refillingMed.remainingPills,
+                dosesPerDay = if (refillingMed.isPrn) 1 else refillingMed.scheduleText.split(",").count { it.isNotBlank() }.coerceAtLeast(1),
+                onDismiss = { onAction(PatientPrescriptionsAction.CloseRefillSheet) },
+                onConfirmRefill = { addedPills ->
+                    onAction(PatientPrescriptionsAction.RefillPrescription(refillingMed.id, addedPills))
+                }
+            )
+        }
     }
 
     Scaffold(
@@ -314,10 +336,12 @@ fun PatientPrescriptionsScreenContent(
                                         scheduleText = prescription.scheduleText,
                                         instructionsText = prescription.instructionsText,
                                         nextDoseText = prescription.nextDoseText,
-                                        onEditClick = {
-                                            onAction(PatientPrescriptionsAction.OpenEditSheet(prescription.id))
-                                        },
-                                        onDeleteClick = { prescriptionToDelete = prescription }
+                                        remainingPills = prescription.remainingPills,
+                                        refillThreshold = prescription.refillThreshold,
+                                        daysLeft = prescription.daysLeft,
+                                        onRefillClick = { onAction(PatientPrescriptionsAction.OpenRefillSheet(prescription.id)) },
+                                        onEditClick = { onAction(PatientPrescriptionsAction.OpenEditSheet(prescription.id)) },
+                                        onDeleteClick = { onAction(PatientPrescriptionsAction.DeletePrescription(prescription.id)) }
                                     )
                                 }
                             }

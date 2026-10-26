@@ -3,6 +3,7 @@ package com.riramzy.pillfllow.ui.state.dashboard
 import com.riramzy.pillfllow.data.local.entity.UserEntity
 import com.riramzy.pillfllow.domain.physics.PillEntity
 import com.riramzy.pillfllow.ui.state.notifications.NotificationAlertUiModel
+import com.riramzy.pillfllow.ui.state.prescriptions.LowSupplyMedicationUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.pill.PillColor
@@ -25,6 +26,9 @@ data class PatientDashboardState(
     val physicsSensitivity: PhysicsSensitivity = PhysicsSensitivity.NORMAL,
     val activeNudges: List<NotificationAlertUiModel> = emptyList(),
     val prnMedications: List<PrnMedicationUiModel> = emptyList(),
+    val trackedMedicationsCount: Int = 0,
+    val minDaysOfSupply: Int? = null,
+    val lowSupplyMedications: List<LowSupplyMedicationUiModel> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null

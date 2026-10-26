@@ -51,7 +51,8 @@ val viewModelModule: Module = module {
             getPendingDosesForUserUseCase = get(),
             savePrescriptionUseCase = get(),
             deletePrescriptionUseCase = get(),
-            syncAndMaintainScheduleUseCase = get()
+            syncAndMaintainScheduleUseCase = get(),
+            refillPrescriptionUseCase = get()
         )
     }
 
@@ -90,7 +91,8 @@ val viewModelModule: Module = module {
             savePrescriptionUseCase = get(),
             deletePrescriptionUseCase = get(),
             sessionManager = get(),
-            syncAndMaintainScheduleUseCase = get()
+            syncAndMaintainScheduleUseCase = get(),
+            refillPrescriptionUseCase = get()
         )
     }
 

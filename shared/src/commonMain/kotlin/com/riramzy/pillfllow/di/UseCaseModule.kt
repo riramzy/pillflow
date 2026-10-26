@@ -2,6 +2,7 @@ package com.riramzy.pillfllow.di
 
 import com.riramzy.pillfllow.domain.usecase.auth.LogoutUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.ResolveStartDestinationUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
 import com.riramzy.pillfllow.domain.usecase.caregiver.ConfirmPairingUseCase
@@ -33,6 +34,7 @@ val useCaseModule: Module = module {
     factory { SignUpUseCase(authRepo = get(), sessionManager = get()) }
     factory { LogoutUseCase(authRepo = get(), sessionManager = get(), database = get(), platformNotifier = get()) }
     factory { ObserveCurrentUserUseCase(sessionManager = get(), authRepo = get()) }
+    factory { ResolveStartDestinationUseCase(observeCurrentUserUseCase = get(), sessionManager = get()) }
 
     factory { GetCaregiverPatientsUseCase(pairingRepo = get(), userRepo = get(), medicationRepo = get()) }
     factory { InitiatePairingUseCase(pairingRepo = get(), userRepo = get()) }

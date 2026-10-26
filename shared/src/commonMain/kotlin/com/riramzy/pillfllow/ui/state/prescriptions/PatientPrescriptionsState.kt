@@ -12,6 +12,7 @@ data class PatientPrescriptionsState(
     val nextDoseMedication: String = "None",
     val isAddSheetOpen: Boolean = false,
     val editingMedicationId: String? = null,
+    val refillingMedicationId: String? = null,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -30,7 +31,10 @@ data class PrescriptionUiModel(
     val scheduleText: String,
     val instructionsText: String,
     val nextDoseText: String,
-    val isPrn: Boolean = false
+    val isPrn: Boolean = false,
+    val remainingPills: Int? = null,
+    val refillThreshold: Int = 5,
+    val daysLeft: Int? = null
 )
 
 data class LowSupplyMedicationUiModel(
@@ -63,8 +67,13 @@ sealed interface PatientPrescriptionsAction {
         val colorHex: String,
         val shape: String,
         val scheduledTimesMillis: List<Long> = emptyList(),
-        val isPrn: Boolean = false
+        val isPrn: Boolean = false,
+        val remainingPills: Int? = null,
+        val refillThreshold: Int = 5
     ): PatientPrescriptionsAction
+    data class OpenRefillSheet(val medicationId: String): PatientPrescriptionsAction
+    data object CloseRefillSheet: PatientPrescriptionsAction
+    data class RefillPrescription(val medicationId: String, val addedPills: Int): PatientPrescriptionsAction
     data class DeletePrescription(val id: String): PatientPrescriptionsAction
     data object ClearMessages: PatientPrescriptionsAction
     data object Refresh: PatientPrescriptionsAction

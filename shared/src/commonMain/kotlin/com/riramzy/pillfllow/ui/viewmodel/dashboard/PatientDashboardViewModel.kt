@@ -13,6 +13,7 @@ import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseC
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogDoseTakenUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.LogPrnDoseUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.RefillPrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SkipDoseUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.domain.usecase.patient.GetPhysicsSensitivityUseCase
@@ -22,6 +23,7 @@ import com.riramzy.pillfllow.ui.state.dashboard.PrnMedicationUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.state.notifications.NotificationType
 import com.riramzy.pillfllow.ui.state.notifications.NotificationsAction
+import com.riramzy.pillfllow.ui.state.prescriptions.LowSupplyMedicationUiModel
 import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
@@ -90,6 +92,24 @@ class PatientDashboardViewModel(
                         val todayHistoryDoses = historyDoses.filter {
                             it.isTaken && isSameDay(it.scheduledTime, now)
                         }
+
+                        val trackedMeds = medications.filter { !it.isArchived && it.remainingPills != null }
+
+                        val lowSupplyMedication = trackedMeds
+                            .filter { it.remainingPills!! <= it.refillThreshold }
+                            .map {
+                                LowSupplyMedicationUiModel(
+                                    id = it.id,
+                                    name = it.name,
+                                    dosage = it.dosage,
+                                    remainingPills = it.remainingPills!!,
+                                    daysLeft = RefillPrescriptionUseCase.estimateDaysOfSupply(
+                                        it.remainingPills,
+                                        it.timeOfDay,
+                                        it.isPrn
+                                    )
+                                )
+                            }
 
                         val eligibleDishDoses = todayPendingDoses.filter { dose ->
                             DoseComplianceEvaluator.evaluateDoseCard(

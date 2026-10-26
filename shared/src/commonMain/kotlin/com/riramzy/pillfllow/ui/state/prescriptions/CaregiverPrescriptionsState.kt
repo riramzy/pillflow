@@ -9,8 +9,9 @@ data class CaregiverPrescriptionsState(
     val activeCount: Int = 0,
     val nextDoseTime: String = "--:--",
     val nextDoseMedication: String = "None",
-    val isAddSheetOpen: Boolean = false,
     val editingMedicationId: String? = null,
+    val refillingMedicationId: String? = null,
+    val isAddSheetOpen: Boolean = false,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -34,8 +35,13 @@ sealed interface CaregiverPrescriptionsAction {
         val colorHex: String,
         val shape: String,
         val scheduledTimesMillis: List<Long> = emptyList(),
-        val isPrn: Boolean = false
+        val isPrn: Boolean = false,
+        val remainingPills: Int? = null,
+        val refillThreshold: Int = 5
     ): CaregiverPrescriptionsAction
+    data class OpenRefillSheet(val medicationId: String): CaregiverPrescriptionsAction
+    data object CloseRefillSheet: CaregiverPrescriptionsAction
+    data class RefillPrescription(val medicationId: String, val addedPills: Int): CaregiverPrescriptionsAction
     data class DeletePrescription(val id: String): CaregiverPrescriptionsAction
     data object ClearMessages: CaregiverPrescriptionsAction
     data object Refresh: CaregiverPrescriptionsAction

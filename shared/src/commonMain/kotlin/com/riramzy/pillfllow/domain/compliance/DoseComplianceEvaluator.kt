@@ -1,12 +1,21 @@
 package com.riramzy.pillfllow.domain.compliance
 
 import com.riramzy.pillfllow.data.local.entity.DoseHistoryEntity
+import com.riramzy.pillfllow.data.local.entity.MedicationEntity
 import com.riramzy.pillfllow.data.local.entity.PendingDoseWithMedication
+import com.riramzy.pillfllow.domain.physics.PillEntity
+import com.riramzy.pillfllow.domain.physics.Vector2D
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceCardUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ComplianceDayUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.PrnMedicationUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.RecentActivityUiModel
+import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.state.history.HistoryLogRecordUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
+import com.riramzy.pillfllow.utils.pill.PillColorMapper
+import com.riramzy.pillfllow.utils.pill.PillShape
+import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.formatDate
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
@@ -50,6 +59,23 @@ data class PatientSummaryEvaluation(
     val lateDosesCount: Int,
     val missedDosesCount: Int,
     val compliancePercentage: Int
+)
+
+data class TodayDosesEvaluation(
+    val todayPendingDoses: List<PendingDoseWithMedication>,
+    val todayScheduledHistoryDoses: List<DoseHistoryEntity>,
+    val todayTakenHistoryDoses: List<DoseHistoryEntity>
+)
+
+data class ScheduledTimelineEvaluation(
+    val scheduledDoses: List<ScheduledDoseUiModel>,
+    val remainingCount: Int,
+    val missedCount: Int
+)
+
+data class DishPillsEvaluation(
+    val pills: List<PillEntity>,
+    val totalDishDoses: Int
 )
 
 object DoseComplianceEvaluator {
@@ -545,5 +571,200 @@ object DoseComplianceEvaluator {
             missedDosesCount = missedCount,
             compliancePercentage = score
         )
+    }
+
+    fun filterTodayDoses(
+        pendingDoses: List<PendingDoseWithMedication>,
+        historyDoses: List<DoseHistoryEntity>,
+        now: Long
+    ): TodayDosesEvaluation {
+        val todayPending = pendingDoses
+            .filter { isSameDay(it.scheduledTime, now) }
+
+        val todayScheduledHistory = historyDoses
+            .filter {
+                it.isTaken &&
+                        isSameDay(it.scheduledTime, now)
+            }
+
+        val todayTakenHistory = historyDoses
+            .filter {
+                it.isTaken &&
+                        isSameDay(it.takenTime ?: it.scheduledTime, now)
+            }
+
+        return TodayDosesEvaluation(
+            todayPending,
+            todayScheduledHistory,
+            todayTakenHistory
+        )
+    }
+
+    fun evaluatePrnMedications(
+        medications: List<MedicationEntity>,
+        historyDoses: List<DoseHistoryEntity>
+    ): List<PrnMedicationUiModel> {
+        return medications
+            .filter { it.isPrn && !it.isPaused && !it.isArchived }
+            .map { med ->
+                val lastTaken = historyDoses
+                    .filter {
+                        it.medicationId == med.id
+                            && it.isTaken
+                            && it.complianceStatus != "SKIPPED"
+                    }
+                    .maxByOrNull { it.takenTime ?: it.scheduledTime }
+
+                val lastTakenText = lastTaken?.let {
+                    "Last taken: ${formatTime(it.takenTime ?: it.scheduledTime)}"
+                }
+
+                PrnMedicationUiModel(
+                    medicationId = med.id,
+                    name = med.name,
+                    dosage = med.dosage,
+                    color = PillColorMapper.fromRaw(med.colorHex),
+                    lastTakenText = lastTakenText
+                )
+            }
+    }
+
+    fun evaluateDishPills(
+        todayPendingDoses: List<PendingDoseWithMedication>,
+        currentPills: List<PillEntity>,
+        now: Long
+    ): DishPillsEvaluation {
+        val eligibleDishDoses = todayPendingDoses
+                .filter { dose ->
+                    evaluateDoseCard(dose.scheduledTime, now, isTaken = false).isDishEligible
+                }
+
+        val sortedDishDoses = eligibleDishDoses
+            .sortedWith(
+                compareBy<PendingDoseWithMedication> { it.scheduledTime }
+                    .thenBy { it.name }
+                    .thenBy { it.id }
+        )
+
+        val currentDishDose = sortedDishDoses.firstOrNull()
+        val currentPillId = currentPills.firstOrNull()?.id
+        val newPillId = currentDishDose?.id
+
+        val mappedPills = if (currentPillId == newPillId && currentDishDose != null) {
+            currentPills
+        } else {
+            currentDishDose?.let { dose ->
+                val color = PillColorMapper.fromRaw(dose.colorHex).color
+                val shape = PillShapeMapper.fromRaw(dose.shape, default = PillShape.CIRCLE)
+
+                listOf(
+                    PillEntity(
+                        id = dose.id,
+                        name = dose.name,
+                        color = color,
+                        shape = shape,
+                        radius = 32f,
+                        position = Vector2D(x = 350f, y = 480f)
+                    )
+                )
+            } ?: emptyList()
+        }
+
+        return DishPillsEvaluation(
+            pills = mappedPills,
+            totalDishDoses = sortedDishDoses.size
+        )
+    }
+
+    fun evaluateScheduledTimeline(
+        todayPendingDoses: List<PendingDoseWithMedication>,
+        todayHistoryDoses: List<DoseHistoryEntity>,
+        now: Long
+    ): ScheduledTimelineEvaluation {
+        val mappedPending = todayPendingDoses.map { dose ->
+            val evalDose = evaluateDoseCard(dose.scheduledTime, now, isTaken = false)
+
+            ScheduledDoseUiModel(
+                id = dose.id,
+                name = dose.name,
+                dosage = dose.dosage,
+                timeFormatted = formatTime(dose.scheduledTime),
+                color = PillColorMapper.fromRaw(dose.colorHex),
+                status = evalDose.status,
+                badgeText = evalDose.badgeText,
+                scheduledTime = dose.scheduledTime
+            )
+        }
+
+        val mappedSkipped = todayHistoryDoses
+            .filter { it.complianceStatus == "SKIPPED" }
+            .map { dose ->
+                ScheduledDoseUiModel(
+                    id = dose.id,
+                    name = dose.name,
+                    dosage = dose.dosage,
+                    timeFormatted = formatTime(dose.scheduledTime),
+                    color = PillColorMapper.fromRaw(dose.colorHex),
+                    status = ComplianceStatus.SKIPPED,
+                    badgeText = if (!dose.skipReason.isNullOrBlank()) "Skipped: ${dose.skipReason}" else "Skipped",
+                    scheduledTime = dose.scheduledTime
+                )
+            }
+
+        return ScheduledTimelineEvaluation(
+            scheduledDoses = (mappedPending + mappedSkipped).sortedBy { it.scheduledTime },
+            remainingCount = mappedPending.count { it.status != ComplianceStatus.MISSED },
+            missedCount = mappedPending.count { it.status == ComplianceStatus.MISSED }
+        )
+    }
+
+    fun evaluateRecentActivities(
+        todayPendingDoses: List<PendingDoseWithMedication>,
+        todayTakenDoses: List<DoseHistoryEntity>,
+        patientName: String,
+        now: Long,
+        limit: Int = 4
+    ): List<RecentActivityUiModel> {
+        val takenActivities = todayTakenDoses.map { dose ->
+            val takenTime = dose.takenTime ?: dose.scheduledTime
+
+            val (status, action) = when {
+                dose.complianceStatus == "SKIPPED" -> {
+                    val reason = dose.skipReason?.ifBlank { null }
+                    ComplianceStatus.SKIPPED to "skipped ${dose.name} ${dose.dosage}${if (reason != null) " ($reason)" else ""}"
+                }
+                dose.isPrn -> ComplianceStatus.ON_TIME to "took ${dose.name} ${dose.dosage} (As Needed)"
+                dose.complianceStatus == "LATE" -> ComplianceStatus.LATE to "took ${dose.name} ${dose.dosage}"
+                else -> ComplianceStatus.ON_TIME to "took ${dose.name} ${dose.dosage}"
+            }
+
+            RecentActivityUiModel(
+                id = dose.id,
+                patientName = patientName,
+                actionDescription = action,
+                timestampText = "at ${formatTime(takenTime)}",
+                status = status
+            ) to takenTime
+        }
+
+        val overduePendingDoses = todayPendingDoses.filter { dose ->
+            (now - dose.scheduledTime) > DoseStateMachine.ON_TIME_WINDOW_MILLIS
+        }
+
+        val alertActivities = overduePendingDoses.map { dose ->
+            val evalDose = evaluateLiveActivity(dose.name, dose.dosage, dose.scheduledTime, now)
+            RecentActivityUiModel(
+                id = dose.id,
+                patientName = patientName,
+                actionDescription = evalDose.actionDescription,
+                timestampText = "at ${formatTime(dose.scheduledTime)}",
+                status = evalDose.status
+            ) to dose.scheduledTime
+        }
+
+        return (takenActivities + alertActivities)
+            .sortedByDescending { it.second }
+            .map { it.first }
+            .take(limit)
     }
 }

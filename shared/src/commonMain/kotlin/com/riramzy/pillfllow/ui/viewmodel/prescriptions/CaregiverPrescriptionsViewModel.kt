@@ -9,6 +9,7 @@ import com.riramzy.pillfllow.domain.usecase.caregiver.GetCaregiverPatientsUseCas
 import com.riramzy.pillfllow.domain.usecase.medication.DeletePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetMedicationsForUserUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.GetPendingDosesForUserUseCase
+import com.riramzy.pillfllow.domain.usecase.medication.RefillPrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SavePrescriptionUseCase
 import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import com.riramzy.pillfllow.ui.state.prescriptions.CaregiverPrescriptionsAction
@@ -42,6 +43,7 @@ class CaregiverPrescriptionsViewModel(
     private val savePrescriptionUseCase: SavePrescriptionUseCase,
     private val deletePrescriptionUseCase: DeletePrescriptionUseCase,
     private val syncAndMaintainScheduleUseCase: SyncAndMaintainScheduleUseCase,
+    private val refillPrescriptionUseCase: RefillPrescriptionUseCase,
     private val sessionManager: SessionManager
 ): ViewModel() {
     private val _state = MutableStateFlow(CaregiverPrescriptionsState())
@@ -116,7 +118,10 @@ class CaregiverPrescriptionsViewModel(
                                     med.isPrn -> "Take as needed"
                                     else -> formatRelativeNextDose(nextDoseTimeMillis, now)
                                 },
-                                isPrn = med.isPrn
+                                isPrn = med.isPrn,
+                                remainingPills = med.remainingPills,
+                                refillThreshold = med.refillThreshold,
+                                daysLeft = RefillPrescriptionUseCase.estimateDaysOfSupply(med.remainingPills, med.timeOfDay, med.isPrn)
                             )
                         }
 
@@ -175,7 +180,9 @@ class CaregiverPrescriptionsViewModel(
         colorHex: String,
         shape: String,
         scheduledTimesMillis: List<Long> = emptyList(),
-        isPrn: Boolean = false
+        isPrn: Boolean = false,
+        remainingPills: Int? = null,
+        refillThreshold: Int = 5
     ) {
         val isEditing = _state.value.editingMedicationId != null
         _state.update { it.copy(isSaving = true) }
@@ -198,7 +205,9 @@ class CaregiverPrescriptionsViewModel(
                 colorHex = colorHex,
                 shape = shape,
                 scheduledTimesMillis = scheduledTimesMillis,
-                isPrn = isPrn
+                isPrn = isPrn,
+                remainingPills = remainingPills,
+                refillThreshold = refillThreshold
             )
 
             when (result) {
@@ -278,8 +287,22 @@ class CaregiverPrescriptionsViewModel(
                 action.colorHex,
                 action.shape,
                 action.scheduledTimesMillis,
-                action.isPrn
+                action.isPrn,
+                action.remainingPills,
+                action.refillThreshold
             )
+            is CaregiverPrescriptionsAction.OpenRefillSheet -> {
+                _state.update { it.copy(refillingMedicationId = action.medicationId) }
+            }
+            is CaregiverPrescriptionsAction.CloseRefillSheet -> {
+                _state.update { it.copy(refillingMedicationId = null) }
+            }
+            is CaregiverPrescriptionsAction.RefillPrescription -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    refillPrescriptionUseCase(action.medicationId, action.addedPills)
+                    _state.update { it.copy(refillingMedicationId = null) }
+                }
+            }
             is CaregiverPrescriptionsAction.DeletePrescription -> deletePrescription(action.id)
             is CaregiverPrescriptionsAction.ClearMessages -> clearMessages()
             is CaregiverPrescriptionsAction.Refresh -> refresh()
