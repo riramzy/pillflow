@@ -83,7 +83,8 @@ class CaregiverEscalationReceiver: BroadcastReceiver() {
                 )
 
                 val notification = NotificationCompat.Builder(context, channelId)
-                    .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                    .setSmallIcon(com.riramzy.pillfllow.R.drawable.ic_notification)
+                    .setColor(0xFF835414.toInt())
                     .setContentTitle(title)
                     .setContentText(body)
                     .setPriority(NotificationCompat.PRIORITY_MAX)

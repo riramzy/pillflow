@@ -210,8 +210,12 @@ actual class PlatformNotifier {
             )
         }
 
+        val iconResId = ctx.resources.getIdentifier("ic_notification", "drawable", ctx.packageName)
+        val smallIcon = if (iconResId != 0) iconResId else android.R.drawable.ic_dialog_alert
+
         val builder = NotificationCompat.Builder(ctx, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setSmallIcon(smallIcon)
+            .setColor(0xFF835414.toInt())
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

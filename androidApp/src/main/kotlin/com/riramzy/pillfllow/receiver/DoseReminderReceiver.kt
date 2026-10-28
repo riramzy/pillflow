@@ -86,7 +86,8 @@ class DoseReminderReceiver: BroadcastReceiver() {
                 }
 
                 val builder = NotificationCompat.Builder(context, channelId)
-                    .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                    .setSmallIcon(com.riramzy.pillfllow.R.drawable.ic_notification)
+                    .setColor(0xFF835414.toInt())
                     .setContentTitle(title)
                     .setContentText(message)
                     .setPriority(if (isAdvance) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_MAX)
