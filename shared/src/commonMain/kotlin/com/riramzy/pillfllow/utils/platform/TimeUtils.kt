@@ -75,3 +75,9 @@ fun parseScheduleTimeToMillis(scheduleText: String?): List<Long> {
     if (scheduleText.isNullOrBlank()) return emptyList()
     return scheduleText.split(",").mapNotNull { parseTimeStringToMillis(it.trim()) }
 }
+
+fun getDayOfWeekIndex(millis: Long): Int {
+    val firstDayOfWeek = getFirstDayOfWeekOfMonth(millis)
+    val dayOfMonth = getDayOfMonth(millis)
+    return (firstDayOfWeek + dayOfMonth - 1) % 7
+}

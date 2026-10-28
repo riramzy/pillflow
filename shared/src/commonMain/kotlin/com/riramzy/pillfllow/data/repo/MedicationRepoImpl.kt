@@ -86,7 +86,7 @@ class MedicationRepoImpl(
                 .set(dto)
 
             val logDto = DoseLogDto(
-                id = "log_${currentTimeMillis()}_${dose.id}",
+                id = "log_${dose.id}",
                 patientId = userId,
                 patientName = patientName,
                 medicationName = med?.name ?: "",
@@ -279,7 +279,7 @@ class MedicationRepoImpl(
                 medicationDao.markScheduledDoseSynced(id)
 
                 val logDto = DoseLogDto(
-                    id = "log_${currentTimeMillis()}_${id}",
+                    id = "log_${id}",
                     patientId = userId,
                     patientName = patientName,
                     medicationName = med?.name ?: "",
@@ -335,7 +335,7 @@ class MedicationRepoImpl(
                 medicationDao.markScheduledDoseSynced(id)
 
                 val logDto = DoseLogDto(
-                    id = "log_${currentTimeMillis()}_${id}",
+                    id = "log_${id}",
                     patientId = userId,
                     patientName = patientName,
                     medicationName = med?.name ?: "",
@@ -534,11 +534,13 @@ class MedicationRepoImpl(
                                     it.isSynced
                         }.forEach { med ->
                             val pendingDosesIds = medicationDao.getPendingDoseIdsForMedication(med.id)
+
                             pendingDosesIds.forEach { doseId ->
                                 platformNotifier.cancelReminder(doseId = doseId)
-                                medicationDao.deletePendingDosesByMedicationId(med.id)
-                                medicationDao.deleteMedicationById(med.id)
                             }
+
+                            medicationDao.deletePendingDosesByMedicationId(med.id)
+                            medicationDao.deleteMedicationById(med.id)
                         }
 
                         val localMap = local.associateBy { it.id }

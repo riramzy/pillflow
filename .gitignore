@@ -20,3 +20,9 @@ node_modules/
 /androidApp/google-services.json
 /shared/schemas/com.riramzy.pillfllow.data.local.database.PillFlowDatabase/1.json
 /iosApp/iosApp/GoogleService-Info.plist
+# Keystores & Signing
+*.jks
+*.keystore
+# Internal Agent & IDE assistant configs
+.agents/
+.gemini/

@@ -105,6 +105,15 @@ class UserRepoImpl(
         val patient = getUserByIdOnce(patientId)
         if (patient != null) {
             userDao.insertUser(patient.copy(pairedCaregiverId = caregiverId))
+            runCatching {
+                firestore
+                    .collection("users")
+                    .document(patientId)
+                    .update(
+                        "pairedCaregiverId" to caregiverId,
+                        "updatedAt" to currentTimeMillis()
+                    )
+            }
         }
     }
 

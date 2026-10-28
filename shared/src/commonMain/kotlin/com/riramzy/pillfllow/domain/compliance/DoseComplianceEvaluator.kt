@@ -19,6 +19,7 @@ import com.riramzy.pillfllow.utils.pill.PillShapeMapper
 import com.riramzy.pillfllow.utils.platform.formatDate
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
+import com.riramzy.pillfllow.utils.platform.getDayOfWeekIndex
 import com.riramzy.pillfllow.utils.platform.getDaysInMonth
 import com.riramzy.pillfllow.utils.platform.isSameDay
 import com.riramzy.pillfllow.utils.platform.isSameMonthAndYear
@@ -196,7 +197,7 @@ object DoseComplianceEvaluator {
         now: Long
     ): WeeklyComplianceEvaluation {
         val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        val currentDayIndex = (((now / 86400000L) + 3) % 7).toInt()
+        val currentDayIndex = getDayOfWeekIndex(now)
 
         val days = dayNames.mapIndexed { index, name ->
             val dayOffsetMillis = (index - currentDayIndex) * 86400000L

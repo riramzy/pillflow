@@ -23,12 +23,12 @@ class GetPatientPairingStatusUseCase(
                 ?: if (active != null) "Connected Caregiver" else null
 
             val caregiverRelation = when (active?.relation?.trim()?.lowercase()) {
-                "mom", "mother" -> "Son"
-                "dad", "father" -> "Son"
+                "mom", "mother" -> "Child"
+                "dad", "father" -> "Child"
                 "son" -> "Parent"
                 "daughter" -> "Parent"
-                "grandma", "grandmother" -> "Grandson"
-                "grandpa", "grandfather" -> "Grandson"
+                "grandma", "grandmother" -> "Grandchild"
+                "grandpa", "grandfather" -> "Grandchild"
                 "patient", "", null -> if (active != null) "Caregiver" else null
                 else -> active.relation.ifBlank { "Caregiver" }
             }

@@ -31,7 +31,7 @@ class GetCaregiverPatientsUseCase(
                 val patientName = patient?.firstName?.ifBlank { null } ?: relation
 
                 val patientDoses = medicationRepo.getPendingDosesForUser(patientId).firstOrNull() ?: emptyList()
-                val patientHistory = medicationRepo.getDoseHistoryForUser(patientId).firstOrNull() ?: emptyList()
+                val patientHistory = medicationRepo.getDoseHistoryForUserOnce(patientId)
 
                 val todayPatientDoses = patientDoses.filter { isSameDay(it.scheduledTime, now) }
                 val todayPatientHistory = patientHistory.filter {

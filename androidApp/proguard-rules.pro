@@ -1,21 +1,30 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ====================================================================
+# PillFlow Production R8 / ProGuard Rules
+# ====================================================================
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 1. Preserve Firestore DTOs and reflection / serialization fields
+-keep class com.riramzy.pillfllow.data.remote.dto.** { *; }
+-keepclassmembers class com.riramzy.pillfllow.data.remote.dto.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# 2. Preserve Room SQLite Entities
+-keep class com.riramzy.pillfllow.data.local.entity.** { *; }
+-keepclassmembers class com.riramzy.pillfllow.data.local.entity.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# 3. Kotlinx Serialization
+-keepattributes *Annotation*, InnerClasses, EnclosingMethod
+-keepclassmembers class * {
+    @kotlinx.serialization.SerialName <fields>;
+}
+-keepclassmembers class **$$serializer {
+    public static final **$$serializer INSTANCE;
+}
+-keepclasseswithmembers class * {
+    @kotlinx.serialization.Serializable <fields>;
+}
+-keepclassmembers class * implements kotlinx.serialization.KSerializer {
+    <fields>;
+    <methods>;
+}
+
+# 4. Koin DI reflection safety
+-dontwarn org.koin.**

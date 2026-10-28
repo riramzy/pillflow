@@ -388,7 +388,7 @@ fun CaregiverPrescriptionsScreenContent(
                                                 daysLeft = prescription.daysLeft,
                                                 onRefillClick = { onAction(CaregiverPrescriptionsAction.OpenRefillSheet(prescription.id)) },
                                                 onEditClick = { onAction(CaregiverPrescriptionsAction.OpenEditSheet(prescription.id)) },
-                                                onDeleteClick = { onAction(CaregiverPrescriptionsAction.DeletePrescription(prescription.id)) }
+                                                onDeleteClick = { prescriptionToDelete = prescription }
                                             )
                                         }
                                     }

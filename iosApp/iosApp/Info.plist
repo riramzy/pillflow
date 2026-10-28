@@ -11,8 +11,16 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>tel</string>
-	</array>
+    	<array>
+    		<string>tel</string>
+    	</array>
+    	<key>UIBackgroundModes</key>
+    	<array>
+    		<string>fetch</string>
+    	</array>
+    	<key>BGTaskSchedulerPermittedIdentifiers</key>
+    	<array>
+    		<string>com.riramzy.pillflow.refresh</string>
+    	</array>
 </dict>
 </plist>

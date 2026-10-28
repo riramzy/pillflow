@@ -2,7 +2,9 @@ package com.riramzy.pillfllow.domain.scheduler
 
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
+import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.isSameDay
+import com.riramzy.pillfllow.utils.platform.parseTimeStringToMillis
 
 object MedicationScheduler {
     const val ROLLING_DAYS = 7
@@ -60,10 +62,8 @@ object MedicationScheduler {
         if (latestDoseTime > now + (6 * DAY_MILLIS)) return emptyList()
 
         val existingTimes = existingDoses.map { it.scheduledTime }.toSet()
-        val distinctOffsets = existingDoses.map { it.scheduledTime % DAY_MILLIS }.distinct()
-
-        val todayStart = now - (now % DAY_MILLIS)
-        val baseTimesToday = distinctOffsets.map { todayStart + it }
+        val distinctTimesFormatted = existingDoses.map { formatTime(it.scheduledTime) }.distinct()
+        val baseTimesToday = distinctTimesFormatted.mapNotNull { parseTimeStringToMillis(it) }
 
         return generateRollingDoses(
             medicationId = medicationId,

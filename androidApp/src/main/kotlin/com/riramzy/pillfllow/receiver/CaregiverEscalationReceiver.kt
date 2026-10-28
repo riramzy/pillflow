@@ -12,7 +12,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.riramzy.pillfllow.MainActivity
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
-import com.riramzy.pillfllow.data.local.dao.UserDao
+import com.riramzy.pillfllow.domain.repo.AuthRepo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,8 +20,8 @@ import org.koin.java.KoinJavaComponent.inject
 
 @Suppress("DEPRECATION")
 class CaregiverEscalationReceiver: BroadcastReceiver() {
-    private val userDao: UserDao by inject(UserDao::class.java)
     private val medicationDao: MedicationDao by inject(MedicationDao::class.java)
+    private val authRepo: AuthRepo by inject(AuthRepo::class.java)
 
     @SuppressLint("FullScreenIntentPolicy")
     override fun onReceive(context: Context, intent: Intent) {
@@ -30,7 +30,7 @@ class CaregiverEscalationReceiver: BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val activeUser = userDao.getAllUsersOnce().firstOrNull() ?: return@launch
+                val activeUser = authRepo.getCurrentUser() ?: return@launch
                 if (!activeUser.userType.equals("caregiver", ignoreCase = true)) return@launch
 
                 val doseId = intent.getStringExtra("DOSE_ID") ?: ""
