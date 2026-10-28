@@ -31,6 +31,7 @@ class DoseActionReceiver: BroadcastReceiver() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         logDoseTakenUseCase(doseId = doseId)
+                        showActionFeedback(context, "Dose Recorded", "Marked as taken.")
                     } finally {
                         pendingResult.finish()
                     }
@@ -40,6 +41,7 @@ class DoseActionReceiver: BroadcastReceiver() {
             ACTION_SNOOZE_DOSE -> {
                 val pillName = intent.getStringExtra("PILL_NAME") ?: "Medication"
                 platformNotifier.cancelReminder(context, doseId)
+
                 val snoozeTargetTime = System.currentTimeMillis() + 15 * 60 * 1000L
 
                 platformNotifier.scheduleDoseReminder(
@@ -49,7 +51,37 @@ class DoseActionReceiver: BroadcastReceiver() {
                     triggerTimeMillis = snoozeTargetTime,
                     stage = DoseReminderStage.DUE_NOW
                 )
+                showActionFeedback(context, "Dose Snoozed", "$pillName reminder set for 15 minutes.")
             }
         }
     }
+}
+
+private fun showActionFeedback(context: Context?, title: String, message: String) {
+    val ctx = context ?: return
+    val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager ?: return
+    val channelId = "pillflow_feedback_channel"
+
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        val channel = android.app.NotificationChannel(
+            channelId,
+            "Action Confirmations",
+            android.app.NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Brief confirmations for medication actions taken"
+        }
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    val notification = androidx.core.app.NotificationCompat.Builder(ctx, channelId)
+        .setSmallIcon(com.riramzy.pillfllow.R.drawable.ic_notification)
+        .setColor(0xFF835414.toInt())
+        .setContentTitle(title)
+        .setContentText(message)
+        .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
+        .setAutoCancel(true)
+        .setTimeoutAfter(10000L)
+        .build()
+
+    notificationManager.notify(99999, notification)
 }
