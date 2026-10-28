@@ -56,9 +56,9 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
+import com.riramzy.pillfllow.ui.components.custom.PillFlowScreenHeaderCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
-import com.riramzy.pillfllow.ui.components.custom.PillFlowUserCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceCard
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowFloatingNudgeBanner
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
@@ -314,7 +314,7 @@ fun PatientDashboardScreenContent(
                         contentPadding = PaddingValues(bottom = 100.dp),
                     ) {
                         item {
-                            PillFlowUserCard(
+                            PillFlowScreenHeaderCard(
                                 userName = state.user?.firstName ?: "User",
                                 headerDosesSubtitle = state.headerDosesSubtitle,
                                 modifier = Modifier

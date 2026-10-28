@@ -1,9 +1,7 @@
 package com.riramzy.pillfllow.ui.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,6 +35,7 @@ import com.riramzy.pillfllow.domain.repo.NotificationsRepo
 import com.riramzy.pillfllow.ui.components.custom.PillFlowBottomNavBar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
+import com.riramzy.pillfllow.ui.components.custom.PillFlowScreenHeaderCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowSnackbar
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.settings.PillFlowConnectedUserCard
@@ -313,29 +312,13 @@ fun PatientSettingsScreenContent(
                 contentPadding = PaddingValues(bottom = 100.dp),
             ) {
                 item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.Start,
+                    PillFlowScreenHeaderCard(
+                        isStatic = true,
+                        title = "Settings",
+                        subtitle = "Link codes, sensor calibration & profile settings",
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(horizontal = 15.dp)
-                    ) {
-                        Text(
-                            text = "Settings",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Text(
-                            text = "Link codes, sensor calibration & profile settings",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    )
                 }
 
                 item {

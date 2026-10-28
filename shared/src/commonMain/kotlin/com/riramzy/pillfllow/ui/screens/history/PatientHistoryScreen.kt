@@ -28,6 +28,7 @@ import com.riramzy.pillfllow.ui.components.custom.PillFlowEmptyStateCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLoadingCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowLogCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowPullToRefreshBox
+import com.riramzy.pillfllow.ui.components.custom.PillFlowScreenHeaderCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowTopAppBar
 import com.riramzy.pillfllow.ui.components.history.MonthDaysCompliance
 import com.riramzy.pillfllow.ui.components.history.PillFlowMonthSelectionCard
@@ -120,29 +121,13 @@ fun PatientHistoryScreenContent(
                     contentPadding = PaddingValues(bottom = 100.dp),
                 ) {
                     item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
+                        PillFlowScreenHeaderCard(
+                            isStatic = true,
+                            title = "Adherence History",
+                            subtitle = "Monthly compliance tracking & log history",
                             modifier = Modifier
-                                .fillMaxWidth()
                                 .padding(horizontal = 15.dp)
-                        ) {
-                            Text(
-                                text = "Adherence History",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            Text(
-                                text = "Monthly compliance tracking & log history",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        )
                     }
 
                     item {

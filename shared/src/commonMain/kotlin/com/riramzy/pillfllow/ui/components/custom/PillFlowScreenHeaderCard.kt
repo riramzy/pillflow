@@ -21,10 +21,13 @@ import androidx.compose.ui.unit.sp
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 
 @Composable
-fun PillFlowUserCard(
+fun PillFlowScreenHeaderCard(
     modifier: Modifier = Modifier,
     userName: String = "Ramzy",
-    headerDosesSubtitle: String = "Keep up the good work!"
+    headerDosesSubtitle: String = "Keep up the good work!",
+    isStatic: Boolean = false,
+    title: String = "Hello, Ramzy",
+    subtitle: String = "Keep up the good work!",
 ) {
     Card(
         modifier = modifier
@@ -43,14 +46,14 @@ fun PillFlowUserCard(
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = "Hello, $userName",
+                text = if (isStatic) title else "Hello, $userName",
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = headerDosesSubtitle,
+                text = if (isStatic) subtitle else headerDosesSubtitle,
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal
@@ -61,16 +64,16 @@ fun PillFlowUserCard(
 
 @Preview
 @Composable
-fun PillFlowUserCardPreview() {
+fun PillFlowScreenHeaderCardPreview() {
     PillFlowTheme {
-        PillFlowUserCard()
+        PillFlowScreenHeaderCard()
     }
 }
 
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-fun PillFlowUserCardPreviewDark() {
+fun PillFlowScreenHeaderCardPreviewDark() {
     PillFlowTheme {
-        PillFlowUserCard()
+        PillFlowScreenHeaderCard()
     }
 }
