@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.riramzy.pillfllow.data.local.dao.MedicationDao
+import com.riramzy.pillfllow.data.local.dao.UserDao
+import com.riramzy.pillfllow.domain.compliance.DoseStateMachine
 import com.riramzy.pillfllow.domain.hardware.PlatformNotifier
 import com.riramzy.pillfllow.utils.medication.DoseReminderStage
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
@@ -14,6 +16,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class BootReceiver : BroadcastReceiver() {
     private val medicationDao: MedicationDao by inject(MedicationDao::class.java)
+    private val userDao: UserDao by inject(UserDao::class.java)
     private val platformNotifier: PlatformNotifier by inject(PlatformNotifier::class.java)
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -31,45 +34,88 @@ class BootReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val now = currentTimeMillis()
-                val medications = medicationDao.getAllMedicationsOnce().associateBy { it.id }
-                val pendingDoses = medicationDao.getAllPendingScheduledDosesOnce()
-                    .filter { !it.isTaken && it.scheduledTime > now }
+                val activeUser = userDao.getAllUsersOnce().firstOrNull()
+                val isCaregiver = activeUser?.userType.equals("caregiver", ignoreCase = true)
 
-                pendingDoses.forEach { dose ->
-                    val medName = medications[dose.medicationId]?.name ?: "Medication"
+                val activeMeds = medicationDao.getAllMedicationsOnce()
+                    .filter { !it.isArchived && !it.isPaused && !it.isPrn }
+                    .associateBy { it.id }
 
-                    val tMinus30 = dose.scheduledTime - 30 * 60 * 1000L
-                    if (tMinus30 > now) {
-                        platformNotifier.scheduleDoseReminder(
-                            context = context,
-                            doseId = dose.id,
-                            pillName = medName,
-                            triggerTimeMillis = tMinus30,
-                            stage = DoseReminderStage.ADVANCE_30MIN
-                        )
+                val activeDoses = medicationDao.getAllPendingScheduledDosesOnce()
+                    .filter { dose ->
+                        !dose.isTaken &&
+                                activeMeds.containsKey(dose.medicationId) &&
+                                (now <= dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS)
                     }
 
-                    platformNotifier.scheduleDoseReminder(
-                        context = context,
-                        doseId = dose.id,
-                        pillName = medName,
-                        triggerTimeMillis = dose.scheduledTime,
-                        stage = DoseReminderStage.DUE_NOW
-                    )
+                if (isCaregiver) {
+                    activeDoses.forEach { dose ->
+                        val medName = activeMeds[dose.medicationId]?.name ?: "Medication"
 
-                    val tPlus15 = dose.scheduledTime + 15 * 60 * 1000L
-                    if (tPlus15 > now) {
+                        val lateTrigger = dose.scheduledTime + DoseStateMachine.ON_TIME_WINDOW_MILLIS
+                        if (lateTrigger > now) {
+                            platformNotifier.scheduleCaregiverEscalation(
+                                context = context,
+                                doseId = dose.id,
+                                pillName = medName,
+                                patientName = activeUser?.firstName ?: "Your patient",
+                                triggerTimeMillis = lateTrigger,
+                                isMissed = false
+                            )
+                        }
+
+                        val missedTrigger = dose.scheduledTime + DoseStateMachine.LATE_WINDOW_MILLIS
+                        if (missedTrigger > now) {
+                            platformNotifier.scheduleCaregiverEscalation(
+                                context = context,
+                                doseId = dose.id,
+                                pillName = medName,
+                                patientName = activeUser?.firstName ?: "Your patient",
+                                triggerTimeMillis = missedTrigger,
+                                isMissed = true
+                            )
+                        }
+                    }
+                } else {
+                    activeDoses.forEach { dose ->
+                        val medName = activeMeds[dose.medicationId]?.name ?: "Medication"
+
+                        val tMinus30 = dose.scheduledTime - 30 * 60 * 1000L
+                        if (tMinus30 > now) {
+                            platformNotifier.scheduleDoseReminder(
+                                context = context,
+                                doseId = dose.id,
+                                pillName = medName,
+                                triggerTimeMillis = tMinus30,
+                                stage = DoseReminderStage.ADVANCE_30MIN
+                            )
+                        }
+
+                        val dueTrigger = if (dose.scheduledTime > now) {
+                            dose.scheduledTime
+                        } else {
+                            (now + 1000L)
+                        }
                         platformNotifier.scheduleDoseReminder(
                             context = context,
                             doseId = dose.id,
                             pillName = medName,
-                            triggerTimeMillis = tPlus15,
-                            stage = DoseReminderStage.PRE_EXPIRY_15MIN
+                            triggerTimeMillis = dueTrigger,
+                            stage = DoseReminderStage.DUE_NOW
                         )
+
+                        val tPlus = dose.scheduledTime + 15 * 60 * 1000L
+                        if (tPlus > now) {
+                            platformNotifier.scheduleDoseReminder(
+                                context = context,
+                                doseId = dose.id,
+                                pillName = medName,
+                                triggerTimeMillis = tPlus,
+                                stage = DoseReminderStage.PRE_EXPIRY_15MIN
+                            )
+                        }
                     }
                 }
-
-
             } finally {
                 pendingResult.finish()
             }
