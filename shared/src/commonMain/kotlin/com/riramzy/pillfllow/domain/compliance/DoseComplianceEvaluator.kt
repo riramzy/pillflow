@@ -16,6 +16,7 @@ import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.pill.PillColorMapper
 import com.riramzy.pillfllow.utils.pill.PillShape
 import com.riramzy.pillfllow.utils.pill.PillShapeMapper
+import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.platform.formatDate
 import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.getDayOfMonth
@@ -603,21 +604,34 @@ object DoseComplianceEvaluator {
 
     fun evaluatePrnMedications(
         medications: List<MedicationEntity>,
-        historyDoses: List<DoseHistoryEntity>
+        historyDoses: List<DoseHistoryEntity>,
+        now: Long = currentTimeMillis()
     ): List<PrnMedicationUiModel> {
         return medications
             .filter { it.isPrn && !it.isPaused && !it.isArchived }
             .map { med ->
-                val lastTaken = historyDoses
+                val todayTaken = historyDoses
                     .filter {
                         it.medicationId == med.id
-                            && it.isTaken
-                            && it.complianceStatus != "SKIPPED"
+                                && it.isTaken
+                                && it.complianceStatus != "SKIPPED"
+                                && isSameDay(it.takenTime ?: it.scheduledTime, now)
                     }
-                    .maxByOrNull { it.takenTime ?: it.scheduledTime }
 
-                val lastTakenText = lastTaken?.let {
-                    "Last taken: ${formatTime(it.takenTime ?: it.scheduledTime)}"
+                val takenTodayCount = todayTaken.size
+                val lastTakenToday = todayTaken.maxByOrNull { it.takenTime ?: it.scheduledTime }
+                val isAlreadyTook = lastTakenToday != null
+
+                val lastTakenText = when {
+                    lastTakenToday == null -> "Has not been taken today yet!"
+                    takenTodayCount == 1 -> {
+                        val timeString = formatTime(lastTakenToday.takenTime ?: lastTakenToday.scheduledTime)
+                        "Last time taken: $timeString"
+                    }
+                    else -> {
+                        val timeString = formatTime(lastTakenToday.takenTime ?: lastTakenToday.scheduledTime)
+                        "Taken ${takenTodayCount}x today • Last: $timeString"
+                    }
                 }
 
                 PrnMedicationUiModel(
@@ -625,6 +639,9 @@ object DoseComplianceEvaluator {
                     name = med.name,
                     dosage = med.dosage,
                     color = PillColorMapper.fromRaw(med.colorHex),
+                    shape = PillShapeMapper.fromRaw(med.shape, default = PillShape.CAPSULE),
+                    isAlreadyTook = isAlreadyTook,
+                    takenTodayCount = takenTodayCount,
                     lastTakenText = lastTakenText
                 )
             }

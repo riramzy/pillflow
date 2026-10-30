@@ -81,7 +81,7 @@ class PatientDashboardViewModel(
                         val dish = DoseComplianceEvaluator.evaluateDishPills(today.todayPendingDoses, _state.value.pills, now)
                         val timeline = DoseComplianceEvaluator.evaluateScheduledTimeline(today.todayPendingDoses, today.todayScheduledHistoryDoses, now)
                         val complianceCards = DoseComplianceEvaluator.evaluatePatientComplianceCards(today.todayPendingDoses, today.todayScheduledHistoryDoses, now)
-                        val prnUiModels = DoseComplianceEvaluator.evaluatePrnMedications(medications, historyDoses)
+                        val prnUiModels = DoseComplianceEvaluator.evaluatePrnMedications(medications, historyDoses, now)
 
                         _state.update {
                             it.copy(

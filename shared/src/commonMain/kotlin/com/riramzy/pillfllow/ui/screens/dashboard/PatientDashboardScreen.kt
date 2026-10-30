@@ -5,13 +5,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,15 +17,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -62,9 +57,11 @@ import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowComplianceC
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowFloatingNudgeBanner
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowPillJarSandbox
 import com.riramzy.pillfllow.ui.components.dashboard.patient.PillFlowScheduledDoseCard
+import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowAsNeededPrescriptionCard
 import com.riramzy.pillfllow.ui.components.prescriptions.PillFlowPrescriptionCabinetCard
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardAction
 import com.riramzy.pillfllow.ui.state.dashboard.PatientDashboardState
+import com.riramzy.pillfllow.ui.state.dashboard.PrnMedicationUiModel
 import com.riramzy.pillfllow.ui.state.dashboard.ScheduledDoseUiModel
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.dashboard.PatientDashboardViewModel
@@ -107,7 +104,6 @@ fun PatientDashboardScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientDashboardScreenContent(
     modifier: Modifier = Modifier,
@@ -126,50 +122,54 @@ fun PatientDashboardScreenContent(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var showPrnSheet by remember { mutableStateOf(false) }
+    var prnMedToLog by remember { mutableStateOf<PrnMedicationUiModel?>(null) }
 
-    if (showPrnSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showPrnSheet = false }
-        ) {
-            Column(
-                modifier = Modifier.padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(30.dp)
-            ) {
-                Column {
-                    Text(
-                        text = "Log As-Needed Medication",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+    if (prnMedToLog != null) {
+        val med = prnMedToLog!!
 
-                    Text(
-                        text = "Tap a medication to record a dose taken now",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                state.prnMedications.forEach { prnMed ->
-                    PillFlowScheduledDoseCard(
-                        name = prnMed.name,
-                        dose = prnMed.dosage,
-                        time = "As Needed",
-                        color = prnMed.color,
-                        status = ComplianceStatus.DEFAULT,
-                        badgeText = prnMed.lastTakenText ?: "Log Dose",
-                        modifier = Modifier.clickable {
-                            onAction(PatientDashboardAction.LogPrnDose(prnMed.medicationId))
-                            showPrnSheet = false
-                        }
-                    )
-                }
+        AlertDialog(
+            onDismissRequest = { prnMedToLog = null },
+            title = {
+                Text(
+                    text = if (med.isAlreadyTook) "Retake ${med.name}?" else "Take ${med.name}?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = if (med.isAlreadyTook) {
+                        "You have already taken ${med.name} ${med.takenTodayCount} ${if (med.takenTodayCount == 1) "time" else "times"} today. Do you want to record another ${med.dosage} dose now?"
+                    } else {
+                        "Confirm taking a ${med.dosage} dose of ${med.name} right now?"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            confirmButton = {
+                PillFlowButton(
+                    text = if (med.isAlreadyTook) "Retake" else "Take",
+                    customColor = MaterialTheme.colorScheme.primary,
+                    customTextColor = MaterialTheme.colorScheme.onPrimary,
+                    onClick = {
+                        onAction(PatientDashboardAction.LogPrnDose(med.medicationId))
+                        prnMedToLog = null
+                    }
+                )
+            },
+            dismissButton = {
+                PillFlowButton(
+                    text = "Cancel",
+                    customColor = MaterialTheme.colorScheme.surface,
+                    customTextColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { prnMedToLog = null }
+                )
             }
-        }
+        )
     }
 
     if (doseToSkip != null) {
@@ -397,35 +397,13 @@ fun PatientDashboardScreenContent(
                                     .fillMaxWidth()
                                     .padding(horizontal = 15.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Daily Schedule",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-
-                                    if (state.prnMedications.isNotEmpty()) {
-                                        Surface(
-                                            onClick = { showPrnSheet = true },
-                                            shape = RoundedCornerShape(20.dp),
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                        ) {
-                                            Text(
-                                                text = "+ As-Needed",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.padding(10.dp)
-                                            )
-                                        }
-                                    }
-                                }
+                                Text(
+                                    text = "Daily Schedule",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
 
                                 if (state.scheduledDoses.isEmpty()) {
                                     PillFlowEmptyStateCard(
@@ -445,6 +423,38 @@ fun PatientDashboardScreenContent(
                                             color = scheduledDose.color,
                                             status = scheduledDose.status,
                                             badgeText = scheduledDose.badgeText,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (state.prnMedications.isNotEmpty()) {
+                            item {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(15.dp),
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 15.dp)
+                                ) {
+                                    Text(
+                                        text = "As-Needed Medications",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+
+                                    state.prnMedications.forEach { prnMed ->
+                                        PillFlowAsNeededPrescriptionCard(
+                                            medicationName = prnMed.name,
+                                            dosage = prnMed.dosage,
+                                            pillShape = prnMed.shape,
+                                            pillColor = prnMed.color,
+                                            metadataText = prnMed.lastTakenText,
+                                            isAlreadyTook = prnMed.isAlreadyTook,
+                                            onTakeClick = { prnMedToLog = prnMed }
                                         )
                                     }
                                 }

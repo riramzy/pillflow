@@ -7,6 +7,7 @@ import com.riramzy.pillfllow.ui.state.prescriptions.LowSupplyMedicationUiModel
 import com.riramzy.pillfllow.utils.medication.ComplianceStatus
 import com.riramzy.pillfllow.utils.physics.PhysicsSensitivity
 import com.riramzy.pillfllow.utils.pill.PillColor
+import com.riramzy.pillfllow.utils.pill.PillShape
 
 data class PatientDashboardState(
     val user: UserEntity? = null,
@@ -69,7 +70,10 @@ data class PrnMedicationUiModel(
     val name: String,
     val dosage: String,
     val color: PillColor,
-    val lastTakenText: String? = null
+    val shape: PillShape = PillShape.CAPSULE,
+    val isAlreadyTook: Boolean = false,
+    val takenTodayCount: Int = 0,
+    val lastTakenText: String = "Has not been taken today yet!"
 )
 
 sealed interface PatientDashboardAction {
