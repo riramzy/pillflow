@@ -15,6 +15,8 @@ serialization = "1.7.3"
 material3 = "1.11.0-alpha07"
 navigation = "2.9.2"
 work = "2.10.0"
+credentials = "1.6.0"
+googleid = "1.2.1"
 
 # Android compile parameters (keep your SDK 36 settings)
 android-compileSdk = "36"
@@ -41,7 +43,6 @@ androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", vers
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
-
 
 # Compose Multiplatform UI Libraries
 compose-uiTooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
@@ -81,6 +82,11 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 # WorkManager
 androidx-work = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+
+# Credential Manager & Google Identity
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 
 [plugins]
 # Android & Multiplatform Core Plugins

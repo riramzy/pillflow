@@ -73,6 +73,9 @@ kotlin {
             implementation(libs.firebase.android.firestore)
             implementation(libs.compose.uiTooling)
             implementation(libs.koin.android)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services)
+            implementation(libs.googleid)
         }
     }
     sourceSets.commonTest.dependencies {
