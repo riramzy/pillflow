@@ -8,7 +8,6 @@ import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateComponents
 import platform.Foundation.NSDateFormatter
-import platform.Foundation.dateWithTimeInterval
 import platform.Foundation.dateWithTimeIntervalSince1970
 import platform.Foundation.timeIntervalSince1970
 
@@ -61,8 +60,13 @@ actual fun getTodayTimeInMillis(hour: Int, minute: Int): Long {
 
     var date = cal.dateFromComponents(components) ?: now
 
+
     if (date.timeIntervalSince1970 <= now.timeIntervalSince1970) {
-        date = NSDate.dateWithTimeInterval(86400.0, sinceDate = date)
+        date = cal.dateByAddingComponents(
+            NSDateComponents().apply { day = 1 },
+            date,
+            0u
+        ) ?: date
     }
 
     return (date.timeIntervalSince1970 * 1000).toLong()
@@ -133,4 +137,20 @@ actual fun getFirstDayOfWeekOfMonth(millis: Long): Int {
     val weekday = cal.component(NSCalendarUnitWeekday, fromDate = firstDay).toInt()
 
     return (weekday + 5) % 7
+}
+
+actual fun addDays(millis: Long, days: Int): Long {
+    val cal = NSCalendar.currentCalendar
+    val date = NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)
+    val components = NSDateComponents().apply {
+        day = days.toLong()
+    }
+
+    val shiftedDate = cal.dateByAddingComponents(
+        components,
+        date,
+        0u
+    ) ?: date
+
+    return (shiftedDate.timeIntervalSince1970 * 1000).toLong()
 }

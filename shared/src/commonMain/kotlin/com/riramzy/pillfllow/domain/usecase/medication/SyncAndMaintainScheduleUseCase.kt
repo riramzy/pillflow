@@ -28,7 +28,8 @@ class SyncAndMaintainScheduleUseCase(
 
             val newDoses = MedicationScheduler.extendRollingWindow(
                 medicationId = med.id,
-                existingDoses = medDoses
+                existingDoses = medDoses,
+                timeOfDay = med.timeOfDay
             )
 
             if (newDoses.isNotEmpty()) {

@@ -81,3 +81,12 @@ actual fun getFirstDayOfWeekOfMonth(millis: Long): Int {
 
     return (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
 }
+
+actual fun addDays(millis: Long, days: Int): Long {
+    val cal = Calendar.getInstance().apply {
+        timeInMillis = millis
+        add(Calendar.DAY_OF_YEAR, days)
+    }
+
+    return cal.timeInMillis
+}

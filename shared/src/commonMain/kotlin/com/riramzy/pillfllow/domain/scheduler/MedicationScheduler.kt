@@ -1,14 +1,13 @@
 package com.riramzy.pillfllow.domain.scheduler
 
 import com.riramzy.pillfllow.data.local.entity.ScheduledDoseEntity
+import com.riramzy.pillfllow.utils.platform.addDays
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
-import com.riramzy.pillfllow.utils.platform.formatTime
 import com.riramzy.pillfllow.utils.platform.isSameDay
-import com.riramzy.pillfllow.utils.platform.parseTimeStringToMillis
+import com.riramzy.pillfllow.utils.platform.parseScheduleTimeToMillis
 
 object MedicationScheduler {
     const val ROLLING_DAYS = 7
-    const val DAY_MILLIS = 86_400_000L
 
     fun generateRollingDoses(
         medicationId: String,
@@ -33,7 +32,8 @@ object MedicationScheduler {
                 emptyList()
             } else {
                 baseTimesToday.mapNotNull { baseTime ->
-                    val targetTime = baseTime + (dayOffset * DAY_MILLIS)
+                    val targetTime = addDays(baseTime, dayOffset)
+
                     if (existingTimes.contains(targetTime)) {
                         null
                     } else {
@@ -53,17 +53,17 @@ object MedicationScheduler {
 
     fun extendRollingWindow(
         medicationId: String,
+        timeOfDay: String,
         existingDoses: List<ScheduledDoseEntity>,
         now: Long = currentTimeMillis()
     ): List<ScheduledDoseEntity> {
         if (existingDoses.isEmpty()) return emptyList()
 
         val latestDoseTime = existingDoses.maxOf { it.scheduledTime }
-        if (latestDoseTime > now + (6 * DAY_MILLIS)) return emptyList()
+        if (latestDoseTime > addDays(now, 6)) return emptyList()
 
         val existingTimes = existingDoses.map { it.scheduledTime }.toSet()
-        val distinctTimesFormatted = existingDoses.map { formatTime(it.scheduledTime) }.distinct()
-        val baseTimesToday = distinctTimesFormatted.mapNotNull { parseTimeStringToMillis(it) }
+        val baseTimesToday = parseScheduleTimeToMillis(timeOfDay)
 
         return generateRollingDoses(
             medicationId = medicationId,
