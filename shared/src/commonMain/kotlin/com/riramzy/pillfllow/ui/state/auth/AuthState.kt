@@ -16,10 +16,10 @@ data class AuthState(
     val selectedAvatar: String = "avatar1",
     val phoneNumber: String = "",
     val selectedCountry: Country = allCountries.firstOrNull { it.code.equals(getDeviceCountryCode(), ignoreCase = true) } ?: allCountries.first(),
-    val isSignUp: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isAuthenticated: Boolean = false
+    val isAuthenticated: Boolean = false,
+    val isRoleExplicitlySelected: Boolean = false
 )
 
 sealed interface AuthAction {
@@ -32,7 +32,6 @@ sealed interface AuthAction {
     data class AvatarSelected(val avatar: String): AuthAction
     data class PhoneNumberChanged(val phoneNumber: String): AuthAction
     data class CountrySelected(val country: Country): AuthAction
-    data object ToggleAuthMode: AuthAction
     data class SignUp(val onSuccess: () -> Unit = {}): AuthAction
     data class SignIn(val onSuccess: () -> Unit = {}): AuthAction
     data object DismissError: AuthAction

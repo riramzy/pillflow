@@ -19,7 +19,7 @@ class ResolveStartDestinationUseCase(
 
         return when {
             hasIncomplete -> SplashNavEvent.NavigateToCompleteProfile
-            sessionManager.isOnboardingCompleted() -> SplashNavEvent.NavigateToRoleSelection
+            sessionManager.isOnboardingCompleted() -> SplashNavEvent.NavigateToSignIn
             else -> SplashNavEvent.NavigateToOnboarding
         }
     }

@@ -57,27 +57,21 @@ import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
-import com.riramzy.pillfllow.utils.user.UserType
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AuthSignInScreen(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel = koinViewModel(),
-    selectedRole: UserType = UserType.PATIENT,
-    onNavigateToSignUp: () -> Unit = {},
-    onAuthSuccess: (UserType) -> Unit = {}
+    onNavigateToRoleSelection: () -> Unit = {},
+    onAuthSuccess: () -> Unit = {}
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(selectedRole) {
-        authViewModel.onAction(AuthAction.SelectRole(selectedRole))
-    }
 
     AuthSignInScreenContent(
         state = state,
         onAction = authViewModel::onAction,
-        onNavigateToSignUp = onNavigateToSignUp,
+        onNavigateToRoleSelection = onNavigateToRoleSelection,
         onAuthSuccess = onAuthSuccess,
         modifier = modifier
     )
@@ -88,8 +82,8 @@ fun AuthSignInScreenContent(
     modifier: Modifier = Modifier,
     state: AuthState = AuthState(),
     onAction: (AuthAction) -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {},
-    onAuthSuccess: (UserType) -> Unit = {}
+    onNavigateToRoleSelection: () -> Unit = {},
+    onAuthSuccess: () -> Unit = {}
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -165,17 +159,14 @@ fun AuthSignInScreenContent(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "Login as a ${state.selectedRole.label}",
+                                text = "Sign In",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
 
                             Text(
-                                text = when (state.selectedRole) {
-                                    UserType.PATIENT -> "Schedule your pills and add some fun to the process"
-                                    UserType.CAREGIVER -> "Support your loved ones and stay on top of their medication schedules"
-                                },
+                                text = "Manage medications and stay connected with loved ones",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
@@ -226,11 +217,7 @@ fun AuthSignInScreenContent(
                                 text = if (state.isLoading) "Logging In..." else "Sign In",
                                 isEnabled = !state.isLoading,
                                 onClick = {
-                                    onAction(AuthAction.SignIn(onSuccess = {
-                                        onAuthSuccess(
-                                            state.selectedRole
-                                        )
-                                    }))
+                                    onAction(AuthAction.SignIn(onSuccess = { onAuthSuccess() }))
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -244,8 +231,7 @@ fun AuthSignInScreenContent(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        onAction(AuthAction.ToggleAuthMode)
-                                        onNavigateToSignUp()
+                                        onNavigateToRoleSelection()
                                     }
                             )
                         }

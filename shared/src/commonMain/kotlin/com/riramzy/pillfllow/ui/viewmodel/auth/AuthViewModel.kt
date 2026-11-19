@@ -26,7 +26,7 @@ class AuthViewModel(
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
     fun onRoleSelected(role: UserType) {
-        _state.update { it.copy(selectedRole = role) }
+        _state.update { it.copy(selectedRole = role, isRoleExplicitlySelected = true) }
     }
 
     fun onFirstNameChanged(firstName: String) {
@@ -59,10 +59,6 @@ class AuthViewModel(
 
     fun onCountrySelected(country: Country) {
         _state.update { it.copy(selectedCountry = country) }
-    }
-
-    fun onToggleAuthMode() {
-        _state.update { it.copy(isSignUp = !it.isSignUp) }
     }
 
     fun signUp(onSuccess: () -> Unit = {}) {
@@ -148,7 +144,6 @@ class AuthViewModel(
             is AuthAction.AvatarSelected -> onAvatarSelected(action.avatar)
             is AuthAction.PhoneNumberChanged -> onPhoneNumberChanged(action.phoneNumber)
             is AuthAction.CountrySelected -> onCountrySelected(action.country)
-            is AuthAction.ToggleAuthMode -> onToggleAuthMode()
             is AuthAction.SignUp -> signUp(action.onSuccess)
             is AuthAction.SignIn -> signIn(action.onSuccess)
             is AuthAction.DismissError -> onErrorDismissed()

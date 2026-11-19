@@ -10,7 +10,7 @@ sealed interface SplashAction {
 
 sealed interface SplashNavEvent {
     data object NavigateToHome : SplashNavEvent
-    data object NavigateToRoleSelection : SplashNavEvent
+    data object NavigateToSignIn : SplashNavEvent
     data object NavigateToOnboarding : SplashNavEvent
     data object NavigateToCompleteProfile : SplashNavEvent
 }

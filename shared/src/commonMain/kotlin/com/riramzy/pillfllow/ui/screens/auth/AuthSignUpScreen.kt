@@ -65,7 +65,7 @@ fun AuthSignUpScreen(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel = koinViewModel(),
     selectedRole: UserType = UserType.PATIENT,
-    onAuthSuccess: (UserType) -> Unit = {},
+    onAuthSuccess: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
@@ -87,7 +87,7 @@ fun AuthSignUpScreen(
 fun AuthSignUpScreenContent(
     modifier: Modifier = Modifier,
     state: AuthState = AuthState(),
-    onAuthSuccess: (UserType) -> Unit = {},
+    onAuthSuccess: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
     onAction: (AuthAction) -> Unit = {}
 ) {
@@ -265,7 +265,7 @@ fun AuthSignUpScreenContent(
                         PillFlowButton(
                             text = if (state.isLoading) "Creating Account..." else "Sign Up",
                             isEnabled = !state.isLoading,
-                            onClick = { onAction(AuthAction.SignUp(onSuccess = { onAuthSuccess(state.selectedRole) })) },
+                            onClick = { onAction(AuthAction.SignUp(onSuccess = { onAuthSuccess() })) },
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
@@ -277,7 +277,6 @@ fun AuthSignUpScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onAction(AuthAction.ToggleAuthMode)
                                     onNavigateToSignIn()
                                 }
                         )

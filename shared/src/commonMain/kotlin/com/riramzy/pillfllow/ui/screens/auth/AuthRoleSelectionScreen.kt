@@ -1,15 +1,18 @@
 package com.riramzy.pillfllow.ui.screens.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riramzy.pillfllow.ui.components.auth.PillFlowAuthHeader
 import com.riramzy.pillfllow.ui.components.auth.PillFlowUserTypeCard
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
+import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.ui.theme.PillFlowTheme
 import com.riramzy.pillfllow.ui.viewmodel.auth.AuthViewModel
@@ -41,12 +46,14 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AuthRoleSelectionScreen(
     authViewModel: AuthViewModel = koinViewModel(),
     onRoleSelected: (UserType) -> Unit = {},
+    onNavigateToSignIn: () -> Unit = {}
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
 
     AuthRoleSelectionScreenContent(
         state = state,
-        onRoleSelected = { authViewModel.onRoleSelected(it) },
+        onRoleSelected = { authViewModel.onAction(AuthAction.SelectRole(it)) },
+        onNavigateToSignIn = onNavigateToSignIn,
         onContinueClick = { onRoleSelected(state.selectedRole) }
     )
 }
@@ -56,6 +63,7 @@ fun AuthRoleSelectionScreenContent(
     modifier: Modifier = Modifier,
     state: AuthState = AuthState(),
     onRoleSelected: (UserType) -> Unit = {},
+    onNavigateToSignIn: () -> Unit = {},
     onContinueClick: () -> Unit = {},
 ) {
     var infoDialogRole by remember { mutableStateOf<UserType?>(null) }
@@ -117,13 +125,14 @@ fun AuthRoleSelectionScreenContent(
         )
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(
                 color = MaterialTheme.colorScheme.surface
             )
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState()),
         contentAlignment = Alignment.Center
     ) {
         PillFlowAuthHeader(
@@ -186,11 +195,26 @@ fun AuthRoleSelectionScreenContent(
                     )
                 }
 
-                PillFlowButton(
-                    text = "Continue",
-                    onClick = { onContinueClick() },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    PillFlowButton(
+                        text = "Continue",
+                        onClick = { onContinueClick() },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text(
+                        text = "Already have an account? Sign In",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToSignIn() }
+                    )
+                }
             }
         }
     }

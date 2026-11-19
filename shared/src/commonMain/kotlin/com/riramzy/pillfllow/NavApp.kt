@@ -58,8 +58,9 @@ fun NavApp(
     val openNotifications = { showNotificationsSheet = true }
 
     val onLogoutSuccess = {
+        selectedRole = UserType.PATIENT
         sessionManager.clearUser()
-        navController.navigate(Screen.RoleSelection.route) {
+        navController.navigate(Screen.SignIn.route) {
             popUpTo(0) { inclusive = true }
             launchSingleTop = true
         }
@@ -87,7 +88,7 @@ fun NavApp(
             OnboardingScreen(
                 onFinishOnboarding = {
                     sessionManager.setOnboardingCompleted(true)
-                    navController.navigate(Screen.RoleSelection.route) {
+                    navController.navigate(Screen.SignIn.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
                 }
@@ -98,23 +99,22 @@ fun NavApp(
             AuthRoleSelectionScreen(
                 onRoleSelected = { role ->
                     selectedRole = role
-                    navController.navigate(Screen.SignIn.route)
+                    navController.navigate(Screen.SignUp.route) { launchSingleTop = true }
+                },
+                onNavigateToSignIn = {
+                    navController.popBackStack(Screen.SignIn.route, inclusive = false)
                 }
             )
         }
 
         composable(Screen.SignIn.route) {
             AuthSignInScreen(
-                selectedRole = selectedRole,
-                onNavigateToSignUp = {
-                    navController.navigate(Screen.SignUp.route) {
-                        popUpTo(Screen.SignIn.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                onNavigateToRoleSelection = {
+                    navController.navigate(Screen.RoleSelection.route) { launchSingleTop = true }
                 },
                 onAuthSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.RoleSelection.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -125,14 +125,11 @@ fun NavApp(
             AuthSignUpScreen(
                 selectedRole = selectedRole,
                 onNavigateToSignIn = {
-                    navController.navigate(Screen.SignIn.route) {
-                        popUpTo(Screen.SignUp.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    navController.popBackStack(Screen.SignIn.route, inclusive = false)
                 },
                 onAuthSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.RoleSelection.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -200,14 +197,6 @@ fun NavApp(
         }
 
         composable(Screen.Settings.route) {
-            val onLogoutSuccess = {
-                sessionManager.clearUser()
-                navController.navigate(Screen.RoleSelection.route) {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-
             if (isCaregiver) {
                 CaregiverSettingsScreen(
                     onNavigateToHome = { navigateToTab(Screen.Home.route) },
