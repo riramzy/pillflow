@@ -1,5 +1,7 @@
 package com.riramzy.pillfllow.di
 
+import com.riramzy.pillfllow.data.IosSocialAuthBridge
+import com.riramzy.pillfllow.data.IosSocialAuthDelegate
 import com.riramzy.pillfllow.domain.usecase.medication.SyncAndMaintainScheduleUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,4 +19,9 @@ fun triggerAppSyncAndSchedule(onComplete: (() -> Unit)? = null) {
         useCase()
         onComplete?.invoke()
     }
+}
+
+fun registerSocialAuthDelegate(delegate: IosSocialAuthDelegate) {
+    val koin = runCatching { KoinPlatformTools.defaultContext().get() }.getOrNull() ?: return
+    koin.get<IosSocialAuthBridge>().attachDelegate(delegate)
 }
