@@ -35,6 +35,18 @@ object ErrorMapper {
             message.contains("User profile not found in cloud or local cache") ->
                 "Unable to load profile data. Please try signing in again."
 
+            message.contains("17012") || message.contains("ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL") ->
+                "An account already exists with this email using a different sign-in method."
+
+            message.contains("NoCredential") || message.contains("NoSuchProvider") ||
+                    message.contains("No credentials available", ignoreCase = true) ||
+                    message.contains("12500") ->
+                "No Google account available on this device or Google Play Services needs an update."
+
+            message.contains("Missing default_web_client_id") ||
+                    message.contains("No active screen available") ->
+                "Google Sign-In is temporarily unavailable. Please try again."
+
             else -> "Authentication failed. Please check your credentials and try again."
         }
     }

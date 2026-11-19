@@ -49,6 +49,35 @@ object AuthValidator {
         }
     }
 
+    fun validateProfileCompletion(
+        firstName: String,
+        lastName: String,
+        email: String,
+        phone: String,
+        country: Country
+    ): Result {
+        val cleanFirst = firstName.trim()
+        val cleanLast = lastName.trim()
+        val cleanEmail = email.trim()
+        val cleanPhone = phone.trim()
+
+        return when {
+            cleanFirst.isBlank() || cleanLast.isBlank() || cleanEmail.isBlank() ->
+                Result.Invalid("Please fill in all fields")
+
+            !cleanEmail.matches(EMAIL_REGEX) ->
+                Result.Invalid("Please enter a valid email address")
+
+            cleanPhone.isBlank() ->
+                Result.Invalid("Please enter your phone number")
+
+            cleanPhone.length < country.minLength ->
+                Result.Invalid("Please enter a valid phone number for ${country.name}")
+
+            else -> Result.Valid
+        }
+    }
+
     fun validateSignIn(email: String, password: String): Result {
         val cleanEmail = email.trim()
         val cleanPass = password.trim()

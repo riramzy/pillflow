@@ -9,7 +9,7 @@ data class UserDto(
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
-    val phoneNumber: String = "+1234567890",
+    val phoneNumber: String = "",
     val userType: String = "PATIENT",
     val avatarRes: String = "avatar1",
     val fcmToken: String? = null,
