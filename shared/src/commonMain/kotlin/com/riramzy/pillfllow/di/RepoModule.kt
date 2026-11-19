@@ -47,7 +47,8 @@ val repoModule: Module = module {
         AuthRepoImpl(
             firebaseAuth = get(),
             userRepo = get(),
-            firestore = get()
+            firestore = get(),
+            socialAuthBridge = get()
         )
     }
 
