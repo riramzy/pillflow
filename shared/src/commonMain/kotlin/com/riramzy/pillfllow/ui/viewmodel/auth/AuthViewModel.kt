@@ -3,8 +3,14 @@ package com.riramzy.pillfllow.ui.viewmodel.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riramzy.pillfllow.data.local.entity.UserEntity
+import com.riramzy.pillfllow.domain.auth.SocialAuthBridge
+import com.riramzy.pillfllow.domain.auth.SocialProvider
+import com.riramzy.pillfllow.domain.repo.SocialSignInOutcome
+import com.riramzy.pillfllow.domain.usecase.auth.CompleteSocialProfileUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.GetIncompleteAuthSessionUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignInUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.SignUpUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.SocialSignInUseCase
 import com.riramzy.pillfllow.ui.state.auth.AuthAction
 import com.riramzy.pillfllow.ui.state.auth.AuthState
 import com.riramzy.pillfllow.utils.app.Result
@@ -20,9 +26,18 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val signInUseCase: SignInUseCase,
-    private val signUpUseCase: SignUpUseCase
+    private val signUpUseCase: SignUpUseCase,
+    private val socialSignInUseCase: SocialSignInUseCase,
+    private val completeSocialProfileUseCase: CompleteSocialProfileUseCase,
+    socialAuthBridge: SocialAuthBridge,
+    private val getIncompleteAuthSessionUseCase: GetIncompleteAuthSessionUseCase
 ): ViewModel() {
-    private val _state = MutableStateFlow(AuthState())
+    private val _state = MutableStateFlow(
+        AuthState(
+            isGoogleSignInAvailable = socialAuthBridge.supportsGoogleSignIn,
+            isAppleSignInAvailable = socialAuthBridge.supportsAppleSignIn
+        )
+    )
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
     fun onRoleSelected(role: UserType) {
@@ -98,6 +113,116 @@ class AuthViewModel(
         }
     }
 
+    private fun signInWithSocial(
+        provider: SocialProvider,
+        onExistingUser: () -> Unit,
+        onNeedsProfile: () -> Unit
+    ) {
+        if (_state.value.isLoading) return
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, activeSocialProvider = provider, errorMessage = null) }
+            when (val result = socialSignInUseCase(provider)) {
+                is Success -> when (val outcome = result.data) {
+                    is SocialSignInOutcome.ExistingUser -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                activeSocialProvider = null,
+                                isAuthenticated = true,
+                                userId = outcome.user.id,
+                                selectedRole = UserType.fromRaw(outcome.user.userType)
+                            )
+                        }
+                        onExistingUser()
+                    }
+                    is SocialSignInOutcome.NeedsProfileCompletion -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                activeSocialProvider = null,
+                                userId = outcome.uid,
+                                email = outcome.email,
+                                firstName = outcome.suggestedFirstName,
+                                lastName = outcome.suggestedLastName,
+                                isEmailReadOnly = outcome.email.isNotBlank()
+                            )
+                        }
+                        onNeedsProfile()
+                    }
+
+                    is SocialSignInOutcome.Cancelled -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                activeSocialProvider = null
+                            )
+                        }
+                    }
+                }
+                is Error -> _state.update {
+                    it.copy(isLoading = false, activeSocialProvider = null, errorMessage = result.message)
+                }
+                else -> _state.update { it.copy(isLoading = false, activeSocialProvider = null) }
+            }
+        }
+    }
+
+    fun loadIncompleteSession(preselectedRole: UserType? = null) {
+        if (preselectedRole != null) {
+            _state.update {
+                it.copy(
+                    selectedRole = preselectedRole,
+                    isRoleExplicitlySelected = true
+                )
+            }
+        }
+
+        if (_state.value.userId.isNotBlank()) return
+
+        viewModelScope.launch {
+            val session = getIncompleteAuthSessionUseCase() ?: return@launch
+
+            _state.update {
+                it.copy(
+                    userId = session.uid,
+                    email = it.email.ifBlank { session.email },
+                    firstName = it.firstName.ifBlank { session.suggestedFirstName },
+                    lastName = it.lastName.ifBlank { session.suggestedLastName },
+                    isEmailReadOnly = session.email.isNotBlank()
+                )
+            }
+        }
+    }
+
+    fun completeSocialProfile(onSuccess: () -> Unit = {}) {
+        val currentState = state.value
+
+        if (!currentState.isRoleExplicitlySelected) {
+            _state.update {
+                it.copy(errorMessage = "Please select whether you are a Patient or a Caregiver.")
+            }
+            return
+        }
+
+        if (currentState.isLoading) return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val result = completeSocialProfileUseCase(
+                firstName = currentState.firstName,
+                lastName = currentState.lastName,
+                email = currentState.email,
+                role = currentState.selectedRole,
+                phoneNumber = currentState.phoneNumber,
+                country = currentState.selectedCountry,
+                avatarRes = currentState.selectedAvatar
+            )
+
+            handleAuthResult(result, onSuccess)
+        }
+    }
+
     fun onErrorDismissed() {
         _state.update { it.copy(errorMessage = null) }
     }
@@ -146,6 +271,10 @@ class AuthViewModel(
             is AuthAction.CountrySelected -> onCountrySelected(action.country)
             is AuthAction.SignUp -> signUp(action.onSuccess)
             is AuthAction.SignIn -> signIn(action.onSuccess)
+            is AuthAction.SignInWithGoogle -> signInWithSocial(SocialProvider.GOOGLE, action.onExistingUser, action.onNeedsProfile)
+            is AuthAction.SignInWithApple -> signInWithSocial(SocialProvider.APPLE, action.onExistingUser, action.onNeedsProfile)
+            is AuthAction.CompleteSocialProfile -> completeSocialProfile(action.onSuccess)
+            is AuthAction.LoadIncompleteSession -> loadIncompleteSession(action.preselectedRole)
             is AuthAction.DismissError -> onErrorDismissed()
         }
     }

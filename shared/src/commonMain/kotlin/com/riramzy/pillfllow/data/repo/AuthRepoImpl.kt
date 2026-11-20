@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlin.concurrent.Volatile
 
 class AuthRepoImpl(
     private val firebaseAuth: FirebaseAuth,
@@ -34,6 +35,9 @@ class AuthRepoImpl(
     private val firestore: FirebaseFirestore,
     private val socialAuthBridge: SocialAuthBridge
 ): AuthRepo {
+    @Volatile
+    private var pendingIncompleteSession: SocialSignInOutcome.NeedsProfileCompletion? = null
+
     override val isUserLoggedIn: Flow<Boolean> =
         firebaseAuth.authStateChanged.map { it != null }
 
@@ -131,6 +135,7 @@ class AuthRepoImpl(
     }
 
     override suspend fun signOut(): Result<Unit> = safeCall {
+        pendingIncompleteSession = null
         runCatching { socialAuthBridge.signOut() }
         firebaseAuth.signOut()
     }
@@ -166,6 +171,7 @@ class AuthRepoImpl(
                 }
 
                 if (existingUser != null) {
+                    pendingIncompleteSession = null
                     userRepo.insertUser(existingUser)
                     SocialSignInOutcome.ExistingUser(existingUser)
                 } else {
@@ -175,7 +181,7 @@ class AuthRepoImpl(
                         ?.split(" ", limit = 2)
                         .orEmpty()
 
-                    SocialSignInOutcome.NeedsProfileCompletion(
+                    val outcome = SocialSignInOutcome.NeedsProfileCompletion(
                         uid = uid,
                         email = firebaseUser.email?.takeIf { it.isNotBlank() } ?: payload.email.orEmpty(),
                         suggestedFirstName = payload.firstName?.takeIf { it.isNotBlank() }
@@ -183,6 +189,9 @@ class AuthRepoImpl(
                         suggestedLastName = payload.lastName?.takeIf { it.isNotBlank() }
                             ?: displayParts.getOrNull(1).orEmpty()
                     )
+
+                    pendingIncompleteSession = outcome
+                    outcome
                 }
             }
         }
@@ -223,6 +232,7 @@ class AuthRepoImpl(
                     .set(userDto)
 
                 userRepo.insertUser(userEntity)
+                pendingIncompleteSession = null
                 userEntity
             }
         }
@@ -230,5 +240,30 @@ class AuthRepoImpl(
     override suspend fun hasIncompleteAuthSession(): Boolean {
         val uid = firebaseAuth.currentUser?.uid ?: return false
         return userRepo.getUserByIdOnce(uid) == null
+    }
+
+    override suspend fun getIncompleteAuthSession(): SocialSignInOutcome.NeedsProfileCompletion? {
+        val firebaseUser = firebaseAuth.currentUser ?: return null
+        val uid = firebaseUser.uid
+
+        if (userRepo.getUserByIdOnce(uid) != null) {
+            pendingIncompleteSession = null
+            return null
+        }
+
+        pendingIncompleteSession?.takeIf { it.uid == uid }?.let { return it }
+
+        val displayParts = firebaseUser.displayName
+            ?.substringBefore("|")
+            ?.trim()
+            ?.split(" ", limit = 2)
+            .orEmpty()
+
+        return SocialSignInOutcome.NeedsProfileCompletion(
+            uid = uid,
+            email = firebaseUser.email.orEmpty(),
+            suggestedFirstName = displayParts.getOrNull(0).orEmpty(),
+            suggestedLastName = displayParts.getOrNull(1).orEmpty()
+        )
     }
 }

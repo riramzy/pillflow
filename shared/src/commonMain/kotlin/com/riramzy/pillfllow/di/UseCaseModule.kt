@@ -1,6 +1,7 @@
 package com.riramzy.pillfllow.di
 
 import com.riramzy.pillfllow.domain.usecase.auth.CompleteSocialProfileUseCase
+import com.riramzy.pillfllow.domain.usecase.auth.GetIncompleteAuthSessionUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.LogoutUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.ObserveCurrentUserUseCase
 import com.riramzy.pillfllow.domain.usecase.auth.ResolveStartDestinationUseCase
@@ -39,6 +40,7 @@ val useCaseModule: Module = module {
     factory { SocialSignInUseCase(socialAuthBridge = get(), authRepo = get(), sessionManager = get()) }
     factory { CompleteSocialProfileUseCase(authRepo = get(), sessionManager = get()) }
     factory { ResolveStartDestinationUseCase(observeCurrentUserUseCase = get(), sessionManager = get(), authRepo = get()) }
+    factory { GetIncompleteAuthSessionUseCase(authRepo = get()) }
 
     factory { GetCaregiverPatientsUseCase(pairingRepo = get(), userRepo = get(), medicationRepo = get()) }
     factory { InitiatePairingUseCase(pairingRepo = get(), userRepo = get()) }

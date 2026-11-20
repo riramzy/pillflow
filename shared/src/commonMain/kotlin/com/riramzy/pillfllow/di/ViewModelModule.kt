@@ -24,7 +24,11 @@ val viewModelModule: Module = module {
     viewModel {
         AuthViewModel(
             signInUseCase = get(),
-            signUpUseCase = get()
+            signUpUseCase = get(),
+            socialAuthBridge = get(),
+            socialSignInUseCase = get(),
+            completeSocialProfileUseCase = get(),
+            getIncompleteAuthSessionUseCase = get()
         )
     }
 

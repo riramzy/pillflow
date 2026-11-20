@@ -1,5 +1,6 @@
 package com.riramzy.pillfllow.ui.state.auth
 
+import com.riramzy.pillfllow.domain.auth.SocialProvider
 import com.riramzy.pillfllow.utils.platform.Country
 import com.riramzy.pillfllow.utils.platform.allCountries
 import com.riramzy.pillfllow.utils.platform.getDeviceCountryCode
@@ -19,7 +20,11 @@ data class AuthState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isAuthenticated: Boolean = false,
-    val isRoleExplicitlySelected: Boolean = false
+    val isRoleExplicitlySelected: Boolean = false,
+    val activeSocialProvider: SocialProvider? = null,
+    val isGoogleSignInAvailable: Boolean = false,
+    val isAppleSignInAvailable: Boolean = false,
+    val isEmailReadOnly: Boolean = false
 )
 
 sealed interface AuthAction {
@@ -34,5 +39,9 @@ sealed interface AuthAction {
     data class CountrySelected(val country: Country): AuthAction
     data class SignUp(val onSuccess: () -> Unit = {}): AuthAction
     data class SignIn(val onSuccess: () -> Unit = {}): AuthAction
+    data class SignInWithGoogle(val onExistingUser: () -> Unit, val onNeedsProfile: () -> Unit) : AuthAction
+    data class SignInWithApple(val onExistingUser: () -> Unit, val onNeedsProfile: () -> Unit) : AuthAction
+    data class CompleteSocialProfile(val onSuccess: () -> Unit) : AuthAction
+    data class LoadIncompleteSession(val preselectedRole: UserType? = null) : AuthAction
     data object DismissError: AuthAction
 }

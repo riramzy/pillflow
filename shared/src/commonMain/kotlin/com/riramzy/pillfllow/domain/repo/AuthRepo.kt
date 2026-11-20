@@ -42,6 +42,8 @@ interface AuthRepo {
     ): Result<UserEntity>
 
     suspend fun hasIncompleteAuthSession(): Boolean
+
+    suspend fun getIncompleteAuthSession(): SocialSignInOutcome.NeedsProfileCompletion?
 }
 
 sealed interface SocialSignInOutcome {
