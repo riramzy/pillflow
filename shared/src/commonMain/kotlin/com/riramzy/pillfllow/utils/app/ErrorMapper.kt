@@ -47,6 +47,11 @@ object ErrorMapper {
                     message.contains("No active screen available") ->
                 "Google Sign-In is temporarily unavailable. Please try again."
 
+            message.contains("SOCIAL_SESSION_EXPIRED") ||
+                    message.contains("TOKEN_EXPIRED") ||
+                    message.contains("INVALID_IDP_RESPONSE") ->
+                "Your sign-in session expired. Please sign in again."
+
             else -> "Authentication failed. Please check your credentials and try again."
         }
     }

@@ -26,9 +26,13 @@ fun SplashScreen(
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }
             }
-            is SplashNavEvent.NavigateToSignIn,
-            is SplashNavEvent.NavigateToCompleteProfile -> {
+            is SplashNavEvent.NavigateToSignIn -> {
                 navController.navigate(Screen.SignIn.route) {
+                    popUpTo(Screen.Splash.route) { inclusive = true }
+                }
+            }
+            is SplashNavEvent.NavigateToCompleteProfile -> {
+                navController.navigate(Screen.CompleteProfile.route) {
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }
             }

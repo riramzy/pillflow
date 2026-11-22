@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +37,10 @@ import pillfllow.shared.generated.resources.google
 fun PillFlowSignWithButton(
     modifier: Modifier = Modifier,
     isWithGoogle: Boolean = true,
-    isSignUp: Boolean = false
+    isSignUp: Boolean = false,
+    isEnabled: Boolean = true,
+    isLoading: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     val (bgnColor, icon) = when(isWithGoogle) {
         true -> Pair(
@@ -68,9 +72,11 @@ fun PillFlowSignWithButton(
             .wrapContentHeight(),
         shape = RoundedCornerShape(25.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = bgnColor
+            containerColor = bgnColor,
+            disabledContainerColor = bgnColor.copy(alpha = 0.6f)
         ),
-        onClick = {}
+        enabled = isEnabled,
+        onClick = onClick
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -78,7 +84,13 @@ fun PillFlowSignWithButton(
             modifier = Modifier
                 .padding(vertical = 6.dp)
         ) {
-            if (isWithGoogle) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = txtColor
+                )
+            } else if (isWithGoogle) {
                 Box(
                     modifier = Modifier
                         .size(24.dp)
@@ -105,7 +117,7 @@ fun PillFlowSignWithButton(
             }
 
             Text(
-                text = btnText,
+                text = if (isLoading) "Connecting..." else btnText,
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,

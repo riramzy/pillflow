@@ -40,6 +40,8 @@ class AuthViewModel(
     )
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
+    private var hasLoadedIncompleteSession = false
+
     fun onRoleSelected(role: UserType) {
         _state.update { it.copy(selectedRole = role, isRoleExplicitlySelected = true) }
     }
@@ -177,7 +179,8 @@ class AuthViewModel(
             }
         }
 
-        if (_state.value.userId.isNotBlank()) return
+        if (hasLoadedIncompleteSession) return
+        hasLoadedIncompleteSession = true
 
         viewModelScope.launch {
             val session = getIncompleteAuthSessionUseCase() ?: return@launch

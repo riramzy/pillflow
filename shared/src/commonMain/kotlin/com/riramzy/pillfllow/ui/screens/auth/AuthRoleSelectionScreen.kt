@@ -1,12 +1,13 @@
 package com.riramzy.pillfllow.ui.screens.auth
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -17,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -125,95 +127,109 @@ fun AuthRoleSelectionScreenContent(
         )
     }
 
-    BoxWithConstraints(
+    Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .background(
-                color = MaterialTheme.colorScheme.surface
-            )
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState()),
-        contentAlignment = Alignment.Center
-    ) {
-        PillFlowAuthHeader(
+            .fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp)
+                    .statusBarsPadding(),
+                contentAlignment = Alignment.Center
+            ) {
+                PillFlowAuthHeader()
+            }
+        }
+    ) { paddingValues ->
+        BoxWithConstraints(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 40.dp)
-        )
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .align(Alignment.Center)
-                .padding(15.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ),
-            shape = RoundedCornerShape(25.dp)
+                .padding(paddingValues)
+                .fillMaxSize()
         ) {
             Column(
                 modifier = Modifier
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .fillMaxWidth()
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(15.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.5f),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    shape = RoundedCornerShape(25.dp)
                 ) {
-                    Text(
-                        text = "Who are you?",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = "Select the role that best describes you",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    PillFlowUserTypeCard(
-                        type = UserType.PATIENT,
-                        isSelected = state.selectedRole == UserType.PATIENT,
-                        onSelect = { onRoleSelected(UserType.PATIENT) },
-                        onInfoClick = { infoDialogRole = UserType.PATIENT }
-                    )
-
-                    PillFlowUserTypeCard(
-                        type = UserType.CAREGIVER,
-                        isSelected = state.selectedRole == UserType.CAREGIVER,
-                        onSelect = { onRoleSelected(UserType.CAREGIVER) },
-                        onInfoClick = { infoDialogRole = UserType.CAREGIVER }
-                    )
-                }
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    PillFlowButton(
-                        text = "Continue",
-                        onClick = { onContinueClick() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Text(
-                        text = "Already have an account? Sign In",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigateToSignIn() }
-                    )
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Who are you?",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Text(
+                                text = "Select the role that best describes you",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            PillFlowUserTypeCard(
+                                type = UserType.PATIENT,
+                                isSelected = state.selectedRole == UserType.PATIENT,
+                                onSelect = { onRoleSelected(UserType.PATIENT) },
+                                onInfoClick = { infoDialogRole = UserType.PATIENT }
+                            )
+
+                            PillFlowUserTypeCard(
+                                type = UserType.CAREGIVER,
+                                isSelected = state.selectedRole == UserType.CAREGIVER,
+                                onSelect = { onRoleSelected(UserType.CAREGIVER) },
+                                onInfoClick = { infoDialogRole = UserType.CAREGIVER }
+                            )
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            PillFlowButton(
+                                text = "Continue",
+                                onClick = { onContinueClick() },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Text(
+                                text = "Already have an account? Sign In",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onNavigateToSignIn() }
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -44,7 +44,8 @@ fun PillFlowInputField(
     keyboardActions: KeyboardActions? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     isNoteCard: Boolean = false,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    readOnly: Boolean = false
 ) {
     Column(
         modifier = modifier
@@ -96,11 +97,12 @@ fun PillFlowInputField(
                         },
                         singleLine = !isNoteCard,
                         textStyle = TextStyle.Default.copy(
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = if (readOnly) 0.6f else 1f)
                         ),
                         keyboardOptions = keyboardOptions,
                         keyboardActions = effectiveActions,
                         visualTransformation = visualTransformation,
+                        readOnly = readOnly,
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         decorationBox = { innerTextField ->
                             Row(

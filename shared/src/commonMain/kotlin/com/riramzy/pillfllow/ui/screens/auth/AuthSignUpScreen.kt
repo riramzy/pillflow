@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -47,7 +49,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riramzy.pillfllow.domain.auth.SocialProvider
 import com.riramzy.pillfllow.ui.components.auth.PillFlowAuthHeader
+import com.riramzy.pillfllow.ui.components.auth.PillFlowSignWithButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowAvatarSelector
 import com.riramzy.pillfllow.ui.components.custom.PillFlowButton
 import com.riramzy.pillfllow.ui.components.custom.PillFlowInputField
@@ -67,6 +71,7 @@ fun AuthSignUpScreen(
     selectedRole: UserType = UserType.PATIENT,
     onAuthSuccess: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
+    onNeedsProfileCompletion: () -> Unit = {}
 ) {
     val state by authViewModel.state.collectAsStateWithLifecycle()
 
@@ -79,6 +84,7 @@ fun AuthSignUpScreen(
         onAuthSuccess = onAuthSuccess,
         onNavigateToSignIn = onNavigateToSignIn,
         onAction = authViewModel::onAction,
+        onNeedsProfileCompletion = onNeedsProfileCompletion,
         modifier = modifier
     )
 }
@@ -89,6 +95,7 @@ fun AuthSignUpScreenContent(
     state: AuthState = AuthState(),
     onAuthSuccess: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
+    onNeedsProfileCompletion: () -> Unit = {},
     onAction: (AuthAction) -> Unit = {}
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -263,11 +270,57 @@ fun AuthSignUpScreenContent(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         PillFlowButton(
-                            text = if (state.isLoading) "Creating Account..." else "Sign Up",
-                            isEnabled = !state.isLoading,
+                            text = if (state.isLoading && state.activeSocialProvider == null) "Creating Account..." else "Sign Up",                            isEnabled = !state.isLoading,
                             onClick = { onAction(AuthAction.SignUp(onSuccess = { onAuthSuccess() })) },
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        if (state.isGoogleSignInAvailable || state.isAppleSignInAvailable) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                HorizontalDivider(modifier = Modifier.weight(1f))
+                                Text(text = "or", style = MaterialTheme.typography.bodySmall)
+                                HorizontalDivider(modifier = Modifier.weight(1f))
+                            }
+
+                            if (state.isGoogleSignInAvailable) {
+                                PillFlowSignWithButton(
+                                    isWithGoogle = true,
+                                    isSignUp = true,
+                                    isEnabled = !state.isLoading,
+                                    isLoading = state.isLoading && state.activeSocialProvider == SocialProvider.GOOGLE,
+                                    onClick = {
+                                        onAction(
+                                            AuthAction.SignInWithGoogle(
+                                                onExistingUser = onAuthSuccess,
+                                                onNeedsProfile = onNeedsProfileCompletion
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+
+                            if (state.isAppleSignInAvailable) {
+                                PillFlowSignWithButton(
+                                    isWithGoogle = false,
+                                    isSignUp = true,
+                                    isEnabled = !state.isLoading,
+                                    isLoading = state.isLoading && state.activeSocialProvider == SocialProvider.APPLE,
+                                    onClick = {
+                                        onAction(
+                                            AuthAction.SignInWithApple(
+                                                onExistingUser = onAuthSuccess,
+                                                onNeedsProfile = onNeedsProfileCompletion
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
                         Text(
                             text = "Already have an account? Sign In",
                             style = MaterialTheme.typography.bodySmall,

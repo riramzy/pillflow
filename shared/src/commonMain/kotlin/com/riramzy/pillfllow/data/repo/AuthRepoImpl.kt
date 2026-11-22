@@ -15,6 +15,7 @@ import com.riramzy.pillfllow.utils.app.Result
 import com.riramzy.pillfllow.utils.app.safeCall
 import com.riramzy.pillfllow.utils.platform.currentTimeMillis
 import com.riramzy.pillfllow.utils.user.UserType
+import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
@@ -35,8 +36,8 @@ class AuthRepoImpl(
     private val firestore: FirebaseFirestore,
     private val socialAuthBridge: SocialAuthBridge
 ): AuthRepo {
-    @Volatile
-    private var pendingIncompleteSession: SocialSignInOutcome.NeedsProfileCompletion? = null
+    @Volatile private var pendingIncompleteSession: SocialSignInOutcome.NeedsProfileCompletion? = null
+    @Volatile private var pendingSocialPayload: SocialAuthPayload? = null
 
     override val isUserLoggedIn: Flow<Boolean> =
         firebaseAuth.authStateChanged.map { it != null }
@@ -136,6 +137,7 @@ class AuthRepoImpl(
 
     override suspend fun signOut(): Result<Unit> = safeCall {
         pendingIncompleteSession = null
+        pendingSocialPayload = null
         runCatching { socialAuthBridge.signOut() }
         firebaseAuth.signOut()
     }
@@ -143,18 +145,7 @@ class AuthRepoImpl(
     override suspend fun signInWithSocial(payload: SocialAuthPayload): Result<SocialSignInOutcome> =
         safeCall(errorMapper = ErrorMapper::mapAuthError) {
             withContext(Dispatchers.IO) {
-                val credential = when (payload.provider) {
-                    SocialProvider.APPLE -> OAuthProvider.credential(
-                        providerId = "apple.com",
-                        idToken = payload.idToken,
-                        accessToken = payload.accessToken,
-                        rawNonce = payload.rawNonce
-                    )
-                    SocialProvider.GOOGLE -> GoogleAuthProvider.credential(
-                        idToken = payload.idToken,
-                        accessToken = payload.accessToken
-                    )
-                }
+                val credential = buildSocialCredential(payload)
 
                 val firebaseUser = firebaseAuth.signInWithCredential(credential).user
                     ?: throw Exception("User ID not found")
@@ -172,6 +163,7 @@ class AuthRepoImpl(
 
                 if (existingUser != null) {
                     pendingIncompleteSession = null
+                    pendingSocialPayload = null
                     userRepo.insertUser(existingUser)
                     SocialSignInOutcome.ExistingUser(existingUser)
                 } else {
@@ -182,7 +174,7 @@ class AuthRepoImpl(
                         .orEmpty()
 
                     val outcome = SocialSignInOutcome.NeedsProfileCompletion(
-                        uid = uid,
+                        uid = "",
                         email = firebaseUser.email?.takeIf { it.isNotBlank() } ?: payload.email.orEmpty(),
                         suggestedFirstName = payload.firstName?.takeIf { it.isNotBlank() }
                             ?: displayParts.getOrNull(0).orEmpty(),
@@ -190,6 +182,9 @@ class AuthRepoImpl(
                             ?: displayParts.getOrNull(1).orEmpty()
                     )
 
+                    runCatching { firebaseUser.delete() }
+                    firebaseAuth.signOut()
+                    pendingSocialPayload = payload
                     pendingIncompleteSession = outcome
                     outcome
                 }
@@ -207,7 +202,11 @@ class AuthRepoImpl(
         safeCall(errorMapper = ErrorMapper::mapAuthError) {
             withContext(Dispatchers.IO) {
                 val now = currentTimeMillis()
-                val firebaseUser = firebaseAuth.currentUser ?: throw Exception("User ID not found")
+                val firebaseUser = firebaseAuth.currentUser ?: run {
+                    val payload = pendingSocialPayload ?: throw Exception("SOCIAL_SESSION_EXPIRED")
+                    firebaseAuth.signInWithCredential(buildSocialCredential(payload)).user
+                        ?: throw Exception("User ID not found")
+                }
                 val uid = firebaseUser.uid
 
                 runCatching {
@@ -227,11 +226,18 @@ class AuthRepoImpl(
 
                 val userDto = userEntity.toDto(updatedAt = now)
 
-                firestore.collection("users")
-                    .document(uid)
-                    .set(userDto)
+                try {
+                    firestore.collection("users")
+                        .document(uid)
+                        .set(userDto)
+                } catch (e: Exception) {
+                    runCatching { firebaseUser.delete() }
+                    firebaseAuth.signOut()
+                    throw e
+                }
 
                 userRepo.insertUser(userEntity)
+                pendingSocialPayload = null
                 pendingIncompleteSession = null
                 userEntity
             }
@@ -243,6 +249,7 @@ class AuthRepoImpl(
     }
 
     override suspend fun getIncompleteAuthSession(): SocialSignInOutcome.NeedsProfileCompletion? {
+        pendingIncompleteSession?.let { return it }
         val firebaseUser = firebaseAuth.currentUser ?: return null
         val uid = firebaseUser.uid
 
@@ -266,4 +273,18 @@ class AuthRepoImpl(
             suggestedLastName = displayParts.getOrNull(1).orEmpty()
         )
     }
+
+    private fun buildSocialCredential(payload: SocialAuthPayload): AuthCredential =
+        when(payload.provider) {
+            SocialProvider.APPLE -> OAuthProvider.credential(
+                providerId = "apple.com",
+                idToken = payload.idToken,
+                accessToken = payload.accessToken,
+                rawNonce = payload.rawNonce
+            )
+            SocialProvider.GOOGLE -> GoogleAuthProvider.credential(
+                idToken = payload.idToken,
+                accessToken = payload.accessToken
+            )
+        }
 }

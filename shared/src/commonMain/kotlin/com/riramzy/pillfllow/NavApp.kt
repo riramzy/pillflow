@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.riramzy.pillfllow.domain.session.SessionManager
 import com.riramzy.pillfllow.domain.usecase.auth.LogoutUseCase
+import com.riramzy.pillfllow.ui.screens.auth.AuthCompleteProfileScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthRoleSelectionScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthSignInScreen
 import com.riramzy.pillfllow.ui.screens.auth.AuthSignUpScreen
@@ -50,6 +51,7 @@ fun NavApp(
     val isCaregiver = currentUser?.userType?.equals("CAREGIVER", ignoreCase = true) == true
 
     var selectedRole by rememberSaveable { mutableStateOf(UserType.PATIENT) }
+    var socialPreselectedRole by rememberSaveable { mutableStateOf<UserType?>(null) }
 
     var showProfileSheet by rememberSaveable { mutableStateOf(false) }
     var showNotificationsSheet by rememberSaveable { mutableStateOf(false) }
@@ -59,6 +61,7 @@ fun NavApp(
 
     val onLogoutSuccess = {
         selectedRole = UserType.PATIENT
+        socialPreselectedRole = null
         sessionManager.clearUser()
         navController.navigate(Screen.SignIn.route) {
             popUpTo(0) { inclusive = true }
@@ -117,6 +120,12 @@ fun NavApp(
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
                     }
+                },
+                onNeedsProfileCompletion = {
+                    socialPreselectedRole = null
+                    navController.navigate(Screen.CompleteProfile.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -131,6 +140,31 @@ fun NavApp(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
+                    }
+                },
+                onNeedsProfileCompletion = {
+                    socialPreselectedRole = selectedRole
+                    navController.navigate(Screen.CompleteProfile.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(Screen.CompleteProfile.route) {
+            AuthCompleteProfileScreen(
+                preselectedRole = socialPreselectedRole,
+                onCompleteSuccess = {
+                    socialPreselectedRole = null
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onUseAnotherAccount = {
+                    coroutineScope.launch {
+                        logoutUseCase()
+                        onLogoutSuccess()
                     }
                 }
             )
