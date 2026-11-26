@@ -49,8 +49,8 @@ jobs:
         run: |
           sips -z 1024 1024 iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/app-icon-1024.png
 
-      # 5.5. Add Firebase Swift Package dependencies to Xcode project
-      - name: Add Firebase Swift Packages
+      # 5.5. Add Firebase & GoogleSignIn Swift Package dependencies to Xcode project
+      - name: Add Firebase and GoogleSignIn Swift Packages
         run: |
           swift run --package-path .github/scripts/xcode_spm_setup xcode_spm_setup \
             iosApp/iosApp.xcodeproj \
@@ -58,6 +58,11 @@ jobs:
             11.1.0 \
             --plist iosApp/iosApp/GoogleService-Info.plist \
             FirebaseCore FirebaseAuth FirebaseFirestore
+          swift run --package-path .github/scripts/xcode_spm_setup xcode_spm_setup \
+            iosApp/iosApp.xcodeproj \
+            https://github.com/google/GoogleSignIn-iOS.git \
+            9.0.0 \
+            GoogleSignIn
 
       # 6. Build iOS App (runs Gradle KMP compiler + links native ARM64 framework)
       - name: Build iOS App with Xcode

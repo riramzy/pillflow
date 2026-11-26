@@ -22,5 +22,18 @@
     	<array>
     		<string>com.riramzy.pillflow.refresh</string>
     	</array>
+    	<key>GIDClientID</key>
+    	<string>482241683366-0947445g7cppo1k4rgobvej8ghg3mm5l.apps.googleusercontent.com</string>
+    	<key>CFBundleURLTypes</key>
+    	<array>
+    		<dict>
+    			<key>CFBundleTypeRole</key>
+    			<string>Editor</string>
+    			<key>CFBundleURLSchemes</key>
+    			<array>
+    				<string>com.googleusercontent.apps.482241683366-0947445g7cppo1k4rgobvej8ghg3mm5l</string>
+    			</array>
+    		</dict>
+    	</array>
 </dict>
 </plist>

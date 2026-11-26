@@ -159,7 +159,8 @@ fun UpdateProfileSheet(
                     label = "Email",
                     placeholder = "Enter Email",
                     value = email,
-                    onValueChange = { email = it },
+                    readOnly = true,
+                    onValueChange = {},
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
 

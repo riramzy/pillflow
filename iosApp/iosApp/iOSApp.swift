@@ -3,6 +3,7 @@ import Shared
 import FirebaseCore
 import UserNotifications
 import BackgroundTasks
+import GoogleSignIn
 
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(
@@ -21,6 +22,7 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 @main
 struct iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
+    private let socialAuthDelegate = IosSocialAuthDelegateImpl()
     private let notificationDelegate = NotificationDelegate()
     private static let refreshTaskId = "com.riramzy.pillflow.refresh"
 
@@ -28,6 +30,7 @@ struct iOSApp: App {
         FirebaseApp.configure()
         InitKoinIosKt.doInitKoinForIos()
         let center = UNUserNotificationCenter.current()
+        InitKoinIosKt.registerSocialAuthDelegate(delegate: socialAuthDelegate)
         center.delegate = notificationDelegate
 
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -50,6 +53,9 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }.onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
                 InitKoinIosKt.triggerAppSyncAndSchedule(onComplete: nil)
